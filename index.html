@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PLANEJAMENTO</title>
+	<link rel="icon" type="image/png" href="file:///P:/Desenvolvimento/Gustavo Furtunato/4 - Sprints/IDEIAS/favicon.png">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { font-size: 2em; text-align: center; margin-bottom: 30px; }
+    #main-frame {
+        background-color: #ffffff; /* Fundo branco para o quadro */
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Sombra sutil para destacar o quadro */
+        margin-top: 20px;
+        max-width: 800px;
+        margin: 20px auto;
+    }
+	
+		#cabecalho {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #cabecalho img {
+            height: 50px;
+            margin-right: 20px;
+        }
+
+        #cabecalho h1 {
+            font-size: 2em;
+            margin: 0;
+        }
+	
+    label { margin-top: 12px; font-weight: bold; display: block; }
+    input[type="text"], input[type="number"], select {
+        width: 100%;
+		padding: 8px;
+		margin-top: 5px;
+		box-sizing: border-box;
+        border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 1em;
+		font-family: Arial, sans-serif;
+		resize: none;
+    }
+
+	textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    font-family: Arial, sans-serif;
+    resize: none;
+    min-height: 200px;
+	}
+
+    #comentarios { height: 200px; resize: none; }
+	#comentarios_aplicaveis { height: 200px; resize: none }
+	
+    .editable-content {
+        width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;
+        border: 1px solid #ccc; border-radius: 4px; font-size: 1em;
+        min-height: 120px; background-color: #fff;
+    }
+    .editable-content img {
+        max-width: 100%; display: block; margin-top: 5px;
+    }
+    .checkbox-group { margin-top: 5px; }
+    .checkbox-group label { font-weight: normal; margin-right: 15px; }
+    
+    button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 1em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        color: black;
+    }
+    .orange-button {
+        background-color: orange;
+    }
+    .orange-button:hover {
+        background-color: darkorange;
+    }
+    button.principal {
+        background-color: #d4ffd6;
+    }
+    button.principal:hover {
+        filter: brightness(90%);
+    }
+    button.principal.active {
+        background-color: #33d439;
+        color: black;
+    }
+    button.aplicaveis {
+        background-color: #faf5be;
+    }
+    button.aplicaveis:hover {
+        filter: brightness(90%);
+    }
+    button.aplicaveis.active {
+        background-color: #fae743;
+        color: black;
+    }
+    fieldset { border: 1px solid #ccc; padding: 20px; margin-top: 20px; border-radius: 8px; }
+    legend { font-weight: bold; padding: 0 10px; }
+    .system-block {
+        border: 1px dashed #aaa; padding: 15px; margin-top: 15px;
+        background-color: #f7f7f7; border-radius: 6px;
+    }
+    .system-block fieldset {
+        background-color: #ffffff; border-radius: 6px;
+    }
+    .checkbox-block {
+        display: flex; align-items: center; border-bottom: 1px solid #ddd;
+        padding-bottom: 8px; margin-bottom: 12px;
+    }
+    .checkbox-inline {
+        display: flex; flex-wrap: wrap; gap: 15px; margin-top: 2px;
+    }
+    .checkbox-inline label { font-weight: normal; }
+    .checkbox-title { text-transform: uppercase; font-weight: bold; }
+    .checkbox-block .checkbox-title { margin-right: 5px; }
+    input::placeholder { font-style: italic; }
+    input::-webkit-input-placeholder { font-style: italic; }
+    input:-moz-placeholder { font-style: italic; }
+    input:-ms-input-placeholder { font-style: italic; }
+	
+	#iddiagramas, #idfusiveis {
+    width: 155px; /* Largura aproximada para 9 dígitos. Ajuste este valor se precisar. */
+    display: inline-block; /* Permite que o label e o input fiquem na mesma linha se houver espaço */
+	}
+	
+	 .btn-paginacao {
+            background-color: #ddd;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-paginacao.active {
+            background-color: orange; /* Cor laranja para o botão selecionado */
+            color: white;
+        }
+
+        .btn-paginacao:hover {
+            background-color: #ccc;
+        }
+	
+	.btn-adicionar {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .btn-adicionar:hover {
+            background-color: #45a049;
+        }
+
+        .btn-remover {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-remover:hover {
+            background-color: #da190b;
+        }
+		
+		.button-group-centered {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+		
+		.veiculo-aplicavel-block {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+		
+		.paginas-navegacao {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .paginas-navegacao .btn-paginacao {
+            background-color: #ddd;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .paginas-navegacao .btn-paginacao.active {
+            background-color: orange;
+            color: white;
+        }
+		
+		.veiculo-aplicavel-block {
+			background-color: white;
+		}
+</style>
+</head>
+<body style="background-color: #f5fff5;">
+     <div id="cabecalho">
+        <img src="file:///P:/Desenvolvimento/Gustavo Furtunato/4 - Sprints/IDEIAS//logo.png" alt="Logo da Empresa">
+        <h1>PLANEJAMENTO</h1>
+    </div>
+    <div id="main-frame">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <button id="btn-principal" class="active principal" onclick="alternarAbas('principal')">VEÍCULO PRINCIPAL</button>
+            <button id="btn-aplicaveis" class="aplicaveis" onclick="alternarAbas('aplicaveis')">VEÍCULOS APLICÁVEIS</button>
+        </div>
+        <h2 id="aba-titulo" style="text-align: center; margin-top: 10px;">VEÍCULO PRINCIPAL</h2>
+
+        <div id="aba-principal">
+            <fieldset>			
+			<legend>INFORMAÇÕES GERAIS</legend>				
+			<label>Link do Card (ClickUp)</label><input type="text" id="clickup" placeholder="https://app.clickup.com/...">
+				<label>Veículo Referência</label><input type="text" id="veiculo" placeholder="Exemplo: Car>1994>Mazda>RX-7>1.3 256cv (13B - Wankel)">
+                <label>ID DIAGRAMAS</label><input type="number" id="iddiagramas" placeholder="Apenas números">
+                <label>ID FUSÍVEIS</label><input type="number" id="idfusiveis" placeholder="Apenas números">
+                <label>PASTA DO VEÍCULO</label><input type="text" id="pasta" placeholder="P:\Desenvolvimento\+ DIAGRAMAS...">
+				<label>IMPORTANTE PARA O DESENVOLVIMENTO</label><textarea id="comentarios" rows="2"></textarea>
+            </fieldset>
+			<fieldset>
+			<legend>ITENS DE SÉRIE / OPCIONAIS</legend>
+			<div class="checkbox-block">
+				<label class="checkbox-title">TRANSMISSÃO:</label>
+				<div class="checkbox-inline">
+					<label><input type="radio" name="atmt" value="AT"> AT</label>
+					<label><input type="radio" name="atmt" value="MT"> MT</label>
+					<label><input type="radio" name="atmt" value="AMBOS"> AMBOS</label>
+				</div>
+			</div>
+			<div class="checkbox-block">
+				<label class="checkbox-title">COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA:</label>
+				<div class="checkbox-inline">
+					<label><input type="radio" name="chave" value="CHAVE"> CHAVE</label>
+					<label><input type="radio" name="chave" value="BOTÃO"> BOTÃO</label>
+					<label><input type="radio" name="chave" value="AMBOS"> AMBOS</label>
+				</div>
+			</div>
+			<div class="checkbox-block">
+				<label class="checkbox-title">FUNÇÃO START/STOP:</label>
+				<div class="checkbox-inline">
+					<label><input type="radio" name="startstop" value="SIM"> SIM</label>
+					<label><input type="radio" name="startstop" value="NÃO"> NÃO</label>
+					<label><input type="radio" name="startstop" value="AMBOS"> AMBOS</label>
+				</div>
+			</div>
+			<div class="checkbox-block">
+				<label class="checkbox-title">AR-CONDICIONADO:</label>
+				<div class="checkbox-inline">
+					<label><input type="radio" name="ac" value="MANUAL"> MANUAL</label>
+					<label><input type="radio" name="ac" value="AUTOMÁTICO"> AUTOMÁTICO</label>
+					<label><input type="radio" name="ac" value="AMBOS"> AMBOS</label>
+				</div>
+			</div>
+			<div class="checkbox-block">
+				<label class="checkbox-title">TRAÇÃO:</label>
+				<div class="checkbox-inline">
+					<label><input type="radio" name="tracao" value="4X2"> 4X2</label>
+					<label><input type="radio" name="tracao" value="4X4"> 4X4</label>
+					<label><input type="radio" name="tracao" value="AMBOS"> AMBOS</label>
+				</div>
+			</div>
+			<label>EXTRAS:</label><input type="text" id="extras" value="">
+		</fieldset>
+
+            <fieldset>
+                <legend>SISTEMAS</legend>
+                <div id="sistemas-container"></div>
+                <div id="paginas-navegacao" style="text-align: center; margin-bottom: 10px;"></div>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+                    <button type="button" class="orange-button" onclick="adicionarSistema()">➕ Adicionar Capítulo</button>
+                    <button type="button" class="orange-button" onclick="removerUltimoSistema()">➖ Remover Último Capítulo</button>
+                </div>
+            </fieldset>
+
+            <fieldset>
+                <legend>DADOS DO CARD</legend>
+                <div class="card-details-block">
+			<label>Dificuldade (Principal):</label>
+			<select id="dificuldade">
+				<option value="" disabled selected>Selecione a dificuldade</option>
+				<option value="FÁCIL">FÁCIL</option>
+				<option value="MÉDIO">MÉDIO</option>
+				<option value="DIFÍCIL">DIFÍCIL</option>
+				<option value="DIFÍCIL">CARROCERIA F</option>
+				<option value="DIFÍCIL">CARROCERIA M</option>
+				<option value="DIFÍCIL">CARROCERIA D</option>
+			</select>
+			<label>Justificativa:</label><input type="text" id="justificativa">
+			
+		</div>
+    </div>
+	
+
+	
+	<div id="aba-aplicaveis" class="tab-content" style="display: none;">
+    <div id="paginacao-veiculos-aplicaveis" class="paginacao-veiculos" style="text-align: center; margin-bottom: 10px;"></div>
+<div class="button-group-centered">
+    <button class="orange-button" onclick="adicionarVeiculoAplicavel()">➕ Adicionar Veículo</button>
+    <button class="orange-button" onclick="removerUltimoVeiculoAplicavel()">➖ Remover Último Veículo</button>
+</div>
+
+    <div id="veiculos-aplicaveis-container"></div>
+	<div id="dados-card-aplicaveis" style="display: none;">
+		<fieldset>
+    <legend>DADOS DO CARD</legend>
+    <label>Dificuldade (Aplicáveis):</label>
+    <select id="dificuldade_aplicaveis">
+        <option value="" disabled selected>Selecione a dificuldade</option>
+        <option value="FÁCIL">FÁCIL</option>
+        <option value="MÉDIO">MÉDIO</option>
+        <option value="DIFÍCIL">DIFÍCIL</option>
+        <option value="CARROCERIA F">CARROCERIA F</option>
+        <option value="CARROCERIA M">CARROCERIA M</option>
+        <option value="CARROCERIA D">CARROCERIA D</option>
+    </select>
+    <label>Justificativa:</label><input type="text" id="justificativa_aplicaveis">
+		</fieldset>
+	</div>
+</div>
+</div>
+
+    
+    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+        <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
+        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar Planejamento</button>
+        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar Planejamento</button>
+        <button class="orange-button" onclick="gerarPDF()">📄 Gerar PDF/ZIP</button>
+    </div>
+
+    <script>
+       let sistemasData = [];
+		let paginaAtual = 0;
+
+		let veiculosAplicaveisData = [];
+		let veiculoAplicavelAtual = 0;
+
+		function setupEditableContent(elementId) {
+			const element = document.getElementById(elementId);
+			if (element) {
+				element.addEventListener('paste', function (e) {
+					e.preventDefault();
+					let text = (e.clipboardData || window.clipboardData).getData('text/plain');
+					document.execCommand('insertText', false, text);
+				});
+			}
+		}
+
+		function atualizarVisibilidadeDadosCardAplicaveis() {
+			const card = document.getElementById('dados-card-aplicaveis');
+			const container = document.getElementById('veiculos-aplicaveis-container');
+			if (!card || !container) return;
+			const temBlocoVisivel = (container.innerHTML || '').trim().length > 0;
+			const temVeiculos = Array.isArray(veiculosAplicaveisData) && veiculosAplicaveisData.length > 0;
+			card.style.display = (temVeiculos && temBlocoVisivel) ? 'block' : 'none';
+		}
+
+		function extrairTooltipVeiculo(veiculoStr) {
+			if (!veiculoStr || typeof veiculoStr !== 'string') return '';
+			if (veiculoStr.includes('>')) {
+				const partes = veiculoStr.split('>');
+				if (partes.length >= 5) {
+					const ano = partes[1].trim();
+					const modelo = partes[3].trim();
+					const motor = partes[4].trim();
+					return `${ano} ${modelo} ${motor}`;
+				}
+			}
+			return veiculoStr;
+		}
+
+		function alternarAbas(aba) {
+			const abaPrincipal = document.getElementById('aba-principal');
+			const abaAplicaveis = document.getElementById('aba-aplicaveis');
+			const btnPrincipal = document.getElementById('btn-principal');
+			const btnAplicaveis = document.getElementById('btn-aplicaveis');
+			const abaTitulo = document.getElementById('aba-titulo');
+			const body = document.body;
+
+			if (aba === 'principal') {
+				abaPrincipal.style.display = 'block';
+				abaAplicaveis.style.display = 'none';
+				btnPrincipal.classList.add('active');
+				btnAplicaveis.classList.remove('active');
+				abaTitulo.textContent = 'VEÍCULO PRINCIPAL';
+				body.style.backgroundColor = '#d7fcd7';
+			} else {
+				abaPrincipal.style.display = 'none';
+				abaAplicaveis.style.display = 'block';
+				btnPrincipal.classList.remove('active');
+				btnAplicaveis.classList.add('active');
+				abaTitulo.textContent = 'VEÍCULOS APLICÁVEIS';
+				body.style.backgroundColor = '#ffffd1';
+			}
+		}
+
+		// Funções para a aba "Veículo Principal"
+		function renderizarSistema(index) {
+    const container = document.getElementById("sistemas-container");
+    container.innerHTML = "";
+    if (sistemasData.length === 0) return;
+
+    const dados = sistemasData[index];
+    const div = document.createElement("div");
+    div.className = "system-block";
+    const idx = index;
+    div.innerHTML = `
+        <label>Título do capítulo</label>
+        <select name="sistema_${idx}" id="sistema_${idx}" onchange="salvarDadosSistema(${idx})">
+            <option value="" disabled>Selecione</option>
+            <option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
+            <option value="Alimentação Positiva" ${dados.sistema === 'Alimentação Positiva' ? 'selected' : ''}>Alimentação Positiva</option>
+            <option value="Central de Carroceria" ${dados.sistema === 'Central de Carroceria' ? 'selected' : ''}>Central de Carroceria</option>
+            <option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
+            <option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
+            <option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
+            <option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
+            <option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
+            <option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
+            <option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
+            <option value="Airbag" ${dados.sistema === 'Airbag' ? 'selected' : ''}>Airbag</option>
+            <option value="Ar-condicionado" ${dados.sistema === 'Ar-condicionado' ? 'selected' : ''}>Ar-condicionado</option>
+            <option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
+            <option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
+            <option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
+            <option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
+            <option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
+            <option value="Outro" ${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
+        </select>
+        <div id="outrocampo_${idx}" style="display:none; margin-top: 5px;">
+            <label>Especifique o título:</label>
+            <input type="text" name="sistema_outro_${idx}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistema(${idx})">
+        </div>
+        <div class="checkbox-block">
+            <label class="checkbox-title">TRANSFERÊNCIA?</label>
+            <div class="checkbox-inline" onchange="salvarDadosSistema(${idx})">
+                <label><input type="radio" name="transferencia_${idx}" value="sim" ${dados.transferencia === 'sim' ? 'checked' : ''}> SIM</label>
+                <label><input type="radio" name="transferencia_${idx}" value="nao" ${dados.transferencia === 'nao' ? 'checked' : ''}> NÃO</label>
+            </div>
+        </div>
+        <label>ID Transferência</label><input type="number" name="idtransf_${idx}" value="${dados.idtransf || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+        <label>Nº páginas prevista</label><input type="number" name="paginasprev_${idx}" value="${dados.paginasprev || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+        <label>Módulo principal</label><input type="text" name="modulo_${idx}" value="${dados.modulo || ''}" onchange="salvarDadosSistema(${idx})">
+        <label>Nome no material</label><input type="text" name="nomematerial_${idx}" value="${dados.nomematerial || ''}" onchange="salvarDadosSistema(${idx})">
+        <label>Código da peça</label><input type="text" name="codmodulo_${idx}" value="${dados.codmodulo || ''}" onchange="salvarDadosSistema(${idx})">
+        <label>Códigos de Conectores</label><input type="text" name="codconectores_${idx}" value="${dados.codconectores || ''}" onchange="salvarDadosSistema(${idx})">
+        <fieldset>
+            <legend>DESENVOLVIMENTO</legend>
+            <label>Página de Localização</label>
+            <div contenteditable="true" class="editable-content" id="pagloc_${idx}" data-field="pagloc" oninput="salvarDadosSistema(${idx})">${dados.pagloc || ''}</div>
+            <label>Página de Conectores</label>
+            <div contenteditable="true" class="editable-content" id="pagcon_${idx}" data-field="pagcon" oninput="salvarDadosSistema(${idx})">${dados.pagcon || ''}</div>
+            <label>Página de Diagramas</label>
+            <div contenteditable="true" class="editable-content" id="pagdiag_${idx}" data-field="pagdiag" oninput="salvarDadosSistema(${idx})">${dados.pagdiag || ''}</div>
+        </fieldset>
+    `;
+    container.appendChild(div);
+
+    const selectElement = div.querySelector(`select[name="sistema_${idx}"]`);
+    const outroCampo = div.querySelector(`#outrocampo_${idx}`);
+    const outroInput = div.querySelector(`input[name="sistema_outro_${idx}"]`);
+
+    const toggleOutroCampo = () => {
+        if (selectElement.value === 'Outro' || (selectElement.value === '' && outroInput.value !== '')) {
+            outroCampo.style.display = 'block';
+        } else {
+            outroCampo.style.display = 'none';
+        }
+    };
+
+    selectElement.addEventListener('change', toggleOutroCampo);
+    toggleOutroCampo();
+
+    const simRadio = div.querySelector(`input[name="transferencia_${idx}"][value="sim"]`);
+    const naoRadio = div.querySelector(`input[name="transferencia_${idx}"][value="nao"]`);
+    const idTransfInput = div.querySelector(`input[name="idtransf_${idx}"]`);
+
+    const toggleIdTransf = () => {
+        idTransfInput.disabled = naoRadio.checked;
+    };
+
+    simRadio.addEventListener('change', toggleIdTransf);
+    naoRadio.addEventListener('change', toggleIdTransf);
+    toggleIdTransf();
+	setupDragAndDrop(`pagloc_${idx}`);
+    setupDragAndDrop(`pagcon_${idx}`);
+    setupDragAndDrop(`pagdiag_${idx}`);
+}
+
+		function adicionarSistema() {
+			const sistemasContainer = document.getElementById('sistemas-container');
+			if (sistemasData.length > 0) salvarDadosSistema(paginaAtual);
+			sistemasData.push({});
+			renderizarPaginacao();
+			mostrarPagina(sistemasData.length - 1);
+		}
+
+		function removerUltimoSistema() {
+			if (sistemasData.length > 0) {
+				sistemasData.pop();
+				if (sistemasData.length > 0) {
+					paginaAtual = Math.min(paginaAtual, sistemasData.length - 1);
+					renderizarPaginacao();
+					mostrarPagina(paginaAtual);
+				} else {
+					document.getElementById('sistemas-container').innerHTML = '';
+					document.getElementById('paginas-navegacao').innerHTML = '';
+					paginaAtual = 0;
+				}
+			}
+		}
+
+		function mostrarPagina(index) {
+			if (index >= 0 && index < sistemasData.length) {
+				if (paginaAtual !== undefined && paginaAtual >= 0) salvarDadosSistema(paginaAtual);
+				paginaAtual = index;
+				renderizarPaginacao();
+				renderizarSistema(paginaAtual);
+			}
+		}
+
+		function renderizarPaginacao() {
+			const paginacaoDiv = document.getElementById("paginas-navegacao");
+			paginacaoDiv.innerHTML = "";
+			sistemasData.forEach((_, index) => {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.innerText = index + 1;
+				btn.onclick = () => {
+					salvarDadosSistema(paginaAtual);
+					paginaAtual = index;
+					renderizarSistema(paginaAtual);
+					renderizarPaginacao();
+				};
+				btn.classList.add("btn-paginacao");
+				const tituloCap = sistemasData[index]?.sistema;
+				btn.title = tituloCap ? `Capítulo: ${tituloCap}` : `Capítulo ${index + 1}`;
+				if (index === paginaAtual) {
+					btn.classList.add("active");
+				}
+				paginacaoDiv.appendChild(btn);
+			});
+		}
+
+		function salvarDadosSistema(index) {
+			const systemDiv = document.querySelector(`#sistemas-container .system-block`);
+			if (!systemDiv) return;
+
+			const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
+			if (!selectElement) return;
+
+			const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
+			const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
+			const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
+
+			const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
+			const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
+
+			sistemasData[index] = {
+				sistema: sistemaValor,
+				transferencia: transferenciaValue,
+				idtransf: getVal(`input[name="idtransf_${index}"]`),
+				paginasprev: getVal(`input[name="paginasprev_${index}"]`),
+				modulo: getVal(`input[name="modulo_${index}"]`),
+				nomematerial: getVal(`input[name="nomematerial_${index}"]`),
+				codmodulo: getVal(`input[name="codmodulo_${index}"]`),
+				codconectores: getVal(`input[name="codconectores_${index}"]`),
+				pagloc: getHtml(`[id="pagloc_${index}"]`),
+				pagcon: getHtml(`[id="pagcon_${index}"]`),
+				pagdiag: getHtml(`[id="pagdiag_${index}"]`)
+			};
+			// Atualiza títulos (tooltips) dos botões de capítulos
+			renderizarPaginacao();
+		}
+
+		// Funções para a aba "Veículos Aplicáveis"
+		function renderizarPaginacaoVeiculosAplicaveis() {
+			const paginacaoDiv = document.getElementById("paginacao-veiculos-aplicaveis");
+			paginacaoDiv.innerHTML = "";
+			veiculosAplicaveisData.forEach((_, index) => {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.innerText = index + 1;
+				btn.onclick = () => mostrarPaginaVeiculoAplicavel(index);
+				const veiculoRef = veiculosAplicaveisData[index]?.dadosGerais?.veiculo;
+				btn.title = extrairTooltipVeiculo(veiculoRef) || `Veículo ${index + 1}`;
+				btn.classList.add("btn-paginacao");
+				if (index === veiculoAplicavelAtual) {
+					btn.classList.add("active");
+				}
+				paginacaoDiv.appendChild(btn);
+			});
+		}
+
+		function mostrarPaginaVeiculoAplicavel(index) {
+			if (index >= 0 && index < veiculosAplicaveisData.length) {
+				salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
+				veiculoAplicavelAtual = index;
+				renderizarVeiculoAplicavel(veiculoAplicavelAtual);
+				renderizarPaginacaoVeiculosAplicaveis();
+			}
+		}
+
+		function criarNovoVeiculoAplicavel() {
+			veiculosAplicaveisData.push({
+				dadosGerais: {},
+				itensSerie: {},
+				sistemas: []
+			});
+			veiculoAplicavelAtual = veiculosAplicaveisData.length - 1;
+			renderizarVeiculoAplicavel(veiculoAplicavelAtual);
+			renderizarPaginacaoVeiculosAplicaveis();
+		}
+
+		function adicionarVeiculoAplicavel() {
+			// Salva o veículo atual, mas apenas se já houver um
+			if (veiculosAplicaveisData.length > 0) {
+				salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
+			}
+			// Cria o novo veículo e o renderiza
+			criarNovoVeiculoAplicavel();
+			atualizarVisibilidadeDadosCardAplicaveis();
+		}
+
+		function removerUltimoVeiculoAplicavel() {
+			if (veiculosAplicaveisData.length > 0) {
+				veiculosAplicaveisData.pop();
+				if (veiculosAplicaveisData.length > 0) {
+					veiculoAplicavelAtual = Math.min(veiculoAplicavelAtual, veiculosAplicaveisData.length - 1);
+					renderizarVeiculoAplicavel(veiculoAplicavelAtual);
+				} else {
+					// Se não há mais veículos, limpa o container
+					document.getElementById('veiculos-aplicaveis-container').innerHTML = '';
+				}
+				renderizarPaginacaoVeiculosAplicaveis();
+				atualizarVisibilidadeDadosCardAplicaveis();
+			}
+		}
+
+		function renderizarVeiculoAplicavel(veiculoIndex) {
+			const container = document.getElementById("veiculos-aplicaveis-container");
+			container.innerHTML = "";
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+
+			const formHtml = `
+				<div class="veiculo-aplicavel-block">
+					<fieldset>
+						<legend>INFORMAÇÕES GERAIS (Veículo ${veiculoIndex + 1})</legend>
+						<label for="veiculo_aplicaveis_${veiculoIndex}">Veículo Referência</label>
+						<input type="text" id="veiculo_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.veiculo || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<label for="iddiagramas_aplicaveis_${veiculoIndex}">ID DIAGRAMAS</label>
+						<input type="number" id="iddiagramas_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.iddiagramas || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<label for="idfusiveis_aplicaveis_${veiculoIndex}">ID FUSÍVEIS</label>
+						<input type="number" id="idfusiveis_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idfusiveis || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<label for="comentarios_aplicaveis_${veiculoIndex}">IMPORTANTE PARA O DESENVOLVIMENTO</label>
+						<textarea id="comentarios_aplicaveis_${veiculoIndex}" rows="3" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.comentarios || ''}</textarea>
+					</fieldset>
+
+					<fieldset>
+						<legend>ITENS DE SÉRIE / OPCIONAIS (Veículo ${veiculoIndex + 1})</legend>
+						<div class="checkbox-block">
+							<label class="checkbox-title">TRANSMISSÃO:</label>
+							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+								<label><input type="radio" name="atmt_aplicaveis_${veiculoIndex}" value="AT" ${veiculo.itensSerie.atmt === 'AT' ? 'checked' : ''}> AT</label>
+								<label><input type="radio" name="atmt_aplicaveis_${veiculoIndex}" value="MT" ${veiculo.itensSerie.atmt === 'MT' ? 'checked' : ''}> MT</label>
+								<label><input type="radio" name="atmt_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.atmt === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
+							</div>
+						</div>
+						<div class="checkbox-block">
+							<label class="checkbox-title">COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA:</label>
+							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+								<label><input type="radio" name="chave_aplicaveis_${veiculoIndex}" value="CHAVE" ${veiculo.itensSerie.chave === 'CHAVE' ? 'checked' : ''}> CHAVE</label>
+								<label><input type="radio" name="chave_aplicaveis_${veiculoIndex}" value="BOTÃO" ${veiculo.itensSerie.chave === 'BOTÃO' ? 'checked' : ''}> BOTÃO</label>
+								<label><input type="radio" name="chave_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.chave === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
+							</div>
+						</div>
+						<div class="checkbox-block">
+							<label class="checkbox-title">FUNÇÃO START/STOP:</label>
+							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+								<label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="SIM" ${veiculo.itensSerie.startstop === 'SIM' ? 'checked' : ''}> SIM</label>
+								<label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="NÃO" ${veiculo.itensSerie.startstop === 'NÃO' ? 'checked' : ''}> NÃO</label>
+								<label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.startstop === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
+							</div>
+						</div>
+						<div class="checkbox-block">
+							<label class="checkbox-title">AR-CONDICIONADO:</label>
+							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+								<label><input type="radio" name="ac_aplicaveis_${veiculoIndex}" value="MANUAL" ${veiculo.itensSerie.ac === 'MANUAL' ? 'checked' : ''}> MANUAL</label>
+								<label><input type="radio" name="ac_aplicaveis_${veiculoIndex}" value="AUTOMÁTICO" ${veiculo.itensSerie.ac === 'AUTOMÁTICO' ? 'checked' : ''}> AUTOMÁTICO</label>
+								<label><input type="radio" name="ac_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.ac === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
+							</div>
+						</div>
+						<div class="checkbox-block">
+							<label class="checkbox-title">TRAÇÃO:</label>
+							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+								<label><input type="radio" name="tracao_aplicaveis_${veiculoIndex}" value="4X2" ${veiculo.itensSerie.tracao === '4X2' ? 'checked' : ''}> 4X2</label>
+								<label><input type="radio" name="tracao_aplicaveis_${veiculoIndex}" value="4X4" ${veiculo.itensSerie.tracao === '4X4' ? 'checked' : ''}> 4X4</label>
+								<label><input type="radio" name="tracao_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.tracao === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
+							</div>
+						</div>
+						<label>EXTRAS:</label><input type="text" id="extras_aplicaveis_${veiculoIndex}" value="${veiculo.itensSerie.extras || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+					</fieldset>
+
+					<fieldset>
+						<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
+						<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
+						<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
+						<div class="button-group-centered">
+							<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕ Adicionar Capítulo</button>
+							<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖ Remover Último Capítulo</button>
+						</div>
+					</fieldset>
+				</div>
+			`;
+			container.innerHTML = formHtml;
+
+			atualizarVisibilidadeDadosCardAplicaveis();
+
+			// Renderiza os sistemas do veículo atual
+			if (veiculo.sistemas.length > 0) {
+				renderizarPaginacaoAplicaveis(veiculoIndex);
+				renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual || 0);
+			}
+
+			const simRadio = document.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${veiculo.paginaAtual || 0}"][value="sim"]`);
+			const naoRadio = document.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${veiculo.paginaAtual || 0}"][value="nao"]`);
+			const idTransfInput = document.querySelector(`input[name="idtransf_aplicaveis_${veiculoIndex}_${veiculo.paginaAtual || 0}"]`);
+			if (simRadio && naoRadio && idTransfInput) {
+				const toggleIdTransf = () => {
+					idTransfInput.disabled = naoRadio.checked;
+				};
+				simRadio.addEventListener('change', toggleIdTransf);
+				naoRadio.addEventListener('change', toggleIdTransf);
+				toggleIdTransf();
+			}
+		}
+
+		function setupDragAndDrop(elementId) {
+			const element = document.getElementById(elementId);
+			if (!element) return;
+
+			element.addEventListener('dragover', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				element.classList.add('drag-over');
+			});
+
+			element.addEventListener('dragleave', (e) => {
+				e.stopPropagation();
+				element.classList.remove('drag-over');
+			});
+
+			element.addEventListener('drop', (e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				element.classList.remove('drag-over');
+
+				const files = e.dataTransfer.files;
+				if (files && files.length > 0) {
+					for (let i = 0; i < files.length; i++) {
+						const file = files[i];
+						const reader = new FileReader();
+						reader.onload = (readerEvent) => {
+							const dataUrl = readerEvent.target.result;
+							if (file.type && file.type.startsWith('image/')) {
+								const img = document.createElement('img');
+								img.src = dataUrl;
+								img.style.maxWidth = '100%';
+								img.style.display = 'block';
+								img.style.marginTop = '5px';
+								element.appendChild(img);
+								// separa visualmente do próximo texto
+								element.appendChild(document.createElement('br'));
+							} else {
+								const link = document.createElement('a');
+								link.href = dataUrl;
+								link.target = '_blank';
+								link.download = file.name || 'anexo';
+								link.textContent = file.name || 'anexo';
+								link.style.display = 'inline-block';
+								link.style.marginTop = '5px';
+								link.className = 'attachment';
+								link.setAttribute('data-filename', file.name || 'anexo');
+								if (file.type) link.setAttribute('data-mime', file.type);
+								// impede que o texto digitado passe a integrar o link
+								link.contentEditable = 'false';
+								element.appendChild(link);
+								// separa do texto subsequente
+								element.appendChild(document.createElement('br'));
+							}
+							if (element.oninput) {
+								element.oninput();
+							}
+						};
+						reader.readAsDataURL(file);
+					}
+				}
+			});
+		}
+
+
+
+		function salvarDadosVeiculoAplicavel(veiculoIndex) {
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+
+			// Salva dados gerais
+			veiculo.dadosGerais = {
+				veiculo: document.getElementById(`veiculo_aplicaveis_${veiculoIndex}`).value,
+				iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`).value,
+				idfusiveis: document.getElementById(`idfusiveis_aplicaveis_${veiculoIndex}`).value,
+				comentarios: document.getElementById(`comentarios_aplicaveis_${veiculoIndex}`).value,
+			};
+
+			// Salva itens de série
+			veiculo.itensSerie = {
+				atmt: document.querySelector(`input[name="atmt_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				chave: document.querySelector(`input[name="chave_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				startstop: document.querySelector(`input[name="startstop_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				ac: document.querySelector(`input[name="ac_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				tracao: document.querySelector(`input[name="tracao_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				extras: document.getElementById(`extras_aplicaveis_${veiculoIndex}`).value,
+			};
+
+			// Atualiza o tooltip do botão da paginação correspondente
+			renderizarPaginacaoVeiculosAplicaveis();
+		}
+
+		function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
+			const container = document.getElementById(`sistemas-container-aplicaveis_${veiculoIndex}`);
+			container.innerHTML = "";
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			const dados = veiculo.sistemas[sistemaIndex];
+
+			if (!dados) return;
+
+			const div = document.createElement("div");
+			div.className = "system-block";
+			div.innerHTML = `
+				<label>Título do capítulo</label>
+				<select name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}" id="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+					<option value="" disabled>Selecione</option>
+					<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
+					<option value="Alimentação Positiva" ${dados.sistema === 'Alimentação Positiva' ? 'selected' : ''}>Alimentação Positiva</option>
+					<option value="Central de Carroceria" ${dados.sistema === 'Central de Carroceria' ? 'selected' : ''}>Central de Carroceria</option>
+					<option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
+					<option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
+					<option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
+					<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
+					<option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
+					<option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
+					<option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
+					<option value="Airbag" ${dados.sistema === 'Airbag' ? 'selected' : ''}>Airbag</option>
+					<option value="Ar-condicionado" ${dados.sistema === 'Ar-condicionado' ? 'selected' : ''}>Ar-condicionado</option>
+					<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
+					<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
+					<option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
+					<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
+					<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
+					<option value="Outro" ${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
+				</select>
+				<div id="outrocampo_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display:none; margin-top: 5px;">
+					<label>Especifique o título:</label>
+					<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				</div>
+				<div class="checkbox-block">
+					<label class="checkbox-title">TRANSFERÊNCIA?</label>
+					<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+						<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="sim" ${dados.transferencia === 'sim' ? 'checked' : ''}> SIM</label>
+						<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.transferencia === 'nao' ? 'checked' : ''}> NÃO</label>
+					</div>
+				</div>
+				<label>ID Transferência</label><input type="number" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.idtransf || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Nº páginas prevista</label><input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Módulo principal</label><input type="text" name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.modulo || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Nome no material</label><input type="text" name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.nomematerial || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Código da peça</label><input type="text" name="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codmodulo || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Códigos de Conectores</label><input type="text" name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codconectores || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<fieldset>
+					<legend>DESENVOLVIMENTO</legend>
+					<label>Página de Localização</label>
+					<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
+					<label>Página de Conectores</label>
+					<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
+					<label>Página de Diagramas</label>
+					<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
+				</fieldset>
+			`;
+			container.appendChild(div);
+
+			const selectElement = div.querySelector(`select[name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+			const outroCampo = div.querySelector(`#outrocampo_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			const outroInput = div.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+
+			const toggleOutroCampo = () => {
+				if (selectElement.value === 'Outro' || (selectElement.value === '' && outroInput.value !== '')) {
+					outroCampo.style.display = 'block';
+				} else {
+					outroCampo.style.display = 'none';
+				}
+			};
+
+			selectElement.addEventListener('change', toggleOutroCampo);
+			toggleOutroCampo();
+
+			const simRadio = div.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"][value="sim"]`);
+			const naoRadio = div.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"][value="nao"]`);
+			const idTransfInput = div.querySelector(`input[name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+
+			const toggleIdTransf = () => {
+				idTransfInput.disabled = naoRadio.checked;
+			};
+
+			simRadio.addEventListener('change', toggleIdTransf);
+			naoRadio.addEventListener('change', toggleIdTransf);
+			toggleIdTransf();
+
+			setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupEditableContent(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupDragAndDrop(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupEditableContent(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupDragAndDrop(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		}
+
+
+
+		function adicionarSistemaAplicaveis(veiculoIndex) {
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			if (veiculo.sistemas.length > 0) salvarDadosSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+			veiculo.sistemas.push({});
+			veiculo.paginaAtual = veiculo.sistemas.length - 1;
+			renderizarPaginacaoAplicaveis(veiculoIndex);
+			renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+		}
+
+		function removerUltimoSistemaAplicaveis(veiculoIndex) {
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			if (veiculo.sistemas.length > 0) {
+				veiculo.sistemas.pop();
+				if (veiculo.sistemas.length > 0) {
+					veiculo.paginaAtual = Math.min(veiculo.paginaAtual, veiculo.sistemas.length - 1);
+					renderizarPaginacaoAplicaveis(veiculoIndex);
+					renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+				} else {
+					document.getElementById(`sistemas-container-aplicaveis_${veiculoIndex}`).innerHTML = '';
+					document.getElementById(`paginas-navegacao-aplicaveis_${veiculoIndex}`).innerHTML = '';
+					veiculo.paginaAtual = 0;
+				}
+			}
+		}
+
+		function mostrarPaginaAplicaveis(veiculoIndex, sistemaIndex) {
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			if (sistemaIndex >= 0 && sistemaIndex < veiculo.sistemas.length) {
+				if (veiculo.paginaAtual !== undefined && veiculo.paginaAtual >= 0) salvarDadosSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+				veiculo.paginaAtual = sistemaIndex;
+				renderizarPaginacaoAplicaveis(veiculoIndex);
+				renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+			}
+		}
+
+		function renderizarPaginacaoAplicaveis(veiculoIndex) {
+			const paginacaoDiv = document.getElementById(`paginas-navegacao-aplicaveis_${veiculoIndex}`);
+			paginacaoDiv.innerHTML = "";
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			veiculo.sistemas.forEach((_, index) => {
+				const btn = document.createElement("button");
+				btn.type = "button";
+				btn.innerText = index + 1;
+				btn.onclick = () => mostrarPaginaAplicaveis(veiculoIndex, index);
+				btn.classList.add("btn-paginacao");
+				const tituloCap = veiculo.sistemas[index]?.sistema;
+				btn.title = tituloCap ? `Capítulo: ${tituloCap}` : `Capítulo ${index + 1}`;
+				if (index === veiculo.paginaAtual) {
+					btn.classList.add("active");
+				}
+				paginacaoDiv.appendChild(btn);
+			});
+		}
+
+		function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
+			const veiculo = veiculosAplicaveisData[veiculoIndex];
+			const systemDiv = document.querySelector(`#sistemas-container-aplicaveis_${veiculoIndex} .system-block`);
+			if (!systemDiv) return;
+
+			const selectElement = systemDiv.querySelector(`select[name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+			const sistemaValor = selectElement.value === 'Outro' ? systemDiv.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value : selectElement.value;
+			const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"]:checked`)?.value;
+
+			veiculo.sistemas[sistemaIndex] = {
+				sistema: sistemaValor,
+				transferencia: transferenciaValue,
+				idtransf: systemDiv.querySelector(`input[name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				paginasprev: systemDiv.querySelector(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				modulo: systemDiv.querySelector(`input[name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				nomematerial: systemDiv.querySelector(`input[name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				codmodulo: systemDiv.querySelector(`input[name="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				codconectores: systemDiv.querySelector(`input[name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).value,
+				pagloc: systemDiv.querySelector(`[id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).innerHTML,
+				pagcon: systemDiv.querySelector(`[id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).innerHTML,
+				pagdiag: systemDiv.querySelector(`[id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`).innerHTML
+			};
+			// Atualiza títulos (tooltips) dos botões de capítulos do veículo
+			renderizarPaginacaoAplicaveis(veiculoIndex);
+		}
+
+		function coletarDadosFormulario() {
+			if (sistemasData.length > 0) {
+				salvarDadosSistema(paginaAtual);
+			}
+			if (veiculosAplicaveisData.length > 0 && veiculosAplicaveisData[veiculoAplicavelAtual].sistemas.length > 0) {
+				salvarDadosSistemaAplicaveis(veiculoAplicavelAtual, veiculosAplicaveisData[veiculoAplicavelAtual].paginaAtual);
+			}
+			if (veiculosAplicaveisData.length > 0) {
+				salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
+			}
+
+			// Função auxiliar para coletar valores de checkboxes
+			const getCheckedValues = (name) => {
+				const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
+				console.log(`Buscando por: input[name="${name}"]:checked`);
+				console.log(`Encontrados:`, checkboxes);
+				const values = Array.from(checkboxes).map(cb => cb.value);
+				console.log(`Valores coletados para ${name}:`, values);
+				return values;
+			};
+
+			const dataPrincipal = {
+				veiculo: document.getElementById("veiculo").value,
+				clickup: document.getElementById("clickup").value,
+				iddiagramas: document.getElementById("iddiagramas").value,
+				idfusiveis: document.getElementById("idfusiveis").value,
+				comentarios: document.getElementById("comentarios").value,
+				pasta: document.getElementById("pasta").value,
+				// A partir daqui, os valores são coletados como um array
+				atmt: getCheckedValues("atmt"),
+				chave: getCheckedValues("chave"),
+				startstop: getCheckedValues("startstop"),
+				ac: getCheckedValues("ac"),
+				tracao: getCheckedValues("tracao"),
+				extras: document.getElementById("extras").value,
+				dificuldade: document.getElementById("dificuldade").value,
+				justificativa: document.getElementById("justificativa").value,
+				dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
+				justificativa_aplicaveis: document.getElementById("justificativa_aplicaveis").value,
+				sistemas: sistemasData
+			};
+            
+            console.log("Objeto dataPrincipal final:", dataPrincipal);
+
+			return {
+				principal: dataPrincipal,
+				aplicaveis: veiculosAplicaveisData
+			};
+		}
+
+
+
+		function salvarComoJSON() {
+			const data = coletarDadosFormulario();
+			const dataStr = JSON.stringify(data, null, 2);
+			const blob = new Blob([dataStr], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			let nomeArquivo = "planejamento.json";
+			if (data.principal.veiculo && data.principal.veiculo.includes('>')) {
+				const partes = data.principal.veiculo.split('>');
+				if (partes.length >= 5) {
+					const ano = partes[1].trim();
+					const modelo = partes[3].trim();
+					const motor = partes[4].trim();
+					nomeArquivo = `Planejamento - ${ano} ${modelo} ${motor}.json`;
+				}
+			} else if (data.principal.veiculo) {
+				nomeArquivo = `Planejamento - ${data.principal.veiculo}.json`;
+			}
+			a.download = nomeArquivo;
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			URL.revokeObjectURL(url);
+		}
+
+		function carregarDeJSON(input) {
+			const file = input.files[0];
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					try {
+						const dataJSON = JSON.parse(e.target.result);
+						const dataPrincipal = dataJSON.principal || {};
+						const dataAplicaveis = dataJSON.aplicaveis || [];
+
+						const setData = (id, value) => {
+							const element = document.getElementById(id);
+							if (element) { element.value = value || ''; }
+						};
+						const setChecked = (name, value) => {
+							const element = document.querySelector(`input[name="${name}"][value="${value}"]`);
+							if (element) { element.checked = true; }
+						};
+
+						// Carrega dados da aba Principal
+						setData('veiculo', dataPrincipal.veiculo);
+						setData('clickup', dataPrincipal.clickup);
+						setData('iddiagramas', dataPrincipal.iddiagramas);
+						setData('idfusiveis', dataPrincipal.idfusiveis);
+						setData('comentarios', dataPrincipal.comentarios);
+						setData('pasta', dataPrincipal.pasta);
+						setChecked('atmt', dataPrincipal.atmt);
+						setChecked('chave', dataPrincipal.chave);
+						setChecked('startstop', dataPrincipal.startstop);
+						setChecked('ac', dataPrincipal.ac);
+						setChecked('tracao', dataPrincipal.tracao);
+						setData('extras', dataPrincipal.extras);
+						setData('dificuldade', dataPrincipal.dificuldade);
+						setData('justificativa', dataPrincipal.justificativa);
+						sistemasData = dataPrincipal.sistemas || [];
+						if (sistemasData.length > 0) {
+							paginaAtual = 0;
+							renderizarPaginacao();
+							renderizarSistema(paginaAtual);
+						} else {
+							document.getElementById('sistemas-container').innerHTML = '';
+							document.getElementById('paginas-navegacao').innerHTML = '';
+						}
+
+						// Carrega dados da aba Aplicaveis
+						veiculosAplicaveisData = dataAplicaveis.length > 0 ? dataAplicaveis : [{ dadosGerais: {}, itensSerie: {}, sistemas: [] }];
+						veiculoAplicavelAtual = 0;
+						renderizarVeiculoAplicavel(veiculoAplicavelAtual);
+						renderizarPaginacaoVeiculosAplicaveis();
+						setData('dificuldade_aplicaveis', dataPrincipal.dificuldade_aplicaveis);
+						setData('justificativa_aplicaveis', dataPrincipal.justificativa_aplicaveis);
+						atualizarVisibilidadeDadosCardAplicaveis();
+
+						alert("Arquivo JSON carregado com sucesso!");
+					} catch (error) {
+						console.error("Erro ao carregar ou processar o arquivo JSON:", error);
+						alert("Ocorreu um erro ao carregar o arquivo. Verifique se o arquivo é um JSON válido e tente novamente.");
+					}
+				};
+				reader.readAsText(file);
+			}
+		}
+
+		async function gerarPDF() {
+			const { jsPDF } = window.jspdf;
+			const doc = new jsPDF();
+			let y = 10;
+			const margin = 10;
+			const lineHeight = 7;
+			const pageHeight = doc.internal.pageSize.height;
+			const lineSpacing = 6;
+
+			// Coletores de anexos/imagens para ZIP com estrutura de pastas
+			const zip = new JSZip();
+			const rootPrincipal = zip.folder('Veículo Principal');
+			const rootAplicaveis = zip.folder('Veículos Aplicáveis');
+			const sanitizeName = (name) => (name || '').toString().replace(/[\\\/:*?"<>|]/g, '').trim().slice(0, 120) || 'Sem título';
+			const toArrayBuffer = async (dataUrl) => {
+				const res = await fetch(dataUrl);
+				return await res.arrayBuffer();
+			};
+
+			const addText = (text, size, style = 'normal', indent = 0) => {
+				if (y > pageHeight - margin) {
+					doc.addPage();
+					y = margin;
+				}
+				doc.setFontSize(size);
+				doc.setFont('helvetica', style);
+				doc.text(text, margin + indent, y);
+				y += lineHeight;
+			};
+
+			const addCenteredText = (text, size, style = 'normal') => {
+				if (y > pageHeight - margin) {
+					doc.addPage();
+					y = margin;
+				}
+				doc.setFontSize(size);
+				doc.setFont('helvetica', style);
+				const textWidth = doc.getTextWidth(text);
+				const centerX = (doc.internal.pageSize.width - textWidth) / 2;
+				doc.text(text, centerX, y);
+				y += lineHeight;
+			};
+
+			// Destaque com retângulo colorido atrás do texto
+			const addHighlightedText = (text, size, style = 'bold', indent = 0, r = 212, g = 255, b = 214) => {
+				if (y > pageHeight - margin) {
+					doc.addPage();
+					y = margin;
+				}
+				doc.setFontSize(size);
+				doc.setFont('helvetica', style);
+				const x = margin + indent;
+				const textWidth = doc.getTextWidth(text);
+				const rectX = x - 2;
+				const rectY = y - lineHeight + 1;
+				const rectW = textWidth + 4;
+				const rectH = lineHeight;
+				doc.setFillColor(r, g, b);
+				doc.rect(rectX, rectY, rectW, rectH, 'F');
+				doc.setTextColor(0, 0, 0);
+				doc.text(text, x, y);
+				y += lineHeight;
+			};
+
+			
+			
+			const addSeparatorLine = () => {
+				if (y > pageHeight - margin) {
+					doc.addPage();
+					y = margin;
+				}
+				doc.setDrawColor(128, 128, 128); // Cor cinza
+				doc.setLineWidth(0.5);
+				doc.line(margin, y, doc.internal.pageSize.width - margin, y);
+				y += lineHeight;
+			};
+
+
+
+			const addField = (label, value) => {
+				if (value) {
+					addText(`${label}: ${value}`, 12);
+				}
+			};
+
+			const data = coletarDadosFormulario();
+			const dataPrincipal = data.principal;
+			const dataAplicaveis = data.aplicaveis;
+
+			// Seção Veículo Principal
+			addCenteredText("PLANEJAMENTO - VEÍCULO PRINCIPAL", 20, 'bold');
+			y += lineHeight;
+			y += lineSpacing / 2;
+			addText("INFORMAÇÕES GERAIS", 14, 'bold');
+			addField('ClickUp', dataPrincipal.clickup);
+			addField('Veículo Referência', dataPrincipal.veiculo);
+			addField('ID DIAGRAMAS', dataPrincipal.iddiagramas);
+			addField('ID FUSÍVEIS', dataPrincipal.idfusiveis);
+			addField('Pasta do Veículo', dataPrincipal.pasta);
+			addField('IMPORTANTE PARA O DESENVOLVIMENTO', dataPrincipal.comentarios);
+			y += lineHeight;
+
+			addText(`ITENS DE SÉRIE/OPCIONAIS:`, 14, "bold");
+			addText(`- Transmissão: ${dataPrincipal.atmt || ''}`, 12, "normal", 10);
+			addText(`- Comutador de Ignição / Botão de Partida: ${dataPrincipal.chave || ''}`, 12, "normal", 10);
+			addText(`- Função Start/Stop: ${dataPrincipal.startstop || ''}`, 12, "normal", 10);
+			addText(`- Ar-condicionado: ${dataPrincipal.ac || ''}`, 12, "normal", 10);
+			addText(`- Tração: ${dataPrincipal.tracao || ''}`, 12, "normal", 10);
+			addText(`- Extras: ${dataPrincipal.extras || ''}`, 12, "normal", 10);
+			y += lineHeight;
+			y += lineSpacing / 2;
+
+			addCenteredText("SISTEMAS", 18, 'bold');
+			if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
+				for (const [idx, sistema] of dataPrincipal.sistemas.entries()) {
+					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
+					y += lineSpacing / 2;
+					// Título do capítulo com prefixo (verde)
+					addHighlightedText(`CAPÍTULO: ${sistema.sistema || ''}`, 12, 'bold', 0, 212, 255, 214);
+					let linhaTransferencia = '';
+					if (sistema.transferencia === 'sim') {
+						linhaTransferencia = `- Transferência: SIM (ID: ${sistema.idtransf || ''})`;
+					} else if (sistema.transferencia === 'nao') {
+						linhaTransferencia = `- FAZER DO ZERO`;
+					}
+					if (linhaTransferencia) {
+						addText(linhaTransferencia, 12, "normal", 10);
+					}
+					addText(`- Nº páginas prevista: ${sistema.paginasprev || ''}`, 12, "normal", 10);
+					addText(`- Módulo principal: ${sistema.modulo || ''}`, 12, "normal", 10);
+					addText(`- Nome no material: ${sistema.nomematerial || ''}`, 12, "normal", 10);
+					addText(`- Código da peça: ${sistema.codmodulo || ''}`, 12, "normal", 10);
+					addText(`- Códigos de Conectores: ${sistema.codconectores || ''}`, 12, "normal", 10);
+					y += lineHeight;
+
+					addText(`DESENVOLVIMENTO:`, 14, "bold", 10);
+					const campos = [
+						{ label: 'Página de Localização', id: 'pagloc' },
+						{ label: 'Página de Conectores', id: 'pagcon' },
+						{ label: 'Página de Diagramas', id: 'pagdiag' }
+					];
+					for (const campo of campos) {
+					y += lineSpacing / 2;
+						// rótulo em negrito
+						addText(`- ${campo.label}:`, 12, "bold", 20);
+						const content = sistema[campo.id] || '';
+						
+						// Início do trecho de substituição
+						const tempDiv = document.createElement('div');
+						tempDiv.innerHTML = content;
+
+						// Novo laço que processa cada item na ordem correta
+						for (const node of tempDiv.childNodes) {
+							if (node.nodeType === Node.TEXT_NODE) {
+								const text = node.textContent;
+								if (text.trim()) {
+									addText(text, 12, 'normal', 30);
+								}
+							} else if (node.nodeType === Node.ELEMENT_NODE) {
+								if (node.tagName === 'IMG') {
+									document.body.appendChild(node);
+									const imgCanvas = await html2canvas(node);
+									const imgData = imgCanvas.toDataURL('image/png');
+									const imgProps = doc.getImageProperties(imgData);
+									const imgWidth = doc.internal.pageSize.getWidth() - 60;
+									const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+									if (y + imgHeight > pageHeight - margin) {
+										doc.addPage();
+										y = margin;
+									}
+									doc.addImage(imgData, 'PNG', margin + 30, y, imgWidth, imgHeight);
+									y += imgHeight + 5;
+
+									const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
+									const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
+									const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
+									const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+									if (imgsFolder) {
+										const ab = await toArrayBuffer(imgData);
+										const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
+										imgsFolder.file(filename, ab);
+									}
+									document.body.removeChild(node);
+								} else if (node.tagName === 'A' && node.classList.contains('attachment')) {
+									addText(node.textContent, 12, "normal", 30); // Adiciona o nome do anexo ao PDF
+
+									const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
+									const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
+									const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
+									const anexosFolder = chapterFolder && chapterFolder.folder('Anexos');
+									if (anexosFolder) {
+										const href = node.getAttribute('href');
+										const fname = sanitizeName(node.getAttribute('data-filename') || 'anexo');
+										if (href) {
+											const ab = await toArrayBuffer(href);
+											anexosFolder.file(fname, ab);
+										}
+									}
+								} else if (node.tagName === 'BR') {
+									y += lineHeight; // Adiciona um espaço para quebras de linha
+								} else {
+									const text = node.textContent;
+									if (text.trim()) {
+										addText(text, 12, 'normal', 30);
+									}
+								}
+							}
+						}
+						// Fim do trecho de substituição
+
+						// anexos (links gerados no drop) para a pasta do capítulo
+						{
+							const attachments = tempDiv.querySelectorAll('a.attachment');
+							if (attachments.length > 0) {
+								const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
+								const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
+								const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
+								const anexosFolder = chapterFolder && chapterFolder.folder('Anexos');
+								if (anexosFolder) {
+									for (const a of attachments) {
+										const href = a.getAttribute('href');
+										const fname = sanitizeName(a.getAttribute('data-filename') || 'anexo');
+										if (href) {
+											const ab = await toArrayBuffer(href);
+											anexosFolder.file(fname, ab);
+										}
+									}
+								}
+							}
+						}
+
+						
+					}
+				}
+			} else {
+				addText("Nenhum sistema adicionado.", 12);
+			}
+
+			addSeparatorLine();
+			y += lineHeight;
+			addText(`DADOS DO CARD:`, 12, "bold");
+			addText(`- Dificuldade: ${dataPrincipal.dificuldade || ''}`, 12, "normal", 10);
+			addText(`- Justificativa: ${dataPrincipal.justificativa || ''}`, 12, "normal", 10);
+			y += lineHeight;
+
+			let somaTotal = 0;
+			let somaTransferidas = 0;
+			let somaCriadas = 0;
+			if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
+				dataPrincipal.sistemas.forEach(sistema => {
+					const paginas = parseInt(sistema.paginasprev) || 0;
+					somaTotal += paginas;
+					if (sistema.transferencia === 'sim') {
+						somaTransferidas += paginas;
+					} else {
+						somaCriadas += paginas;
+					}
+				});
+			}
+			addText(`PPP:`, 12, "bold");
+			addText(`- Total: ${somaTotal}`, 12, "normal", 10);
+			addText(`- Páginas Criadas do zero: ${somaCriadas}`, 12, "normal", 10);
+			addText(`- Páginas Transferidas: ${somaTransferidas}`, 12, "normal", 10);
+			y += lineHeight;
+
+			y = pageHeight;
+			addCenteredText("PLANEJAMENTO - VEÍCULOS APLICÁVEIS", 20, 'bold');
+			if (dataAplicaveis && dataAplicaveis.length > 0) {
+				for (const [index, veiculo] of dataAplicaveis.entries()) {
+					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
+					y += lineSpacing;
+					
+					addText(`VEÍCULO APLICÁVEL #${index + 1}`, 14, "bold");
+					addField('Veículo Referência', veiculo.dadosGerais.veiculo);
+					addField('ID DIAGRAMAS', veiculo.dadosGerais.iddiagramas);
+					addField('ID FUSÍVEIS', veiculo.dadosGerais.idfusiveis);
+					addField('IMPORTANTE PARA O DESENVOLVIMENTO', veiculo.dadosGerais.comentarios);
+					y += lineHeight;
+					
+
+					addText(`ITENS DE SÉRIE/OPCIONAIS:`, 14, "bold");
+					addText(`- Transmissão: ${veiculo.itensSerie.atmt || ''}`, 12, "normal", 10);
+					addText(`- Comutador de Ignição / Botão de Partida: ${veiculo.itensSerie.chave || ''}`, 12, "normal", 10);
+					addText(`- Função Start/Stop: ${veiculo.itensSerie.startstop || ''}`, 12, "normal", 10);
+					addText(`- Ar-condicionado: ${veiculo.itensSerie.ac || ''}`, 12, "normal", 10);
+					addText(`- Tração: ${veiculo.itensSerie.tracao || ''}`, 12, "normal", 10);
+					addText(`- Extras: ${veiculo.itensSerie.extras || ''}`, 12, "normal", 10);
+					y += lineHeight;
+
+					addCenteredText("SISTEMAS", 18, 'bold');
+					if (veiculo.sistemas && veiculo.sistemas.length > 0) {
+						for (const sistema of veiculo.sistemas) {
+							if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
+							y += lineSpacing / 2;
+							// Título do capítulo com prefixo (amarelo)
+							addHighlightedText(`CAPÍTULO: ${sistema.sistema || ''}`, 12, 'bold', 10, 250, 231, 67);
+							let linhaTransferencia = '';
+							if (sistema.transferencia === 'sim') {
+								linhaTransferencia = `- Transferência: SIM (ID: ${sistema.idtransf || ''})`;
+							} else if (sistema.transferencia === 'nao') {
+								linhaTransferencia = `- FAZER DO ZERO`;
+							}
+							if (linhaTransferencia) {
+								addText(linhaTransferencia, 12, "normal", 20);
+							}
+							addText(`- Nº páginas prevista: ${sistema.paginasprev || ''}`, 12, "normal", 20);
+							addText(`- Módulo principal: ${sistema.modulo || ''}`, 12, "normal", 20);
+							addText(`- Nome no material: ${sistema.nomematerial || ''}`, 12, "normal", 20);
+							addText(`- Código da peça: ${sistema.codmodulo || ''}`, 12, "normal", 20);
+							addText(`- Códigos de Conectores: ${sistema.codconectores || ''}`, 12, "normal", 20);
+							y += lineSpacing / 2;
+							addText(`DESENVOLVIMENTO:`, 14, "bold", 20);
+							const camposAplicaveis = [
+								{ label: 'Página de Localização', id: 'pagloc' },
+								{ label: 'Página de Conectores', id: 'pagcon' },
+								{ label: 'Página de Diagramas', id: 'pagdiag' }
+							];
+							for (const campo of camposAplicaveis) {
+							y += lineSpacing / 2;
+								// rótulo em negrito
+								addText(`- ${campo.label}:`, 12, "bold", 30);
+								const content = sistema[campo.id] || '';
+								const tempDiv = document.createElement('div');
+								tempDiv.innerHTML = content;
+
+								const images = tempDiv.querySelectorAll('img');
+								if (images.length > 0) {
+									for (const img of images) {
+										document.body.appendChild(img);
+										const imgCanvas = await html2canvas(img);
+										const imgData = imgCanvas.toDataURL('image/png');
+										const imgProps = doc.getImageProperties(imgData);
+										const imgWidth = doc.internal.pageSize.getWidth() - 90;
+										const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+										if (y + imgHeight > pageHeight - margin) {
+											doc.addPage();
+											y = margin;
+										}
+										doc.addImage(imgData, 'PNG', margin + 40, y, imgWidth, imgHeight);
+										y += imgHeight + 5;
+										// adicionar ao ZIP na pasta do veículo e capítulo
+										{
+											const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
+											const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
+											const capTitulo = sanitizeName(sistema.sistema || `Capítulo`);
+											const chapterFolderName = `Capítulo ${veiculo.sistemas.indexOf(sistema) + 1} - ${capTitulo}`;
+											const vehicleFolder = rootAplicaveis && rootAplicaveis.folder(veicLabel);
+											const chapterFolder = vehicleFolder && vehicleFolder.folder(chapterFolderName);
+											const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+											if (imgsFolder) {
+												const ab = await toArrayBuffer(imgData);
+												const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
+												imgsFolder.file(filename, ab);
+											}
+										}
+										document.body.removeChild(img);
+									}
+								}
+
+								// anexos (links gerados no drop) na pasta do veículo e capítulo
+								{
+									const attachments = tempDiv.querySelectorAll('a.attachment');
+									if (attachments.length > 0) {
+										const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
+										const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
+										const capTitulo = sanitizeName(sistema.sistema || `Capítulo`);
+										const chapterFolderName = `Capítulo ${veiculo.sistemas.indexOf(sistema) + 1} - ${capTitulo}`;
+										const vehicleFolder = rootAplicaveis && rootAplicaveis.folder(veicLabel);
+										const chapterFolder = vehicleFolder && vehicleFolder.folder(chapterFolderName);
+										const anexosFolder = chapterFolder && chapterFolder.folder('Anexos');
+										if (anexosFolder) {
+											for (const a of attachments) {
+												const href = a.getAttribute('href');
+												const fname = sanitizeName(a.getAttribute('data-filename') || 'anexo');
+												if (href) {
+													const ab = await toArrayBuffer(href);
+													anexosFolder.file(fname, ab);
+												}
+											}
+										}
+									}
+								}
+								
+							}
+						}
+					} else {
+						addText("Nenhum sistema adicionado.", 12, "normal", 10);
+					}
+
+					addSeparatorLine();
+				}
+			} else {
+				addText("Nenhum veículo aplicável adicionado.", 12);
+			}
+
+			y += lineHeight;
+			addText(`DADOS DO CARD (APLICÁVEIS):`, 12, "bold");
+			addField('Dificuldade', data.principal.dificuldade_aplicaveis);
+			addField('Justificativa', data.principal.justificativa_aplicaveis);
+
+			y += lineHeight;
+			let somaTotalAplicaveis = 0;
+			let somaTransferidasAplicaveis = 0;
+			let somaCriadasAplicaveis = 0;
+
+			if (dataAplicaveis && dataAplicaveis.length > 0) {
+				dataAplicaveis.forEach(veiculo => {
+					if (veiculo.sistemas && veiculo.sistemas.length > 0) {
+						veiculo.sistemas.forEach(sistema => {
+							const paginas = parseInt(sistema.paginasprev) || 0;
+							somaTotalAplicaveis += paginas;
+							if (sistema.transferencia === 'sim') {
+								somaTransferidasAplicaveis += paginas;
+							} else {
+								somaCriadasAplicaveis += paginas;
+							}
+						});
+					}
+				});
+			}
+			addText(`PPA:`, 12, "bold");
+			addText(`- Total: ${somaTotalAplicaveis}`, 12, "normal", 10);
+			addText(`- Páginas Criadas do zero: ${somaCriadasAplicaveis}`, 12, "normal", 10);
+			addText(`- Páginas Transferidas: ${somaTransferidasAplicaveis}`, 12, "normal", 10);
+			y += lineHeight;
+			
+			let nomeArquivo = "planejamento.pdf";
+			if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
+				const partes = dataPrincipal.veiculo.split('>');
+				if (partes.length >= 5) {
+					const ano = partes[1].trim();
+					const modelo = partes[3].trim();
+					const motor = partes[4].trim();
+					nomeArquivo = `Planejamento - ${ano} ${modelo} ${motor}.pdf`;
+				}
+			} else if (dataPrincipal.veiculo) {
+				nomeArquivo = `Planejamento - ${dataPrincipal.veiculo}.pdf`;
+			}
+			doc.save(nomeArquivo);
+
+			// gerar zip se houver arquivos
+			const zipContent = await zip.generateAsync({ type: 'blob' });
+			if (zipContent && zipContent.size > 0) {
+				let nomeZip = nomeArquivo.replace(/\.pdf$/i, '.zip');
+				const a = document.createElement('a');
+				const url = URL.createObjectURL(zipContent);
+				a.href = url;
+				a.download = nomeZip;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				URL.revokeObjectURL(url);
+			}
+		}
+		
+		
+		
+		document.addEventListener('DOMContentLoaded', (event) => {
+            alternarAbas('principal');
+            // Remove completamente a renderização automática de veículos aplicáveis
+            // Agora a aba começará vazia
+        });
+    </script>
+</body>
+</html>
