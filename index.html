@@ -75,6 +75,49 @@
     .editable-content img {
         max-width: 100%; display: block; margin-top: 5px;
     }
+    
+    /* Estilo para container dos campos de desenvolvimento */
+    .development-field-container {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .development-field-container .editable-content {
+        flex: 1;
+        margin-top: 0;
+    }
+    
+    .btn-anexar {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+        margin-top: 5px;
+        min-width: 80px;
+    }
+    
+    .btn-anexar:hover {
+        background-color: #0056b3;
+    }
+    
+    /* Input file oculto */
+    .file-input-hidden {
+        display: none;
+    }
+    
+    /* Estilo para drag over */
+    .editable-content.drag-over {
+        border: 2px dashed #007bff;
+        background-color: #f8f9fa;
+    }
+	
     .checkbox-group { margin-top: 5px; }
     .checkbox-group label { font-weight: normal; margin-right: 15px; }
     
@@ -484,11 +527,23 @@
         <fieldset>
             <legend>DESENVOLVIMENTO</legend>
             <label>Página de Localização</label>
-            <div contenteditable="true" class="editable-content" id="pagloc_${idx}" data-field="pagloc" oninput="salvarDadosSistema(${idx})">${dados.pagloc || ''}</div>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagloc_${idx}" data-field="pagloc" oninput="salvarDadosSistema(${idx})">${dados.pagloc || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_${idx}')">Anexar</button>
+                <input type="file" id="file_pagloc_${idx}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_${idx}', this.files)">
+            </div>
             <label>Página de Conectores</label>
-            <div contenteditable="true" class="editable-content" id="pagcon_${idx}" data-field="pagcon" oninput="salvarDadosSistema(${idx})">${dados.pagcon || ''}</div>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagcon_${idx}" data-field="pagcon" oninput="salvarDadosSistema(${idx})">${dados.pagcon || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_${idx}')">Anexar</button>
+                <input type="file" id="file_pagcon_${idx}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_${idx}', this.files)">
+            </div>
             <label>Página de Diagramas</label>
-            <div contenteditable="true" class="editable-content" id="pagdiag_${idx}" data-field="pagdiag" oninput="salvarDadosSistema(${idx})">${dados.pagdiag || ''}</div>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagdiag_${idx}" data-field="pagdiag" oninput="salvarDadosSistema(${idx})">${dados.pagdiag || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_${idx}')">Anexar</button>
+                <input type="file" id="file_pagdiag_${idx}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_${idx}', this.files)">
+            </div>
         </fieldset>
     `;
     container.appendChild(div);
@@ -580,18 +635,34 @@
 		}
 
 		function salvarDadosSistema(index) {
+			console.log(`=== SALVANDO DADOS DO SISTEMA ${index} ===`);
 			const systemDiv = document.querySelector(`#sistemas-container .system-block`);
-			if (!systemDiv) return;
+			if (!systemDiv) {
+				console.log('systemDiv não encontrado');
+				return;
+			}
 
 			const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
-			if (!selectElement) return;
+			if (!selectElement) {
+				console.log('selectElement não encontrado');
+				return;
+			}
 
 			const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
 			const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
 			const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
 
 			const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
-			const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
+			const getHtml = (sel) => {
+				const element = systemDiv.querySelector(sel);
+				const html = element?.innerHTML || '';
+				console.log(`HTML coletado de ${sel}:`, html.substring(0, 200) + (html.length > 200 ? '...' : ''));
+				return html;
+			};
+
+			const paglocHtml = getHtml(`[id="pagloc_${index}"]`);
+			const pagconHtml = getHtml(`[id="pagcon_${index}"]`);
+			const pagdiagHtml = getHtml(`[id="pagdiag_${index}"]`);
 
 			sistemasData[index] = {
 				sistema: sistemaValor,
@@ -602,10 +673,18 @@
 				nomematerial: getVal(`input[name="nomematerial_${index}"]`),
 				codmodulo: getVal(`input[name="codmodulo_${index}"]`),
 				codconectores: getVal(`input[name="codconectores_${index}"]`),
-				pagloc: getHtml(`[id="pagloc_${index}"]`),
-				pagcon: getHtml(`[id="pagcon_${index}"]`),
-				pagdiag: getHtml(`[id="pagdiag_${index}"]`)
+				pagloc: paglocHtml,
+				pagcon: pagconHtml,
+				pagdiag: pagdiagHtml
 			};
+			
+			console.log(`Dados salvos para sistema ${index}:`, {
+				sistema: sistemasData[index].sistema,
+				pagloc: sistemasData[index].pagloc.substring(0, 100) + '...',
+				pagcon: sistemasData[index].pagcon.substring(0, 100) + '...',
+				pagdiag: sistemasData[index].pagdiag.substring(0, 100) + '...'
+			});
+			
 			// Atualiza títulos (tooltips) dos botões de capítulos
 			renderizarPaginacao();
 		}
@@ -772,6 +851,176 @@
 			}
 		}
 
+		// Função para obter a posição do cursor em um elemento contenteditable
+		function getCaretPosition(element) {
+			const selection = window.getSelection();
+			if (selection.rangeCount > 0) {
+				const range = selection.getRangeAt(0);
+				if (element.contains(range.commonAncestorContainer)) {
+					return range;
+				}
+			}
+			return null;
+		}
+
+		// Função para inserir conteúdo na posição do cursor
+		function insertAtCursor(element, content) {
+			const selection = window.getSelection();
+			const range = getCaretPosition(element);
+			
+			if (range) {
+				// Remove o conteúdo selecionado se houver
+				range.deleteContents();
+				// Insere o novo conteúdo
+				range.insertNode(content);
+				// Move o cursor para depois do conteúdo inserido
+				range.collapse(false);
+				selection.removeAllRanges();
+				selection.addRange(range);
+			} else {
+				// Se não há cursor, insere no final
+				element.appendChild(content);
+			}
+		}
+
+		// Função para criar miniatura de imagem
+		function criarMiniatura(dataUrl, maxWidth = 150, maxHeight = 100) {
+			return new Promise((resolve) => {
+				const img = new Image();
+				img.onload = () => {
+					const canvas = document.createElement('canvas');
+					const ctx = canvas.getContext('2d');
+					
+					// Calcula as dimensões da miniatura mantendo proporção
+					let { width, height } = img;
+					if (width > maxWidth) {
+						height = (height * maxWidth) / width;
+						width = maxWidth;
+					}
+					if (height > maxHeight) {
+						width = (width * maxHeight) / height;
+						height = maxHeight;
+					}
+					
+					canvas.width = width;
+					canvas.height = height;
+					
+					// Desenha a imagem redimensionada
+					ctx.drawImage(img, 0, 0, width, height);
+					
+					// Converte para data URL
+					const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+					resolve(thumbnailDataUrl);
+				};
+				img.src = dataUrl;
+			});
+		}
+
+		// Função para processar arquivos (usada tanto pelo drag&drop quanto pelo botão)
+		async function processarArquivo(element, file) {
+			console.log('=== PROCESSANDO ARQUIVO ===');
+			console.log('Tipo do arquivo:', file.type);
+			console.log('Nome do arquivo:', file.name);
+			console.log('Elemento:', element.id);
+			
+			const reader = new FileReader();
+			reader.onload = async (readerEvent) => {
+				const dataUrl = readerEvent.target.result;
+				let content;
+				
+				if (file.type && file.type.startsWith('image/')) {
+					console.log('=== PROCESSANDO IMAGEM ===');
+					// Cria miniatura para exibição
+					const thumbnailDataUrl = await criarMiniatura(dataUrl);
+					console.log('Miniatura criada com sucesso');
+					
+					// Cria container para a imagem com dados originais
+					const imgContainer = document.createElement('div');
+					imgContainer.className = 'image-container';
+					imgContainer.style.display = 'inline-block';
+					imgContainer.style.marginTop = '5px';
+					imgContainer.style.marginBottom = '5px';
+					
+					// Imagem miniatura para exibição
+					const img = document.createElement('img');
+					img.src = thumbnailDataUrl;
+					img.style.maxWidth = '150px';
+					img.style.maxHeight = '100px';
+					img.style.display = 'block';
+					img.style.border = '1px solid #ccc';
+					img.style.borderRadius = '4px';
+					img.style.cursor = 'pointer';
+					img.title = `Clique para ver em tamanho real: ${file.name}`;
+					
+					// Armazena a imagem original como atributo data
+					img.setAttribute('data-original-image', dataUrl);
+					img.setAttribute('data-filename', file.name || 'imagem');
+					img.setAttribute('data-mime', file.type);
+					
+					// Adiciona evento de clique para visualizar em tamanho real
+					img.addEventListener('click', () => {
+						const modal = document.createElement('div');
+						modal.style.position = 'fixed';
+						modal.style.top = '0';
+						modal.style.left = '0';
+						modal.style.width = '100%';
+						modal.style.height = '100%';
+						modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
+						modal.style.display = 'flex';
+						modal.style.justifyContent = 'center';
+						modal.style.alignItems = 'center';
+						modal.style.zIndex = '10000';
+						modal.style.cursor = 'pointer';
+						
+						const modalImg = document.createElement('img');
+						modalImg.src = dataUrl;
+						modalImg.style.maxWidth = '90%';
+						modalImg.style.maxHeight = '90%';
+						modalImg.style.objectFit = 'contain';
+						
+						modal.appendChild(modalImg);
+						document.body.appendChild(modal);
+						
+						modal.addEventListener('click', () => {
+							document.body.removeChild(modal);
+						});
+					});
+					
+					imgContainer.appendChild(img);
+					content = imgContainer;
+				} else {
+					console.log('=== PROCESSANDO DOCUMENTO ===');
+					const link = document.createElement('a');
+					link.href = dataUrl;
+					link.target = '_blank';
+					link.download = file.name || 'anexo';
+					link.textContent = file.name || 'anexo';
+					link.style.display = 'inline-block';
+					link.style.marginTop = '5px';
+					link.className = 'attachment';
+					link.setAttribute('data-filename', file.name || 'anexo');
+					if (file.type) link.setAttribute('data-mime', file.type);
+					link.contentEditable = 'false';
+					content = link;
+					console.log('Link de anexo criado:', file.name);
+				}
+				
+				// Insere na posição do cursor
+				console.log('Inserindo conteúdo no campo:', element.id);
+				insertAtCursor(element, content);
+				
+				// Adiciona quebra de linha após o conteúdo
+				const br = document.createElement('br');
+				insertAtCursor(element, br);
+				
+				if (element.oninput) {
+					console.log('Chamando oninput do elemento');
+					element.oninput();
+				}
+			};
+			reader.readAsDataURL(file);
+		}
+
 		function setupDragAndDrop(elementId) {
 			const element = document.getElementById(elementId);
 			if (!element) return;
@@ -795,44 +1044,37 @@
 				const files = e.dataTransfer.files;
 				if (files && files.length > 0) {
 					for (let i = 0; i < files.length; i++) {
-						const file = files[i];
-						const reader = new FileReader();
-						reader.onload = (readerEvent) => {
-							const dataUrl = readerEvent.target.result;
-							if (file.type && file.type.startsWith('image/')) {
-								const img = document.createElement('img');
-								img.src = dataUrl;
-								img.style.maxWidth = '100%';
-								img.style.display = 'block';
-								img.style.marginTop = '5px';
-								element.appendChild(img);
-								// separa visualmente do próximo texto
-								element.appendChild(document.createElement('br'));
-							} else {
-								const link = document.createElement('a');
-								link.href = dataUrl;
-								link.target = '_blank';
-								link.download = file.name || 'anexo';
-								link.textContent = file.name || 'anexo';
-								link.style.display = 'inline-block';
-								link.style.marginTop = '5px';
-								link.className = 'attachment';
-								link.setAttribute('data-filename', file.name || 'anexo');
-								if (file.type) link.setAttribute('data-mime', file.type);
-								// impede que o texto digitado passe a integrar o link
-								link.contentEditable = 'false';
-								element.appendChild(link);
-								// separa do texto subsequente
-								element.appendChild(document.createElement('br'));
-							}
-							if (element.oninput) {
-								element.oninput();
-							}
-						};
-						reader.readAsDataURL(file);
+						processarArquivo(element, files[i]);
 					}
 				}
 			});
+		}
+
+		// Função para abrir o seletor de arquivos
+		function abrirSeletorArquivo(elementId) {
+			const fileInput = document.getElementById(`file_${elementId}`);
+			if (fileInput) {
+				fileInput.click();
+			}
+		}
+
+		// Função para processar arquivos selecionados via botão
+		function processarArquivosSelecionados(elementId, files) {
+			const element = document.getElementById(elementId);
+			if (!element || !files) return;
+			
+			// Foca no elemento para garantir que o cursor esteja lá
+			element.focus();
+			
+			for (let i = 0; i < files.length; i++) {
+				processarArquivo(element, files[i]);
+			}
+			
+			// Limpa o input para permitir selecionar o mesmo arquivo novamente
+			const fileInput = document.getElementById(`file_${elementId}`);
+			if (fileInput) {
+				fileInput.value = '';
+			}
 		}
 
 
@@ -914,12 +1156,24 @@
 				<label>Códigos de Conectores</label><input type="text" name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codconectores || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 				<fieldset>
 					<legend>DESENVOLVIMENTO</legend>
-					<label>Página de Localização</label>
-					<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
-					<label>Página de Conectores</label>
-					<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
-					<label>Página de Diagramas</label>
-					<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
+					            <label>Página de Localização</label>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+                <input type="file" id="file_pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+            </div>
+            <label>Página de Conectores</label>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+                <input type="file" id="file_pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+            </div>
+            <label>Página de Diagramas</label>
+            <div class="development-field-container">
+                <div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
+                <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+                <input type="file" id="file_pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+            </div>
 				</fieldset>
 			`;
 			container.appendChild(div);
@@ -1042,15 +1296,25 @@
 		}
 
 		function coletarDadosFormulario() {
+			console.log('=== INICIANDO COLETA DE DADOS ===');
+			console.log('sistemasData antes:', sistemasData);
+			
 			if (sistemasData.length > 0) {
+				console.log('Salvando dados do sistema atual:', paginaAtual);
 				salvarDadosSistema(paginaAtual);
 			}
+			
 			if (veiculosAplicaveisData.length > 0 && veiculosAplicaveisData[veiculoAplicavelAtual].sistemas.length > 0) {
+				console.log('Salvando dados do sistema aplicável atual:', veiculoAplicavelAtual, veiculosAplicaveisData[veiculoAplicavelAtual].paginaAtual);
 				salvarDadosSistemaAplicaveis(veiculoAplicavelAtual, veiculosAplicaveisData[veiculoAplicavelAtual].paginaAtual);
 			}
+			
 			if (veiculosAplicaveisData.length > 0) {
+				console.log('Salvando dados do veículo aplicável atual:', veiculoAplicavelAtual);
 				salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
 			}
+			
+			console.log('sistemasData depois:', sistemasData);
 
 			// Função auxiliar para coletar valores de checkboxes
 			const getCheckedValues = (name) => {
@@ -1201,6 +1465,21 @@
 				return await res.arrayBuffer();
 			};
 
+			// Utilitários para trabalhar com Data URLs
+			const inferImageFormat = (dataUrl) => dataUrl && dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG';
+			const dataUrlToBase64 = (dataUrl) => {
+				if (!dataUrl || typeof dataUrl !== 'string') return '';
+				const parts = dataUrl.split(',');
+				return parts.length > 1 ? parts[1] : '';
+			};
+			const addDataUrlToZip = (folder, filename, dataUrl) => {
+				if (!folder || !filename || !dataUrl) return;
+				const base64 = dataUrlToBase64(dataUrl);
+				if (base64) {
+					folder.file(filename, base64, { base64: true });
+				}
+			};
+
 			const addText = (text, size, style = 'normal', indent = 0) => {
 				if (y > pageHeight - margin) {
 					doc.addPage();
@@ -1296,7 +1575,16 @@
 
 			addCenteredText("SISTEMAS", 18, 'bold');
 			if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
+				console.log('=== PROCESSANDO SISTEMAS DO VEÍCULO PRINCIPAL ===');
+				console.log('Número de sistemas:', dataPrincipal.sistemas.length);
+				
 				for (const [idx, sistema] of dataPrincipal.sistemas.entries()) {
+					console.log(`=== PROCESSANDO SISTEMA ${idx} ===`);
+					console.log('Sistema:', sistema.sistema);
+					console.log('pagloc:', sistema.pagloc ? sistema.pagloc.substring(0, 200) + '...' : 'vazio');
+					console.log('pagcon:', sistema.pagcon ? sistema.pagcon.substring(0, 200) + '...' : 'vazio');
+					console.log('pagdiag:', sistema.pagdiag ? sistema.pagdiag.substring(0, 200) + '...' : 'vazio');
+					
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineSpacing / 2;
 					// Título do capítulo com prefixo (verde)
@@ -1332,42 +1620,88 @@
 						// Início do trecho de substituição
 						const tempDiv = document.createElement('div');
 						tempDiv.innerHTML = content;
+						
+						console.log(`=== PROCESSANDO CONTEÚDO DO CAMPO ${campo.id} ===`);
+						console.log('Conteúdo HTML:', content.substring(0, 300) + '...');
+						console.log('Número de childNodes:', tempDiv.childNodes.length);
 
-						// Novo laço que processa cada item na ordem correta
-						for (const node of tempDiv.childNodes) {
+						// Função recursiva para processar todos os nós em ordem
+						const processNode = async (node) => {
 							if (node.nodeType === Node.TEXT_NODE) {
 								const text = node.textContent;
 								if (text.trim()) {
 									addText(text, 12, 'normal', 30);
 								}
 							} else if (node.nodeType === Node.ELEMENT_NODE) {
+								console.log('Processando elemento:', node.tagName, node.className);
+								
 								if (node.tagName === 'IMG') {
-									document.body.appendChild(node);
-									const imgCanvas = await html2canvas(node);
-									const imgData = imgCanvas.toDataURL('image/png');
-									const imgProps = doc.getImageProperties(imgData);
-									const imgWidth = doc.internal.pageSize.getWidth() - 60;
-									const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+									console.log('=== ENCONTRADA IMAGEM ===');
+									// Verifica se é uma imagem com dados originais (miniatura)
+									const originalImageData = node.getAttribute('data-original-image');
+									const filename = node.getAttribute('data-filename') || 'imagem';
+									
+									console.log('originalImageData existe:', !!originalImageData);
+									console.log('filename:', filename);
+									
+									if (originalImageData) {
+										// Usa a imagem original para o PDF
+										const imgProps = doc.getImageProperties(originalImageData);
+										const imgWidth = doc.internal.pageSize.getWidth() - 60;
+										const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 
-									if (y + imgHeight > pageHeight - margin) {
-										doc.addPage();
-										y = margin;
-									}
-									doc.addImage(imgData, 'PNG', margin + 30, y, imgWidth, imgHeight);
-									y += imgHeight + 5;
+										if (y + imgHeight > pageHeight - margin) {
+											doc.addPage();
+											y = margin;
+										}
+										doc.addImage(originalImageData, 'JPEG', margin + 30, y, imgWidth, imgHeight);
+										y += imgHeight + 5;
 
-									const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
-									const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
-									const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
-									const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
-									if (imgsFolder) {
-										const ab = await toArrayBuffer(imgData);
-										const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
-										imgsFolder.file(filename, ab);
+										// Adiciona ao ZIP usando a imagem original
+										const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
+										const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
+										const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
+										const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+										if (imgsFolder) {
+											console.log('Adicionando imagem principal ao ZIP:', sanitizeName(filename));
+											const ab = await toArrayBuffer(originalImageData);
+											const sanitizedFilename = sanitizeName(filename);
+											imgsFolder.file(sanitizedFilename, ab);
+										}
+									} else {
+										// Fallback para imagens antigas (sem dados originais)
+										document.body.appendChild(node);
+										const imgCanvas = await html2canvas(node);
+										const imgData = imgCanvas.toDataURL('image/png');
+										const imgProps = doc.getImageProperties(imgData);
+										const imgWidth = doc.internal.pageSize.getWidth() - 60;
+										const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+										if (y + imgHeight > pageHeight - margin) {
+											doc.addPage();
+											y = margin;
+										}
+										doc.addImage(imgData, 'PNG', margin + 30, y, imgWidth, imgHeight);
+										y += imgHeight + 5;
+
+										const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
+										const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
+										const chapterFolder = rootPrincipal && rootPrincipal.folder(chapterFolderName);
+										const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+										if (imgsFolder) {
+											const ab = await toArrayBuffer(imgData);
+											const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
+											imgsFolder.file(filename, ab);
+										}
+										document.body.removeChild(node);
 									}
-									document.body.removeChild(node);
 								} else if (node.tagName === 'A' && node.classList.contains('attachment')) {
-									addText(node.textContent, 12, "normal", 30); // Adiciona o nome do anexo ao PDF
+									console.log('=== ENCONTRADO ANEXO ===');
+									console.log('Nome do anexo:', node.textContent);
+									console.log('href:', node.getAttribute('href'));
+									console.log('filename:', node.getAttribute('data-filename'));
+									
+									addText(`Anexo: "${node.textContent}"`, 12, "normal", 30); // Adiciona o nome do anexo ao PDF
 
 									const capTitulo = sanitizeName(sistema.sistema || `Capítulo ${idx + 1}`);
 									const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
@@ -1377,6 +1711,7 @@
 										const href = node.getAttribute('href');
 										const fname = sanitizeName(node.getAttribute('data-filename') || 'anexo');
 										if (href) {
+											console.log('Adicionando anexo ao ZIP:', fname);
 											const ab = await toArrayBuffer(href);
 											anexosFolder.file(fname, ab);
 										}
@@ -1384,12 +1719,17 @@
 								} else if (node.tagName === 'BR') {
 									y += lineHeight; // Adiciona um espaço para quebras de linha
 								} else {
-									const text = node.textContent;
-									if (text.trim()) {
-										addText(text, 12, 'normal', 30);
+									// Para outros elementos (como div.image-container), processa os filhos recursivamente
+									for (const childNode of node.childNodes) {
+										await processNode(childNode);
 									}
 								}
 							}
+						};
+
+						// Processa todos os nós em ordem
+						for (const node of tempDiv.childNodes) {
+							await processNode(node);
 						}
 						// Fim do trecho de substituição
 
@@ -1508,44 +1848,127 @@
 								const tempDiv = document.createElement('div');
 								tempDiv.innerHTML = content;
 
-								const images = tempDiv.querySelectorAll('img');
-								if (images.length > 0) {
-									for (const img of images) {
-										document.body.appendChild(img);
-										const imgCanvas = await html2canvas(img);
-										const imgData = imgCanvas.toDataURL('image/png');
-										const imgProps = doc.getImageProperties(imgData);
-										const imgWidth = doc.internal.pageSize.getWidth() - 90;
-										const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-
-										if (y + imgHeight > pageHeight - margin) {
-											doc.addPage();
-											y = margin;
+								// Função recursiva para processar todos os nós em ordem (aplicáveis)
+								const processNodeAplicaveis = async (node) => {
+									if (node.nodeType === Node.TEXT_NODE) {
+										const text = node.textContent;
+										if (text.trim()) {
+											addText(text, 12, 'normal', 40);
 										}
-										doc.addImage(imgData, 'PNG', margin + 40, y, imgWidth, imgHeight);
-										y += imgHeight + 5;
-										// adicionar ao ZIP na pasta do veículo e capítulo
-										{
+									} else if (node.nodeType === Node.ELEMENT_NODE) {
+										console.log('Processando elemento aplicável:', node.tagName, node.className);
+										
+										if (node.tagName === 'IMG') {
+											console.log('=== ENCONTRADA IMAGEM APLICÁVEL ===');
+											// Verifica se é uma imagem com dados originais (miniatura)
+											const originalImageData = node.getAttribute('data-original-image');
+											const filename = node.getAttribute('data-filename') || 'imagem';
+											
+											console.log('originalImageData existe:', !!originalImageData);
+											console.log('filename:', filename);
+											
+											if (originalImageData) {
+												// Usa a imagem original para o PDF
+												const imgProps = doc.getImageProperties(originalImageData);
+												const imgWidth = doc.internal.pageSize.getWidth() - 90;
+												const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+												if (y + imgHeight > pageHeight - margin) {
+													doc.addPage();
+													y = margin;
+												}
+												doc.addImage(originalImageData, 'JPEG', margin + 40, y, imgWidth, imgHeight);
+												y += imgHeight + 5;
+												
+												// Adiciona ao ZIP usando a imagem original
+												const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
+												const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
+												const capTitulo = sanitizeName(sistema.sistema || `Capítulo`);
+												const chapterFolderName = `Capítulo ${veiculo.sistemas.indexOf(sistema) + 1} - ${capTitulo}`;
+												const vehicleFolder = rootAplicaveis && rootAplicaveis.folder(veicLabel);
+												const chapterFolder = vehicleFolder && vehicleFolder.folder(chapterFolderName);
+												const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+												if (imgsFolder) {
+													console.log('Adicionando imagem aplicável ao ZIP:', sanitizeName(filename));
+													const ab = await toArrayBuffer(originalImageData);
+													const sanitizedFilename = sanitizeName(filename);
+													imgsFolder.file(sanitizedFilename, ab);
+												}
+											} else {
+												// Fallback para imagens antigas (sem dados originais)
+												document.body.appendChild(node);
+												const imgCanvas = await html2canvas(node);
+												const imgData = imgCanvas.toDataURL('image/png');
+												const imgProps = doc.getImageProperties(imgData);
+												const imgWidth = doc.internal.pageSize.getWidth() - 90;
+												const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
+
+												if (y + imgHeight > pageHeight - margin) {
+													doc.addPage();
+													y = margin;
+												}
+												doc.addImage(imgData, 'PNG', margin + 40, y, imgWidth, imgHeight);
+												y += imgHeight + 5;
+												
+												// adicionar ao ZIP na pasta do veículo e capítulo
+												const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
+												const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
+												const capTitulo = sanitizeName(sistema.sistema || `Capítulo`);
+												const chapterFolderName = `Capítulo ${veiculo.sistemas.indexOf(sistema) + 1} - ${capTitulo}`;
+												const vehicleFolder = rootAplicaveis && rootAplicaveis.folder(veicLabel);
+												const chapterFolder = vehicleFolder && vehicleFolder.folder(chapterFolderName);
+												const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
+												if (imgsFolder) {
+													const ab = await toArrayBuffer(imgData);
+													const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
+													imgsFolder.file(filename, ab);
+												}
+												document.body.removeChild(node);
+											}
+										} else if (node.tagName === 'A' && node.classList.contains('attachment')) {
+											console.log('=== ENCONTRADO ANEXO APLICÁVEL ===');
+											console.log('Nome do anexo:', node.textContent);
+											console.log('href:', node.getAttribute('href'));
+											console.log('filename:', node.getAttribute('data-filename'));
+											
+											addText(`Anexo: "${node.textContent}"`, 12, "normal", 40); // Adiciona o nome do anexo ao PDF
+
 											const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
 											const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
 											const capTitulo = sanitizeName(sistema.sistema || `Capítulo`);
 											const chapterFolderName = `Capítulo ${veiculo.sistemas.indexOf(sistema) + 1} - ${capTitulo}`;
 											const vehicleFolder = rootAplicaveis && rootAplicaveis.folder(veicLabel);
 											const chapterFolder = vehicleFolder && vehicleFolder.folder(chapterFolderName);
-											const imgsFolder = chapterFolder && chapterFolder.folder('Imagens');
-											if (imgsFolder) {
-												const ab = await toArrayBuffer(imgData);
-												const filename = `${campo.id}_${Math.random().toString(36).slice(2)}.png`;
-												imgsFolder.file(filename, ab);
+											const anexosFolder = chapterFolder && chapterFolder.folder('Anexos');
+											if (anexosFolder) {
+												const href = node.getAttribute('href');
+												const fname = sanitizeName(node.getAttribute('data-filename') || 'anexo');
+												if (href) {
+													console.log('Adicionando anexo aplicável ao ZIP:', fname);
+													const ab = await toArrayBuffer(href);
+													anexosFolder.file(fname, ab);
+												}
+											}
+										} else if (node.tagName === 'BR') {
+											y += lineHeight; // Adiciona um espaço para quebras de linha
+										} else {
+											// Para outros elementos (como div.image-container), processa os filhos recursivamente
+											for (const childNode of node.childNodes) {
+												await processNodeAplicaveis(childNode);
 											}
 										}
-										document.body.removeChild(img);
 									}
+								};
+
+								// Processa todos os nós em ordem
+								for (const node of tempDiv.childNodes) {
+									await processNodeAplicaveis(node);
 								}
 
 								// anexos (links gerados no drop) na pasta do veículo e capítulo
 								{
 									const attachments = tempDiv.querySelectorAll('a.attachment');
+									console.log(`Anexos encontrados no campo ${campo.id}:`, attachments.length);
 									if (attachments.length > 0) {
 										const veicLabelRaw = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `#${index + 1}`;
 										const veicLabel = `Veículo ${sanitizeName(veicLabelRaw)}`;
@@ -1559,6 +1982,7 @@
 												const href = a.getAttribute('href');
 												const fname = sanitizeName(a.getAttribute('data-filename') || 'anexo');
 												if (href) {
+													console.log('Adicionando anexo aplicável ao ZIP:', fname);
 													const ab = await toArrayBuffer(href);
 													anexosFolder.file(fname, ab);
 												}
@@ -1625,7 +2049,9 @@
 			doc.save(nomeArquivo);
 
 			// gerar zip se houver arquivos
+			console.log('=== GERANDO ZIP ===');
 			const zipContent = await zip.generateAsync({ type: 'blob' });
+			console.log('ZIP gerado com sucesso, tamanho:', zipContent ? zipContent.size : '0');
 			if (zipContent && zipContent.size > 0) {
 				let nomeZip = nomeArquivo.replace(/\.pdf$/i, '.zip');
 				const a = document.createElement('a');
