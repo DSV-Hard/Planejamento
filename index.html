@@ -70,7 +70,7 @@
     .editable-content {
         width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;
         border: 1px solid #ccc; border-radius: 4px; font-size: 1em;
-        min-height: 120px; background-color: #fff;
+        min-height: 120px; background-color: #fff; position: relative;
     }
     .editable-content img {
         max-width: 100%; display: block; margin-top: 5px;
@@ -180,10 +180,46 @@
     input::-webkit-input-placeholder { font-style: italic; }
     input:-moz-placeholder { font-style: italic; }
     input:-ms-input-placeholder { font-style: italic; }
+    
+    textarea::placeholder { font-style: italic; }
+    textarea::-webkit-input-placeholder { font-style: italic; }
+    textarea:-moz-placeholder { font-style: italic; }
+    textarea:-ms-input-placeholder { font-style: italic; }
+    
+    /* Placeholder para campos contenteditable */
+    .editable-content[data-placeholder].empty:before {
+        content: attr(data-placeholder);
+        color: #999;
+        font-style: italic;
+        pointer-events: none;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+    }
+    
+    .editable-content[data-placeholder].empty:focus:before {
+        display: none;
+    }
 	
-	#iddiagramas, #idfusiveis {
-    width: 155px; /* Largura aproximada para 9 dígitos. Ajuste este valor se precisar. */
-    display: inline-block; /* Permite que o label e o input fiquem na mesma linha se houver espaço */
+	
+	
+	/* Container para campos ID DIAGRAMAS e ID FUSÍVEIS lado a lado */
+	.id-fields-container {
+		display: flex;
+		gap: 20px;
+		align-items: flex-end;
+	}
+	
+	.id-fields-container .field-group {
+		flex: 1;
+	}
+	
+	.id-fields-container label {
+		margin-bottom: 5px;
+	}
+	
+	.id-fields-container input {
+		width: 100%;
 	}
 	
 	 .btn-paginacao {
@@ -291,12 +327,27 @@
         <div id="aba-principal">
             <fieldset>			
 			<legend>INFORMAÇÕES GERAIS</legend>				
-			<label>Link do Card (ClickUp)</label><input type="text" id="clickup" placeholder="https://app.clickup.com/...">
-				<label>Veículo Referência</label><input type="text" id="veiculo" placeholder="Exemplo: Car>1994>Mazda>RX-7>1.3 256cv (13B - Wankel)">
-                <label>ID DIAGRAMAS</label><input type="number" id="iddiagramas" placeholder="Apenas números">
-                <label>ID FUSÍVEIS</label><input type="number" id="idfusiveis" placeholder="Apenas números">
-                <label>PASTA DO VEÍCULO</label><input type="text" id="pasta" placeholder="P:\Desenvolvimento\+ DIAGRAMAS...">
-				<label>IMPORTANTE PARA O DESENVOLVIMENTO</label><textarea id="comentarios" rows="2"></textarea>
+						<label>Link do Card (ClickUp)</label><input type="text" id="clickup" placeholder="https://app.clickup.com/...">
+			<label>Veículo Referência</label><input type="text" id="veiculo" placeholder="Car>1994>Mazda>RX-7>1.3 256cv (13B - Wankel)">
+            <div class="id-fields-container">
+                <div class="field-group">
+                    <label>ID DIAGRAMAS</label>
+                    <input type="number" id="iddiagramas" placeholder="Apenas números">
+                </div>
+                <div class="field-group">
+                    <label>ID FUSÍVEIS</label>
+                    <input type="number" id="idfusiveis" placeholder="Apenas números">
+                </div>
+            </div>
+            <label>PASTA DO VEÍCULO</label><input type="text" id="pasta" placeholder="P:\Desenvolvimento\+ DIAGRAMAS...">
+			<label>IMPORTANTE PARA O DESENVOLVIMENTO</label><textarea id="comentarios" rows="2" placeholder="Descreva tudo que influenciará no desenvolvimento dos manuais 'Diagramas Elétricos' e 'Fusíveis e Relés'..."></textarea>
+			<label>APLICAÇÃO / CHASSI</label>
+			<div class="checkbox-inline" style="margin-bottom: 10px;">
+				<label><input type="radio" name="aplicacao_chassi" value="mesma"> Mesma aplicação</label>
+				<label><input type="radio" name="aplicacao_chassi" value="ajustar"> Ajustar aplicação</label>
+			</div>
+			<input type="text" id="aplicacao_chassi_texto" placeholder="Insira aqui a aplicação e chassis do veículo.">
+			<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
             </fieldset>
 			<fieldset>
 			<legend>ITENS DE SÉRIE / OPCIONAIS</legend>
@@ -340,7 +391,7 @@
 					<label><input type="radio" name="tracao" value="AMBOS"> AMBOS</label>
 				</div>
 			</div>
-			<label>EXTRAS:</label><input type="text" id="extras" value="">
+			<label>EXTRAS:</label><input type="text" id="extras" placeholder="Teto solar, faróis de xenônio, Rádio e Multimídia, etc...">
 		</fieldset>
 
             <fieldset>
@@ -366,7 +417,7 @@
 				<option value="DIFÍCIL">CARROCERIA M</option>
 				<option value="DIFÍCIL">CARROCERIA D</option>
 			</select>
-			<label>Justificativa:</label><input type="text" id="justificativa">
+			<label>Justificativa:</label><input type="text" id="justificativa" placeholder="Material difícil e muitos capítulos para diagramar do zero...">
 			
 		</div>
     </div>
@@ -394,7 +445,7 @@
         <option value="CARROCERIA M">CARROCERIA M</option>
         <option value="CARROCERIA D">CARROCERIA D</option>
     </select>
-    <label>Justificativa:</label><input type="text" id="justificativa_aplicaveis">
+    <label>Justificativa:</label><input type="text" id="justificativa_aplicaveis" placeholder="Material difícil e muitos capítulos para diagramar do zero...">
 		</fieldset>
 	</div>
 </div>
@@ -423,6 +474,25 @@
 					let text = (e.clipboardData || window.clipboardData).getData('text/plain');
 					document.execCommand('insertText', false, text);
 				});
+				
+				// Gerenciar placeholder para campos contenteditable
+				const placeholder = element.getAttribute('data-placeholder');
+				if (placeholder) {
+					const updatePlaceholder = () => {
+						if (element.innerHTML.trim() === '') {
+							element.classList.add('empty');
+						} else {
+							element.classList.remove('empty');
+						}
+					};
+					
+					element.addEventListener('input', updatePlaceholder);
+					element.addEventListener('focus', updatePlaceholder);
+					element.addEventListener('blur', updatePlaceholder);
+					
+					// Verificar estado inicial
+					updatePlaceholder();
+				}
 			}
 		}
 
@@ -518,12 +588,12 @@
                 <label><input type="radio" name="transferencia_${idx}" value="nao" ${dados.transferencia === 'nao' ? 'checked' : ''}> NÃO</label>
             </div>
         </div>
-        <label>ID Transferência</label><input type="number" name="idtransf_${idx}" value="${dados.idtransf || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
-        <label>Nº páginas prevista</label><input type="number" name="paginasprev_${idx}" value="${dados.paginasprev || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
-        <label>Módulo principal</label><input type="text" name="modulo_${idx}" value="${dados.modulo || ''}" onchange="salvarDadosSistema(${idx})">
-        <label>Nome no material</label><input type="text" name="nomematerial_${idx}" value="${dados.nomematerial || ''}" onchange="salvarDadosSistema(${idx})">
-        <label>Código da peça</label><input type="text" name="codmodulo_${idx}" value="${dados.codmodulo || ''}" onchange="salvarDadosSistema(${idx})">
-        <label>Códigos de Conectores</label><input type="text" name="codconectores_${idx}" value="${dados.codconectores || ''}" onchange="salvarDadosSistema(${idx})">
+        <label>ID Transferência</label><input type="number" name="idtransf_${idx}" value="${dados.idtransf || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+        <label>Nº páginas prevista</label><input type="number" name="paginasprev_${idx}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+        <label>Módulo principal</label><input type="text" name="modulo_${idx}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistema(${idx})">
+        <label>Nome no material</label><input type="text" name="nomematerial_${idx}" value="${dados.nomematerial || ''}" placeholder="Engine Control Unit" onchange="salvarDadosSistema(${idx})">
+        <label>Código da peça</label><input type="text" name="codmodulo_${idx}" value="${dados.codmodulo || ''}" placeholder="A 900 512 894 BE" onchange="salvarDadosSistema(${idx})">
+        <label>Códigos de Conectores</label><input type="text" name="codconectores_${idx}" value="${dados.codconectores || ''}" placeholder="T20 = A / LB = B / T50d = C" onchange="salvarDadosSistema(${idx})">
         <fieldset>
             <legend>DESENVOLVIMENTO</legend>
             <label>Página de Localização</label>
@@ -763,13 +833,26 @@
 					<fieldset>
 						<legend>INFORMAÇÕES GERAIS (Veículo ${veiculoIndex + 1})</legend>
 						<label for="veiculo_aplicaveis_${veiculoIndex}">Veículo Referência</label>
-						<input type="text" id="veiculo_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.veiculo || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-						<label for="iddiagramas_aplicaveis_${veiculoIndex}">ID DIAGRAMAS</label>
-						<input type="number" id="iddiagramas_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.iddiagramas || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-						<label for="idfusiveis_aplicaveis_${veiculoIndex}">ID FUSÍVEIS</label>
-						<input type="number" id="idfusiveis_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idfusiveis || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<input type="text" id="veiculo_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.veiculo || ''}" placeholder="Car>1994>Mazda>RX-7>1.3 256cv (13B - Wankel)" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<div class="id-fields-container">
+							<div class="field-group">
+								<label for="iddiagramas_aplicaveis_${veiculoIndex}">ID DIAGRAMAS</label>
+								<input type="number" id="iddiagramas_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.iddiagramas || ''}" placeholder="Apenas números" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+							</div>
+							<div class="field-group">
+								<label for="idfusiveis_aplicaveis_${veiculoIndex}">ID FUSÍVEIS</label>
+								<input type="number" id="idfusiveis_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idfusiveis || ''}" placeholder="Apenas números" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+							</div>
+						</div>
 						<label for="comentarios_aplicaveis_${veiculoIndex}">IMPORTANTE PARA O DESENVOLVIMENTO</label>
-						<textarea id="comentarios_aplicaveis_${veiculoIndex}" rows="3" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.comentarios || ''}</textarea>
+						<textarea id="comentarios_aplicaveis_${veiculoIndex}" rows="3" placeholder="Descreva tudo que influenciará no desenvolvimento dos manuais 'Diagramas Elétricos' e 'Fusíveis e Relés'..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.comentarios || ''}</textarea>
+						<label for="aplicacao_chassi_aplicaveis_${veiculoIndex}">APLICAÇÃO / CHASSI</label>
+						<div class="checkbox-inline" style="margin-bottom: 10px;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+							<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="mesma" ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'checked' : ''}> Mesma aplicação</label>
+							<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar aplicação</label>
+						</div>
+						<input type="text" id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.aplicacao_chassi_texto || ''}" placeholder="Insira aqui a aplicação e chassis do veículo." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
 					</fieldset>
 
 					<fieldset>
@@ -814,7 +897,7 @@
 								<label><input type="radio" name="tracao_aplicaveis_${veiculoIndex}" value="AMBOS" ${veiculo.itensSerie.tracao === 'AMBOS' ? 'checked' : ''}> AMBOS</label>
 							</div>
 						</div>
-						<label>EXTRAS:</label><input type="text" id="extras_aplicaveis_${veiculoIndex}" value="${veiculo.itensSerie.extras || ''}" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<label>EXTRAS:</label><input type="text" id="extras_aplicaveis_${veiculoIndex}" value="${veiculo.itensSerie.extras || ''}" placeholder="Teto solar, faróis de xenônio, Rádio e Multimídia, etc..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 					</fieldset>
 
 					<fieldset>
@@ -1088,6 +1171,8 @@
 				iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`).value,
 				idfusiveis: document.getElementById(`idfusiveis_aplicaveis_${veiculoIndex}`).value,
 				comentarios: document.getElementById(`comentarios_aplicaveis_${veiculoIndex}`).value,
+				aplicacao_chassi: document.querySelector(`input[name="aplicacao_chassi_aplicaveis_${veiculoIndex}"]:checked`)?.value,
+				aplicacao_chassi_texto: document.getElementById(`aplicacao_chassi_texto_aplicaveis_${veiculoIndex}`).value,
 			};
 
 			// Salva itens de série
@@ -1148,12 +1233,12 @@
 						<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.transferencia === 'nao' ? 'checked' : ''}> NÃO</label>
 					</div>
 				</div>
-				<label>ID Transferência</label><input type="number" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.idtransf || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label>Nº páginas prevista</label><input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label>Módulo principal</label><input type="text" name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.modulo || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label>Nome no material</label><input type="text" name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.nomematerial || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label>Código da peça</label><input type="text" name="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codmodulo || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label>Códigos de Conectores</label><input type="text" name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codconectores || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>ID Transferência</label><input type="number" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.idtransf || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Nº páginas prevista</label><input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Módulo principal</label><input type="text" name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Nome no material</label><input type="text" name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.nomematerial || ''}" placeholder="Engine Control Unit" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Código da peça</label><input type="text" name="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codmodulo || ''}" placeholder="A 900 512 894 BE" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label>Códigos de Conectores</label><input type="text" name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.codconectores || ''}" placeholder="T20 = A / LB = B / T50d = C" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 				<fieldset>
 					<legend>DESENVOLVIMENTO</legend>
 					            <label>Página de Localização</label>
@@ -1333,6 +1418,8 @@
 				idfusiveis: document.getElementById("idfusiveis").value,
 				comentarios: document.getElementById("comentarios").value,
 				pasta: document.getElementById("pasta").value,
+				aplicacao_chassi: document.querySelector('input[name="aplicacao_chassi"]:checked')?.value,
+				aplicacao_chassi_texto: document.getElementById("aplicacao_chassi_texto").value,
 				// A partir daqui, os valores são coletados como um array
 				atmt: getCheckedValues("atmt"),
 				chave: getCheckedValues("chave"),
@@ -1409,6 +1496,8 @@
 						setData('idfusiveis', dataPrincipal.idfusiveis);
 						setData('comentarios', dataPrincipal.comentarios);
 						setData('pasta', dataPrincipal.pasta);
+						setData('aplicacao_chassi_texto', dataPrincipal.aplicacao_chassi_texto);
+						setChecked('aplicacao_chassi', dataPrincipal.aplicacao_chassi);
 						setChecked('atmt', dataPrincipal.atmt);
 						setChecked('chave', dataPrincipal.chave);
 						setChecked('startstop', dataPrincipal.startstop);
@@ -1561,6 +1650,8 @@
 			addField('ID FUSÍVEIS', dataPrincipal.idfusiveis);
 			addField('Pasta do Veículo', dataPrincipal.pasta);
 			addField('IMPORTANTE PARA O DESENVOLVIMENTO', dataPrincipal.comentarios);
+			addText(`APLICAÇÃO / CHASSI: ${dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : '')}`, 12);
+			if (dataPrincipal.aplicacao_chassi_texto) addText(dataPrincipal.aplicacao_chassi_texto, 12);
 			y += lineHeight;
 
 			addText(`ITENS DE SÉRIE/OPCIONAIS:`, 14, "bold");
@@ -1800,6 +1891,8 @@
 					addField('ID DIAGRAMAS', veiculo.dadosGerais.iddiagramas);
 					addField('ID FUSÍVEIS', veiculo.dadosGerais.idfusiveis);
 					addField('IMPORTANTE PARA O DESENVOLVIMENTO', veiculo.dadosGerais.comentarios);
+					addText(`APLICAÇÃO / CHASSI: ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : '')}`, 12);
+					if (veiculo.dadosGerais.aplicacao_chassi_texto) addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12);
 					y += lineHeight;
 					
 
