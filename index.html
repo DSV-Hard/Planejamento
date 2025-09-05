@@ -250,7 +250,7 @@
             background-color: #ccc;
         }
 	
-	.btn-adicionar {
+		.btn-adicionar {
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -466,29 +466,20 @@
             </fieldset>
 			<fieldset>
 			<legend>ITENS DE SÉRIE / OPCIONAIS</legend>
-			<!-- TRANSMISSÃO: vira 2 checkboxes -->
+			
+			<!-- CHAVE / BOTÃO / ENCAIXE -->
 			<div class="checkbox-block">
-			  <label class="checkbox-title">TRANSMISSÃO:</label>
+			  <label class="checkbox-title">TIPO DE CHAVE:</label>
 			  <div class="checkbox-inline">
-				<label><input type="checkbox" name="atmt" value="AT"> AT</label>
-				<label><input type="checkbox" name="atmt" value="MT"> MT</label>
+				<label><input type="checkbox" name="chave" value="Comum"> COMUM</label>
+				<label><input type="checkbox" name="chave" value="Presencial (Botão)"> PRESENCIAL (BOTÃO)</label>
+				<label><input type="checkbox" name="chave" value="Encaixe Inteligente"> ENCAIXE INTELIGENTE</label>
 			  </div>
 			</div>
 
 			<div class="checkbox-blockk"></div>
 
-			<!-- COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA: vira 2 checkboxes -->
-			<div class="checkbox-block">
-			  <label class="checkbox-title">COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA:</label>
-			  <div class="checkbox-inline">
-				<label><input type="checkbox" name="chave" value="CHAVE"> CHAVE</label>
-				<label><input type="checkbox" name="chave" value="BOTÃO"> BOTÃO</label>
-			  </div>
-			</div>
-
-			<div class="checkbox-blockk"></div>
-
-			<!-- FUNÇÃO START/STOP: mantém 3 rádios (novo texto) -->
+			<!-- FUNÇÃO START/STOP -->
 			<div class="checkbox-block">
 			  <label class="checkbox-title">FUNÇÃO START/STOP:</label>
 			  <div class="checkbox-inline">
@@ -500,17 +491,30 @@
 
 			<div class="checkbox-blockk"></div>
 
-			<!-- A/C: vira 3 checkboxes -->
+			<!-- AR-CONDICIONADO -->
 			<div class="checkbox-block">
 			  <label class="checkbox-title">AR-CONDICIONADO:</label>
 			  <div class="checkbox-inline">
-				<label><input type="checkbox" name="ac" value="MANUAL"> MANUAL</label>
-				<label><input type="checkbox" name="ac" value="AUTOMÁTICO"> AUTOMÁTICO</label>
-				<label><input type="checkbox" name="ac" value="SÓ AR QUENTE"> SÓ AR QUENTE</label>
+				<label><input type="checkbox" name="ac" value="Manual"> MANUAL</label>
+				<label><input type="checkbox" name="ac" value="Automático"> AUTOMÁTICO</label>
+				<label><input type="checkbox" name="ac" value="Só Ar Quente"> SÓ AR QUENTE</label>
 			  </div>
 			</div>
 
 			<div class="checkbox-blockk"></div>
+			
+			<!-- TRANSMISSÃO -->
+			<div class="checkbox-block">
+			  <label class="checkbox-title">TRANSMISSÃO:</label>
+			  <div class="checkbox-inline">
+				<label><input type="checkbox" name="atmt" value="AT"> AT</label>
+				<label><input type="checkbox" name="atmt" value="MT"> MT</label>
+			  </div>
+			</div>
+
+			<div class="checkbox-blockk"></div>
+
+			<!-- TRAÇÃO -->
 			<div class="checkbox-block">
 				<label class="checkbox-title">TRAÇÃO:</label>
 				<div class="checkbox-inline">
@@ -523,7 +527,10 @@
 					<label><input type="checkbox" name="tracao" value="8X8"> 8X8</label>
 				</div>
 			</div>
+			
 			<div class="checkbox-blockk"></div>
+			
+			<!-- ADAS -->			
 			<div class="checkbox-block">
 				<label class="checkbox-title">ADAS:</label>
 				<div class="checkbox-inline" onchange="toggleAdasTexto('principal', null)">
@@ -532,10 +539,11 @@
 					<label><input type="radio" name="adas" value="nao"> NÃO</label>
 				</div>
 			</div>
-			<textarea id="adas_texto" rows="3" placeholder="Especifique..." style="display: none; min-height: auto;"></textarea>
+			<textarea id="adas_texto" rows="5" placeholder="Especifique..." style="display: none; min-height: auto;"></textarea>
 						
 			<div class="checkbox-blockk"></div>
 			
+			<!-- EXTRAS -->			
 			<label>EXTRAS:</label><textarea id="extras" rows="3" placeholder="Teto solar, faróis de xenônio, Rádio e Multimídia, etc..."></textarea>
 		
 		</fieldset>
@@ -759,7 +767,7 @@
 			// Não adicione listeners de 'focus' ou 'blur' específicos aqui para a toolbar.
 
 
-			// Listener para o evento de colar (Ctrl+V) - Lógica robusta para links e imagens
+			// Listener para o evento de colar (Ctrl+V)
 			element.addEventListener('paste', async function (e) {
 				e.preventDefault(); // Impede o comportamento padrão do navegador
 				
@@ -775,71 +783,39 @@
 					}
 				}
 
+				// --- INÍCIO DA CORREÇÃO DO PROBLEMA DE COLAR ---
+
 				// 2. Se não foi imagem, tenta processar como HTML ou texto simples
 				if (!contentInserted) {
 					const html = clipboardData.getData('text/html');
 					const text = clipboardData.getData('text/plain');
 
+					// Prioriza colar o HTML completo se ele existir.
+					// Isso preserva a formatação original, incluindo texto e links juntos.
 					if (html) {
-						const tempDiv = document.createElement('div');
-						tempDiv.innerHTML = html;
-						const pastedImg = tempDiv.querySelector('img[src]'); // Busca img com src
-						const pastedLink = tempDiv.querySelector('a[href]'); // Busca link com href
-
-						if (pastedImg && pastedImg.src) {
-							// Se for uma imagem já no HTML
-							try {
-								const response = await fetch(pastedImg.src);
-								const blob = await response.blob();
-								const file = new File([blob], pastedImg.getAttribute('data-filename') || 'imagem.png', { type: blob.type });
-								await processarArquivo(element, file);
-								contentInserted = true;
-							} catch (error) {
-								console.error('Erro ao re-processar imagem colada do HTML:', error);
-							}
-						} else if (pastedLink && pastedLink.href) {
-							// Se for um link HTML já formatado
-							const link = document.createElement('a');
-							link.href = pastedLink.href;
-							link.target = '_blank';
-							link.textContent = 'LINK';
-							document.execCommand('insertHTML', false, link.outerHTML + '<br>');
-							contentInserted = true;
-						}
-					}
-					
-					if (!contentInserted && text) {
-						// Tenta processar como texto simples, verificando se é um URL
+						document.execCommand('insertHTML', false, html);
+						contentInserted = true;
+					} 
+					// Se não houver HTML, processa como texto simples (lógica de criar links a partir de URLs)
+					else if (text) {
 						const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
-						const matches = text.match(urlRegex);
-
-						if (matches && matches.length > 0) {
-							let newContent = '';
-							let lastIndex = 0;
-
-							text.replace(urlRegex, (url, offset) => {
-								if (offset > lastIndex) { newContent += text.substring(lastIndex, offset); }
-								const link = document.createElement('a');
-								link.href = url.startsWith('http') ? url : `http://${url}`;
-								link.target = '_blank';
-								link.textContent = 'LINK';
-								newContent += link.outerHTML;
-								lastIndex = offset + url.length;
-								return '';
+						
+						if (text.match(urlRegex)) {
+							let newContent = text.replace(urlRegex, (url) => {
+								const fullUrl = url.startsWith('http') ? url : `http://${url}`;
+								return `<a href="${fullUrl}" target="_blank">LINK</a>`;
 							});
-							if (lastIndex < text.length) { newContent += text.substring(lastIndex); }
-							document.execCommand('insertHTML', false, newContent + '<br>');
-							contentInserted = true;
+							document.execCommand('insertHTML', false, newContent);
 						} else {
 							// Se não for link, cola como texto simples
 							document.execCommand('insertText', false, text);
-							document.execCommand('insertHTML', false, '<br>');
-							contentInserted = true;
 						}
+						contentInserted = true;
 					}
 				}
+				// --- FIM DA CORREÇÃO ---
 				
-				// Dispara oninput para salvar os dados (se não foi disparado antes)
+				// Dispara oninput para salvar os dados
 				if (element.oninput) {
 					element.oninput();
 				}
@@ -1047,11 +1023,12 @@
 					container.innerHTML = `
 						<div class="checkbox-block">
 							<div class="checkbox-inline" onchange="toggleIdTransfAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia" ${dados.transferencia === 'transferencia' ? 'checked' : ''}> Transferência</label>
+								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_principal" ${dados.transferencia === 'transferencia_principal' ? 'checked' : ''}> Transferência (do Principal)</label>
+								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_outro" ${dados.transferencia === 'transferencia_outro' ? 'checked' : ''}> Transferência (Outro)</label>
 								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 							</div>
 						</div>
-						<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+						<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia_outro' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 						
 						<label>Nº páginas prevista</label>
 						<input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
@@ -1071,11 +1048,12 @@
 					container.innerHTML = `
 						<div class="checkbox-block">
 							<div class="checkbox-inline" onchange="toggleIdTransfAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia" ${dados.transferencia === 'transferencia' ? 'checked' : ''}> Transferência</label>
+								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_principal" ${dados.transferencia === 'transferencia_principal' ? 'checked' : ''}> Transferência (do Principal)</label>
+								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_outro" ${dados.transferencia === 'transferencia_outro' ? 'checked' : ''}> Transferência (Outro)</label>
 								<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 							</div>
 						</div>
-						<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+						<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia_outro' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 						
 						<label>Nº páginas prevista</label>
 						<input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
@@ -1517,29 +1495,20 @@
 
 					<fieldset>
 						<legend>ITENS DE SÉRIE / OPCIONAIS (Veículo ${veiculoIndex + 1})</legend>
-						<!-- TRANSMISSÃO: 2 checkboxes -->
+						
+						<!-- CHAVE / BOTÃO / ENCAIXE -->
 						<div class="checkbox-block">
-						  <label class="checkbox-title">TRANSMISSÃO:</label>
+						  <label class="checkbox-title">TIPO DE CHAVE:</label>
 						  <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-							<label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="AT" ${(veiculo.itensSerie.atmt || []).includes('AT') ? 'checked' : ''}> AT</label>
-							<label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="MT" ${(veiculo.itensSerie.atmt || []).includes('MT') ? 'checked' : ''}> MT</label>
+							<label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Comum" ${(veiculo.itensSerie.chave || []).includes('Comum') ? 'checked' : ''}> COMUM</label>
+							<label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Presencial (Botão)" ${(veiculo.itensSerie.chave || []).includes('Presencial (Botão)') ? 'checked' : ''}> PRESENCIAL (BOTÃO)</label>
+							<label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Encaixe Inteligente" ${(veiculo.itensSerie.chave || []).includes('Encaixe Inteligente') ? 'checked' : ''}> ENCAIXE INTELIGENTE</label>
 						  </div>
 						</div>
 
 						<div class="checkbox-blockk"></div>
 
-						<!-- COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA: 2 checkboxes -->
-						<div class="checkbox-block">
-						  <label class="checkbox-title">COMUTADOR DE IGNIÇÃO / BOTÃO DE PARTIDA:</label>
-						  <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-							<label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="CHAVE" ${(veiculo.itensSerie.chave || []).includes('CHAVE') ? 'checked' : ''}> CHAVE</label>
-							<label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="BOTÃO" ${(veiculo.itensSerie.chave || []).includes('BOTÃO') ? 'checked' : ''}> BOTÃO</label>
-						  </div>
-						</div>
-
-						<div class="checkbox-blockk"></div>
-
-						<!-- START/STOP: 3 rádios (novo texto) -->
+						<!-- FUNÇÃO START/STOP -->
 						<div class="checkbox-block">
 						  <label class="checkbox-title">FUNÇÃO START/STOP:</label>
 						  <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1551,17 +1520,30 @@
 
 						<div class="checkbox-blockk"></div>
 
-						<!-- A/C: 3 checkboxes -->
+						<!-- AR-CONDICIONADO -->
 						<div class="checkbox-block">
 						  <label class="checkbox-title">AR-CONDICIONADO:</label>
 						  <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="MANUAL" ${(veiculo.itensSerie.ac || []).includes('MANUAL') ? 'checked' : ''}> MANUAL</label>
-							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="AUTOMÁTICO" ${(veiculo.itensSerie.ac || []).includes('AUTOMÁTICO') ? 'checked' : ''}> AUTOMÁTICO</label>
-							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="SÓ AR QUENTE" ${(veiculo.itensSerie.ac || []).includes('SÓ AR QUENTE') ? 'checked' : ''}> SÓ AR QUENTE</label>
+							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Manual" ${(veiculo.itensSerie.ac || []).includes('Manual') ? 'checked' : ''}> MANUAL</label>
+							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Automático" ${(veiculo.itensSerie.ac || []).includes('Automático') ? 'checked' : ''}> AUTOMÁTICO</label>
+							<label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Só Ar Quente" ${(veiculo.itensSerie.ac || []).includes('Só Ar Quente') ? 'checked' : ''}> SÓ AR QUENTE</label>
 						  </div>
 						</div>
 
 						<div class="checkbox-blockk"></div>
+						
+						<!-- TRANSMISSÃO -->
+						<div class="checkbox-block">
+						  <label class="checkbox-title">TRANSMISSÃO:</label>
+						  <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+							<label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="AT" ${(veiculo.itensSerie.atmt || []).includes('AT') ? 'checked' : ''}> AT</label>
+							<label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="MT" ${(veiculo.itensSerie.atmt || []).includes('MT') ? 'checked' : ''}> MT</label>
+						  </div>
+						</div>
+
+						<div class="checkbox-blockk"></div>
+						
+						<!-- TRAÇÃO -->
 						<div class="checkbox-block">
 							<label class="checkbox-title">TRAÇÃO:</label>
 							<div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1575,6 +1557,8 @@
 							</div>
 						</div>
 						<div class="checkbox-blockk"></div>
+						
+						<!-- ADAS -->
 						<div class="checkbox-block">
 							<label class="checkbox-title">ADAS:</label>
 							<div class="checkbox-inline" onchange="toggleAdasTexto('aplicavel', ${veiculoIndex}); salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1587,6 +1571,7 @@
 						
 						<div class="checkbox-blockk"></div>
 						
+						<!-- EXTRAS -->
 						<label for="extras_aplicaveis_${veiculoIndex}">EXTRAS:</label>
 						<textarea id="extras_aplicaveis_${veiculoIndex}" rows="3" placeholder="Teto solar, faróis de xenônio, Rádio e Multimídia, etc..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.itensSerie.extras || ''}</textarea>
 					</fieldset>
@@ -1993,7 +1978,7 @@
 			const idTransfInput = document.getElementById(`idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 
 			if (radio && idTransfInput) {
-				idTransfInput.style.display = (radio.value === 'transferencia') ? 'block' : 'none';
+				idTransfInput.style.display = (radio.value === 'transferencia_outro') ? 'block' : 'none';
 			}
 		}
 
@@ -2239,6 +2224,7 @@
 						const comentariosElement = document.getElementById('comentarios');
 						if (comentariosElement && dataPrincipal.comentarios) {
 							comentariosElement.innerHTML = dataPrincipal.comentarios;
+							updateEditablePlaceholder(comentariosElement);
 						}
 						setData('aplicacao_chassi_texto', dataPrincipal.aplicacao_chassi_texto);
 						setChecked('aplicacao_chassi', dataPrincipal.aplicacao_chassi);
@@ -2480,10 +2466,18 @@
 						if (specialFragment) fragments.push(specialFragment);
 						if (node.hasChildNodes()) fragments = fragments.concat(htmlToFragments(node, newStyle));
 						
-						// CORREÇÃO: Adiciona quebra de linha após elementos de bloco como <div> e <p>
-						// Isso garante que cada <div> no editor de texto se torne uma nova linha no PDF.
+						// CORREÇÃO: Adiciona quebra de linha após elementos de bloco como <div> e <p>,
+						// mas evita a quebra dupla quando o navegador insere <div><br></div>.
 						if (['div', 'p'].includes(node.tagName.toLowerCase())) {
-							fragments.push({ type: 'br' });
+                            // Um 'Enter' no editor de conteúdo geralmente cria um <div> com um único <br> dentro.
+                            // O <br> já é processado como uma quebra de linha.
+                            // Esta lógica impede que o <div> adicione uma SEGUNDA quebra de linha.
+							const onlyChildIsBr = node.childNodes.length === 1 && node.childNodes[0].nodeName.toLowerCase() === 'br';
+							
+							// Adiciona uma quebra de linha para o <div>, a menos que ele apenas contenha um <br>.
+							if (!onlyChildIsBr) {
+								fragments.push({ type: 'br' });
+							}
 						}
 					}
 				}
@@ -2550,13 +2544,13 @@
 						currentY += lineHeight;
 						currentX = x;
 					} else if (fragment.type === 'image' && fragment.src) {
-						currentY += 2; // Espaçamento antes da imagem
+						currentY += 0; // Espaçamento antes da imagem
 						const imgProps = doc.getImageProperties(fragment.src);
 						const imgWidth = maxWidth - x;
 						const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
 						if (currentY + imgHeight > pageBottom) { doc.addPage(); currentY = margin; }
 						doc.addImage(fragment.src, 'JPEG', x, currentY, imgWidth, imgHeight);
-						currentY += imgHeight + 2;
+						currentY += imgHeight;
 						currentX = x;
 						
 						// Adiciona ao ZIP
@@ -2603,36 +2597,84 @@
 			}
 			
 			// --- FIM DAS NOVAS FUNÇÕES ---
-
-			// Helper function to add simple text and manage page breaks
+            
+            // >>> INÍCIO DA CORREÇÃO <<<
+            // Função para adicionar texto simples, agora respeitando quebras de linha (\n)
 			const addText = (text, size, style = 'normal', indent = 0) => {
+				if (!text) return; // Não faz nada se o texto for nulo ou vazio
 				const maxWidth = doc.internal.pageSize.width - (margin * 2) - indent;
-				const lines = doc.splitTextToSize(text, maxWidth);
 				doc.setFontSize(size);
 				doc.setFont('helvetica', style);
-				for (const line of lines) {
-					if (y + lineHeight > pageHeight - margin) {
-						doc.addPage();
-						y = margin;
+
+				// Divide o texto em parágrafos com base nas quebras de linha do usuário
+				const paragraphs = String(text).split('\n');
+				
+				for (const paragraph of paragraphs) {
+					// Para cada parágrafo, quebra em linhas com base na largura da página
+					const lines = doc.splitTextToSize(paragraph, maxWidth);
+					for (const line of lines) {
+						// Verifica se a linha cabe na página atual, se não, cria uma nova
+						if (y + lineHeight > pageHeight - margin) {
+							doc.addPage();
+							y = margin;
+						}
+						doc.text(line, margin + indent, y);
+						y += lineHeight; // Incrementa a posição Y para a próxima linha
 					}
-					doc.text(line, margin + indent, y);
-					y += lineHeight;
 				}
 			};
 
-			// Helper para adicionar conteúdo rico (HTML)
-			async function addRichContent(htmlString, startY, indent, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex) {
-				if (!htmlString || !htmlString.trim()) {
-					addText('Nenhum ajuste informado.', 12, 'italic', indent);
-					return y;
+			// Função para adicionar um campo com rótulo e valor, também respeitando quebras de linha
+			const addLabeledValue = (label, value, indent = 0, size = 12) => {
+				// Não renderiza nada se o valor for nulo ou vazio
+				if (value === undefined || value === null || String(value).trim() === '') return;
+
+				const fullLabel = `- ${label}: `;
+				const fullValue = String(value);
+				const availableWidth = doc.internal.pageSize.width - margin * 2;
+				const x = margin + indent;
+
+				doc.setFontSize(size);
+				doc.setFont('helvetica', 'bold');
+				const labelWidth = doc.getTextWidth(fullLabel);
+				doc.setFont('helvetica', 'normal');
+				
+				// Largura disponível para o texto do valor
+				const valueWidth = availableWidth - x - labelWidth;
+
+				// Divide o valor em parágrafos com base nas quebras de linha do usuário
+				const paragraphs = fullValue.split('\n');
+				let isFirstLineOfValue = true;
+				
+				for (const paragraph of paragraphs) {
+					// Para cada parágrafo, quebra em linhas com base na largura
+					const lines = doc.splitTextToSize(paragraph, valueWidth);
+
+					for (const line of lines) {
+						// Verifica se a linha cabe na página atual
+						 if (y + lineHeight > pageHeight - margin) {
+							doc.addPage();
+							y = margin;
+						}
+
+						if (isFirstLineOfValue) {
+							// Imprime o rótulo (em negrito) apenas uma vez, ao lado da primeira linha do valor
+							doc.setFont('helvetica', 'bold');
+							doc.text(fullLabel, x, y);
+							doc.setFont('helvetica', 'normal');
+							doc.text(line, x + labelWidth, y);
+							isFirstLineOfValue = false;
+						} else {
+							// Imprime as linhas subsequentes alinhadas com o início do valor da primeira linha
+							doc.text(line, x + labelWidth, y);
+						}
+						y += lineHeight; // Move para a próxima linha
+					}
 				}
-				const tempDiv = document.createElement('div');
-				tempDiv.innerHTML = htmlString;
-				const fragments = htmlToFragments(tempDiv);
-				const finalY = await renderFragments(fragments, margin + indent, startY, doc.internal.pageSize.width - margin, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex);
-				return finalY;
-			}
-			
+			};
+            // >>> FIM DA CORREÇÃO <<<
+
+			// Helper function to add a field with a label and its value
 			const addFieldWithRichText = (label, value) => {
 				if (value === undefined || value === null || value === '') return;
 				const labelText = `${label}: `;
@@ -2649,12 +2691,26 @@
 				doc.setFont('helvetica', 'bold');
 				doc.text(labelText, margin, y);
 				doc.setFont('helvetica', 'normal');
-				doc.text(valueLines, margin + labelWidth + 2, y);
+				doc.text(valueLines, margin + labelWidth + 0, y);
 				y += valueLines.length * lineHeight;
 			};
 
+			// Helper para adicionar conteúdo rico (HTML)
+			async function addRichContent(htmlString, startY, indent, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex) {
+				if (!htmlString || !htmlString.trim()) {
+					addText('Nenhum ajuste informado.', 12, 'italic', indent);
+					return y;
+				}
+				const tempDiv = document.createElement('div');
+				tempDiv.innerHTML = htmlString;
+				const fragments = htmlToFragments(tempDiv);
+				const finalY = await renderFragments(fragments, margin + indent, startY, doc.internal.pageSize.width - margin, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex);
+				doc.setTextColor(0, 0, 0); // Reseta a cor para preto após renderizar o conteúdo rico
+				return finalY;
+			}
+			
 			const formatArray = (arr) => Array.isArray(arr) && arr.length ? arr.join(', ') : '';
-			const mapStartStop = (v) => ({ sim_serie: 'SIM (DE SÉRIE)', sim_opcional: 'SIM (OPCIONAL)', nao: 'NÃO' }[v] || '');
+			const mapStartStop = (v) => ({ sim_serie: 'Sim (De Série)', sim_opcional: 'Sim (Opcional)', nao: 'Não' }[v] || '');
 
 			const addCenteredText = (text, size, style = 'normal', color = [0, 0, 0]) => {
 				if (y > pageHeight - margin) { doc.addPage(); y = margin; }
@@ -2710,29 +2766,40 @@
 
 			// --- VEÍCULO PRINCIPAL ---
 			addCenteredText("PLANEJAMENTO - VEÍCULO PRINCIPAL", 20, 'bold');
+			addCenteredText(dataPrincipal.clickup, 16, 'normal')
 			y += lineHeight * 2;
 			addColoredText("INFORMAÇÕES GERAIS", 18, 'bold', 0, titleColor);
-			y += lineHeight;
+			addText(' ', 12, 'normal');
 			addFieldWithRichText('PLANEJADO POR', dataPrincipal.planejado_por);
-			addFieldWithRichText('ClickUp', dataPrincipal.clickup);
-			y += lineHeight;
+			// y += lineSpacing / 2;
+			// addFieldWithRichText('ClickUp', dataPrincipal.clickup);
+			
+			y += lineSpacing / 2;
+			
 			addText('Veículo Referência:', 12, 'bold');
 			addText(dataPrincipal.veiculo, 12, 'normal', 4);
+			y += lineSpacing / 2;
+			
 			addFieldWithRichText('ID DIAGRAMAS', dataPrincipal.iddiagramas);
 			addFieldWithRichText('ID FUSÍVEIS', dataPrincipal.idfusiveis);
+			y += lineSpacing / 2;
+			
 			addText('Pasta do Veículo:', 12, 'bold');
 			addText(dataPrincipal.pasta, 12, 'normal', 4);
-			addFieldWithRichText('Pesquisa', dataPrincipal.pesquisa === 'sim' ? 'SIM' : 'NÃO');
+			y += lineSpacing / 2;
+			
+			addFieldWithRichText('Pesquisa', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
 			if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
 				addText(dataPrincipal.pesquisa_texto, 12, 'normal', 4);
 			}
+			y += lineHeight;	
 			
 			addText('IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold');
 			y = await addRichContent(dataPrincipal.comentarios, y, 4, rootPrincipal, null, -1);
+			
 			y += lineSpacing / 2; // Adiciona espaçamento
 			
-			addText('APLICAÇÃO / CHASSI:', 12, 'bold');
-			addText(dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'), 12, 'normal', 4);
+			addFieldWithRichText('APLICAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
 			if (dataPrincipal.aplicacao_chassi_texto) {
 				addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
@@ -2747,28 +2814,30 @@
 			y += lineHeight;
 
 			addText('ITENS DE SÉRIE / OPCIONAIS:', 12, "bold");
-			addText(`- Transmissão: ${formatArray(dataPrincipal.atmt)}`, 12, 'normal', 4);
-			addText(`- Comutador de Ignição / Botão de Partida: ${formatArray(dataPrincipal.chave)}`, 12, 'normal', 4);
-			addText(`- Função Start/Stop: ${mapStartStop(dataPrincipal.startstop)}`, 12, 'normal', 4);
-			addText(`- Ar-condicionado: ${formatArray(dataPrincipal.ac)}`, 12, 'normal', 4);
-			addText(`- Tração: ${(dataPrincipal.tracao || []).join(', ')}`, 12, 'normal', 4);
-			let adasText = 'NÃO';
-			if (dataPrincipal.adas === 'sim_serie') adasText = 'SIM (DE SÉRIE)';
-			if (dataPrincipal.adas === 'sim_opcional') adasText = 'SIM (OPCIONAL)';
-			addText(`- ADAS: ${adasText}`, 12, 'normal', 4);
+            addLabeledValue('Tipo de Chave', formatArray(dataPrincipal.chave), 4);
+            addLabeledValue('Função Start/Stop', mapStartStop(dataPrincipal.startstop), 4);
+            addLabeledValue('Ar-condicionado', formatArray(dataPrincipal.ac), 4);
+			addLabeledValue('Transmissão', formatArray(dataPrincipal.atmt), 4);
+            addLabeledValue('Tração', (dataPrincipal.tracao || []).join(', '), 4);
+            let adasText = 'Não';
+			if (dataPrincipal.adas === 'sim_serie') adasText = 'Sim (De Série)';
+			if (dataPrincipal.adas === 'sim_opcional') adasText = 'Sim (Opcional)';
+            addLabeledValue('ADAS', adasText, 4);
 			if ((dataPrincipal.adas === 'sim_serie' || dataPrincipal.adas === 'sim_opcional') && dataPrincipal.adas_texto) {
-			  addText(dataPrincipal.adas_texto, 12, 'normal', 9);
+			  addText(dataPrincipal.adas_texto, 12, 'normal', 22);
 			}
-			addText(`- Extras: ${dataPrincipal.extras || ''}`, 12, 'normal', 4);
+            addLabeledValue('Extras', dataPrincipal.extras, 4);
 			y += lineSpacing;
-			y += 6; // espaço extra (ajuste conforme necessário)
+			y += lineHeight;
+			
 			addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
-			y += lineSpacing / 2;
+			y += lineSpacing;
 			
 			if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
 				for (const [idx, sistema] of dataPrincipal.sistemas.entries()) {
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineSpacing / 2;
+					
 					addHighlightedText(`CAPÍTULO: ${sistema.sistema || ''}`, 14, 'bold', 0, 212, 255, 214);
 					let linhaTransferencia = '';
 					if (sistema.transferencia === 'transferencia') linhaTransferencia = `Transferência (Origem: ${sistema.idtransf || ''})`;
@@ -2782,11 +2851,10 @@
 						addText(`- Nome no material: ${sistema.nomematerial || ''}`, 12, "normal", 4);
 						addText(`- Código de Peça / Link:`, 12, "normal", 4);
 						y = await addRichContent(sistema.codmodulo, y, 13, rootPrincipal, sistema, idx);
-						y += lineHeight; 
 						
-						addText(`- Códigos de Conectores: ${sistema.codconectores || ''}`, 12, "normal", 4);
+					addText(`- Códigos de Conectores:`, 12, "normal", 4);
+					addText(`${sistema.codconectores || ''}`, 12, 'normal', 9)
 					}
-					y += lineHeight;
 					y += 6; // espaço extra (ajuste conforme necessário)
 					
 					addText('DESENVOLVIMENTO:', 14, "bold", 0);
@@ -2803,15 +2871,19 @@
 							addText(`- ${campo.label}:`, 12, "bold", 0);
 							y = await addRichContent(sistema[campo.id], y, 4, rootPrincipal, sistema, idx);
 							y += lineSpacing / 2; // Adiciona espaçamento
+							y += lineHeight;
 						}
 					}
 				}
 			} else { addText("Nenhum sistema adicionado.", 12); }
+			y += lineHeight;
 			addSeparatorLine();
 			y += lineHeight;
 
 			// --- DADOS DO CARD (PRINCIPAL) ---
 			addColoredText("DADOS DO CARD", 18, 'bold', 0, titleColor);
+			y += lineHeight;
+			
 			addText(`- Dificuldade: ${dataPrincipal.dificuldade || ''}`, 12, "normal", 0);
 			addText(`- Justificativa: ${dataPrincipal.justificativa || ''}`, 12, "normal", 0);
 			y += lineHeight;
@@ -2838,23 +2910,30 @@
 				for (const [index, veiculo] of dataAplicaveis.entries()) {
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineSpacing;
+					y += lineHeight;
 					
 					addColoredText(`VEÍCULO APLICÁVEL #${index + 1}`, 14, "bold", 0, titleColor);
 					addText('Veículo Referência:', 12, 'bold');
 					addText(veiculo.dadosGerais.veiculo, 12, 'normal', 4);
+					y += lineSpacing;
+					
 					addFieldWithRichText('ID DIAGRAMAS', veiculo.dadosGerais.iddiagramas);
 					addFieldWithRichText('ID FUSÍVEIS', veiculo.dadosGerais.idfusiveis);
-					addFieldWithRichText('Pesquisa', veiculo.dadosGerais.pesquisa === 'sim' ? 'SIM' : 'NÃO');
+					y += lineSpacing;
+					
+					addFieldWithRichText('Pesquisa', veiculo.dadosGerais.pesquisa === 'sim' ? 'Sim' : 'Não');
 					if (veiculo.dadosGerais.pesquisa === 'sim' && veiculo.dadosGerais.pesquisa_texto) {
 						addText(veiculo.dadosGerais.pesquisa_texto, 12, 'normal', 4);
 					}
+					y += lineHeight;
 					
 					addText('IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold');
 					y = await addRichContent(veiculo.dadosGerais.comentarios, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
-					y += lineSpacing / 2; // Adiciona espaçamento
 					
-					addText('APLICAÇÃO / CHASSI:', 12, 'bold');
-					addText(veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'), 12, 'normal', 0);
+					y += lineHeight;
+					y += lineHeight / 2;
+					
+					addFieldWithRichText('APLICAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
 					if (veiculo.dadosGerais.aplicacao_chassi_texto) {
 						addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12, 'normal', 4);
 					}
@@ -2867,35 +2946,41 @@
 						addText('Nenhum pedido.', 12, 'italic', 4);
 					}
 					y += lineHeight;
-
+                    
 					addText('ITENS DE SÉRIE/OPCIONAIS:', 12, "bold");
-					addText(`- Transmissão: ${formatArray(veiculo.itensSerie.atmt)}`, 12, 'normal', 4);
-					addText(`- Comutador de Ignição / Botão de Partida: ${formatArray(veiculo.itensSerie.chave)}`, 12, 'normal', 4);
-					addText(`- Função Start/Stop: ${mapStartStop(veiculo.itensSerie.startstop)}`, 12, 'normal', 4);
-					addText(`- Ar-condicionado: ${formatArray(veiculo.itensSerie.ac)}`, 12, 'normal', 4);
-					addText(`- Tração: ${(veiculo.itensSerie.tracao || []).join(', ')}`, 12, 'normal', 4);
-					let adasTextAplicavel = 'NÃO';
-					if (veiculo.itensSerie.adas === 'sim_serie') adasTextAplicavel = 'SIM (DE SÉRIE)';
-					if (veiculo.itensSerie.adas === 'sim_opcional') adasTextAplicavel = 'SIM (OPCIONAL)';
-					addText(`- ADAS: ${adasTextAplicavel}`, 12, 'normal', 4);
+                    addLabeledValue('Tipo de Chave', formatArray(veiculo.itensSerie.chave), 4);
+                    addLabeledValue('Função Start/Stop', mapStartStop(veiculo.itensSerie.startstop), 4);
+                    addLabeledValue('Ar-condicionado', formatArray(veiculo.itensSerie.ac), 4);
+					addLabeledValue('Transmissão', formatArray(veiculo.itensSerie.atmt), 4);
+                    addLabeledValue('Tração', (veiculo.itensSerie.tracao || []).join(', '), 4);
+					let adasTextAplicavel = 'Não';
+					if (veiculo.itensSerie.adas === 'sim_serie') adasTextAplicavel = 'Sim (De Série)';
+					if (veiculo.itensSerie.adas === 'sim_opcional') adasTextAplicavel = 'Sim (Opcional)';
+                    addLabeledValue('ADAS', adasTextAplicavel, 4);
 					if ((veiculo.itensSerie.adas === 'sim_serie' || veiculo.itensSerie.adas === 'sim_opcional') && veiculo.itensSerie.adas_texto) {
 					  addText(veiculo.itensSerie.adas_texto, 12, 'normal', 9);
 					}
-					addText(`- Extras: ${veiculo.itensSerie.extras || ''}`, 12, 'normal', 4);
+                    addLabeledValue('Extras', veiculo.itensSerie.extras, 4);
 					y += lineHeight;
-					y += 6; // espaço extra (ajuste conforme necessário)
+					y += 6;
 
 					addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
 					if (veiculo.sistemas && veiculo.sistemas.length > 0) {
 						for (const [idx, sistema] of veiculo.sistemas.entries()) {
 							if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
-							y += lineSpacing / 2;
+							y += lineHeight;
 							
 							addHighlightedText(`CAPÍTULO: ${sistema.sistema || ''}`, 14, 'bold', 0, 250, 231, 67);
-							let linhaTransferencia = '';
-							if (sistema.transferencia === 'transferencia') linhaTransferencia = `Transferência (Origem: ${sistema.idtransf || ''})`;
-							else if (sistema.transferencia === 'modificar') linhaTransferencia = `Modificar Publicado`;
-							if (linhaTransferencia) addText(linhaTransferencia, 12, "normal", 4);
+							if (sistema.transferencia === 'transferencia_principal') {
+								const idPrincipal = (sistema.sistema === 'Fusíveis e Relés')
+									? dataPrincipal.idfusiveis
+									: dataPrincipal.iddiagramas;
+								addLabeledValue('Transferência (do Principal) - ID', ` ${idPrincipal || 'N/A'}`, 4, 12);
+							} else if (sistema.transferencia === 'transferencia_outro') {
+								addLabeledValue('Transferência (Outro) - ID', ` ${sistema.idtransf || 'N/A'}`, 4, 12);
+							} else if (sistema.transferencia === 'modificar') {
+								addText(`- Modificar Publicado`, 12, "normal", 4);
+							}
 							
 							addText(`- Nº páginas prevista: ${sistema.paginasprev || ''}`, 12, "normal", 4);
 							if (sistema.sistema !== "Fusíveis e Relés" && sistema.sistema !== "Alimentação Positiva" && sistema.sistema !== "Conectores de Peito") {
@@ -2903,31 +2988,34 @@
 								addText(`- Nome no material: ${sistema.nomematerial || ''}`, 12, "normal", 4);
 								addText(`- Código de Peça / Link:`, 12, "normal", 4);
 								y = await addRichContent(sistema.codmodulo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-								y += lineHeight; 
-
-								addText(`- Códigos de Conectores: ${sistema.codconectores || ''}`, 12, "normal", 4);
+								y += 6; // espaço extra (ajuste conforme necessário)
+								addText(`- Códigos de Conectores:`, 12, "normal", 4);
+								addText(`${sistema.codconectores || ''}`, 12, "normal", 9);
 							}
 							y += lineSpacing / 2;
 							y += 6; // espaço extra (ajuste conforme necessário)
+							
 							addText(`DESENVOLVIMENTO:`, 14, "bold", 0);
-
+							y += lineSpacing / 2;
+							
 							if (sistema.sistema === "Fusíveis e Relés" || sistema.sistema === "Alimentação Positiva" || sistema.sistema === "Conectores de Peito") {
-								addText(`- Página de Localização / Códigos / Diagrama:`, 12, "bold", 0);
+								addText(`- Página de Localização / Códigos / Diagrama:`, 12, "bold", 4);
 								y = await addRichContent(sistema.pagloc, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-								y += lineSpacing / 2; // Adiciona espaçamento
+								y += lineHeight;
 							} else {
 								const camposAplicaveis = [ { label: 'Página de Localização', id: 'pagloc' }, { label: 'Página de Conectores', id: 'pagcon' }, { label: 'Página de Diagramas', id: 'pagdiag' }];
 								for (const campo of camposAplicaveis) {
 									y += lineSpacing / 2;
-									addText(`- ${campo.label}:`, 12, "bold", 0);
+									addText(`- ${campo.label}:`, 12, "bold", 4);
 									y = await addRichContent(sistema[campo.id], y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-									y += lineSpacing / 2; // Adiciona espaçamento
+									y += lineHeight;
 								}
 							}
 						}
 					} else {
 						addText("Nenhum sistema adicionado.", 12, "normal", 4);
 					}
+					y += lineHeight;
 					addSeparatorLine();
 				}
 
@@ -3010,4 +3098,3 @@
     </script>
 </body>
 </html>
-
