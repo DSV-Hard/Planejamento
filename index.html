@@ -612,6 +612,10 @@
                 <legend>SISTEMAS</legend>
                 <div id="sistemas-container"></div>
                 <div id="paginas-navegacao" style="text-align: center; margin-bottom: 10px;"></div>
+                <div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
+                    <button type="button" class="orange-button" onclick="moverSistema(-1)" title="Mover capítulo para a esquerda">←</button>
+                    <button type="button" class="orange-button" onclick="moverSistema(1)" title="Mover capítulo para a direita">→</button>
+                </div>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
                     <button type="button" class="orange-button" onclick="adicionarSistema()">➕ Adicionar Capítulo</button>
                     <button type="button" class="orange-button" onclick="removerUltimoSistema()">➖ Remover Capítulo Selecionado</button>
@@ -623,13 +627,13 @@
                 <div class="card-details-block">
 			<label>Dificuldade (Principal):</label>
 			<select id="dificuldade">
-				<option value="" disabled selected>Selecione a dificuldade</option>
-				<option value="FÁCIL">FÁCIL</option>
-				<option value="MÉDIO">MÉDIO</option>
-				<option value="DIFÍCIL">DIFÍCIL</option>
-				<option value="DIFÍCIL">CARROCERIA F</option>
-				<option value="DIFÍCIL">CARROCERIA M</option>
-				<option value="DIFÍCIL">CARROCERIA D</option>
+				<option value="">Selecione a dificuldade</option>
+				<option value="Fácil">FÁCIL</option>
+				<option value="Médio">MÉDIO</option>
+				<option value="Difícil">DIFÍCIL</option>
+				<option value="Carroceria Fácil">CARROCERIA F</option>
+				<option value="Carroceria Médio">CARROCERIA M</option>
+				<option value="Carroceria Difícil">CARROCERIA D</option>
 			</select>
 			<label>Justificativa:</label><input type="text" id="justificativa" placeholder="Material difícil e muitos capítulos para diagramar do zero...">
 			
@@ -651,13 +655,13 @@
     <legend>DADOS DO CARD</legend>
     <label>Dificuldade (Aplicáveis):</label>
     <select id="dificuldade_aplicaveis">
-        <option value="" disabled selected>Selecione a dificuldade</option>
-        <option value="FÁCIL">FÁCIL</option>
-        <option value="MÉDIO">MÉDIO</option>
-        <option value="DIFÍCIL">DIFÍCIL</option>
-        <option value="CARROCERIA F">CARROCERIA F</option>
-        <option value="CARROCERIA M">CARROCERIA M</option>
-        <option value="CARROCERIA D">CARROCERIA D</option>
+        <option value="">Selecione a dificuldade</option>
+        <option value="Fácil">FÁCIL</option>
+        <option value="Médio">MÉDIO</option>
+        <option value="Difícil">DIFÍCIL</option>
+        <option value="Carroceria Fácil">CARROCERIA F</option>
+        <option value="Carroceria Médio">CARROCERIA M</option>
+        <option value="Carroceria Difícil">CARROCERIA D</option>
     </select>
     <label>Justificativa:</label><input type="text" id="justificativa_aplicaveis" placeholder="Material difícil e muitos capítulos para diagramar do zero...">
 		</fieldset>
@@ -694,19 +698,29 @@
         </div>
     </div>
 	
+	<!-- Modal de Cópia de Capítulo -->
+    <div id="copy-chapter-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <h3 style="color: #f0ad4e;">Copiar Capítulo de Outro Veículo</h3>
+            <label for="select-veiculo-copia">De qual veículo?</label>
+            <select id="select-veiculo-copia" onchange="popularCapitulosParaCopia()" style="width: 100%; margin-top: 5px; margin-bottom: 15px;"></select>
+            
+            <label for="select-capitulo-copia">Qual capítulo?</label>
+            <select id="select-capitulo-copia" style="width: 100%; margin-top: 5px;"></select>
+
+            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+                <button class="orange-button" onclick="executarCopiaCapitulo()">Copiar</button>
+                <button class="orange-button" onclick="document.getElementById('copy-chapter-modal').style.display='none'">Cancelar</button>
+            </div>
+        </div>
+    </div>
+	
 	<div id="text-editor-toolbar" style="display: none; position: absolute; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">
 		<!-- CORREÇÃO: Adicionado onmousedown="event.preventDefault()" em todos os botões e no select -->
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('bold')" title="Negrito" style="font-weight: bold;">N</button>
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('italic')" title="Itálico" style="font-style: italic;">I</button>
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('underline')" title="Sublinhado" style="text-decoration: underline;">S</button>
 		<input type="color" id="text-color-picker" onmousedown="event.preventDefault();" onchange="formatTextColor(this.value)" title="Cor do Texto">
-		<select id="font-size-select" onmousedown="event.preventDefault();" onchange="formatFontSize(this.value)" title="Tamanho da Fonte">
-			<option value="1">10px</option>
-			<option value="2">12px</option>
-			<option value="3" selected>14px</option>
-			<option value="4">16px</option>
-			<option value="5">18px</option>
-		</select>
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('insertOrderedList')" title="Lista Numerada">1.</button>
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('insertUnorderedList')" title="Lista com Marcadores">•</button>
 	</div>
@@ -717,6 +731,7 @@
 		let veiculosAplicaveisData = [];
 		let veiculoAplicavelAtual = 0;
 		let currentEditableElement = null;
+		let targetVeiculoIndexParaCopia = null;
 
 		function formatText(command, value = null) {
 			if (currentEditableElement) {
@@ -727,10 +742,6 @@
 
 		function formatTextColor(color) {
 			formatText('foreColor', color);
-		}
-
-		function formatFontSize(size) {
-			formatText('fontSize', size);
 		}
 
 		function positionToolbar() {
@@ -1354,6 +1365,23 @@
 			mostrarPagina(sistemasData.length - 1);
 		}
 
+		function moverSistema(direcao) {
+            if (sistemasData.length < 2) return; 
+
+            const newIndex = paginaAtual + direcao;
+
+            if (newIndex < 0 || newIndex >= sistemasData.length) return;
+
+            salvarDadosSistema(paginaAtual);
+
+            [sistemasData[paginaAtual], sistemasData[newIndex]] = [sistemasData[newIndex], sistemasData[paginaAtual]];
+
+            paginaAtual = newIndex;
+
+            renderizarPaginacao();
+            renderizarSistema(paginaAtual);
+        }
+
 		function removerUltimoSistema() {
 			if (sistemasData.length === 0) return; 
 
@@ -1699,9 +1727,14 @@
 						<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
 						<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 						<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
+						<div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
+							<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, -1)" title="Mover capítulo para a esquerda">←</button>
+							<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, 1)" title="Mover capítulo para a direita">→</button>
+						</div>
 						<div class="button-group-centered">
 							<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕ Adicionar Capítulo</button>
 							<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖ Remover Capítulo Selecionado</button>
+							<button type="button" class="orange-button" onclick="abrirModalCopia(${veiculoIndex})">Copiar Capítulo</button>
 						</div>
 					</fieldset>
 				</div>
@@ -1978,6 +2011,106 @@
 			renderizarPaginacaoVeiculosAplicaveis();
 		}
 
+		function abrirModalCopia(veiculoIndex) {
+			targetVeiculoIndexParaCopia = veiculoIndex;
+
+			const selectVeiculo = document.getElementById('select-veiculo-copia');
+			selectVeiculo.innerHTML = ''; // Limpa opções anteriores
+
+			// Adiciona Veículo Principal
+			const optPrincipal = document.createElement('option');
+			optPrincipal.value = 'principal';
+			optPrincipal.textContent = 'Veículo Principal';
+			selectVeiculo.appendChild(optPrincipal);
+
+			// Adiciona Veículos Aplicáveis
+			veiculosAplicaveisData.forEach((veiculo, idx) => {
+				const optAplicavel = document.createElement('option');
+				optAplicavel.value = `aplicavel_${idx}`;
+				const veiculoLabel = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `Veículo ${idx + 1}`;
+				optAplicavel.textContent = `Veículo Aplicável ${idx + 1}: ${veiculoLabel}`;
+				selectVeiculo.appendChild(optAplicavel);
+			});
+
+			popularCapitulosParaCopia(); // Popula os capítulos para o veículo inicialmente selecionado
+
+			document.getElementById('copy-chapter-modal').style.display = 'flex';
+		}
+
+		function popularCapitulosParaCopia() {
+			const selectVeiculo = document.getElementById('select-veiculo-copia');
+			const selectCapitulo = document.getElementById('select-capitulo-copia');
+			const selectedVeiculoValue = selectVeiculo.value;
+
+			selectCapitulo.innerHTML = ''; // Limpa opções anteriores
+
+			let sourceSistemas = [];
+
+			if (selectedVeiculoValue === 'principal') {
+				sourceSistemas = sistemasData;
+			} else if (selectedVeiculoValue.startsWith('aplicavel_')) {
+				const veiculoIndex = parseInt(selectedVeiculoValue.split('_')[1], 10);
+				if (veiculosAplicaveisData[veiculoIndex]) {
+					sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
+				}
+			}
+
+			if (sourceSistemas && sourceSistemas.length > 0) {
+				sourceSistemas.forEach((sistema, idx) => {
+					const optCapitulo = document.createElement('option');
+					optCapitulo.value = idx;
+					optCapitulo.textContent = `Capítulo ${idx + 1}: ${sistema.sistema || 'Sem título'}`;
+					selectCapitulo.appendChild(optCapitulo);
+				});
+			} else {
+				const optEmpty = document.createElement('option');
+				optEmpty.textContent = 'Nenhum capítulo encontrado';
+				optEmpty.disabled = true;
+				selectCapitulo.appendChild(optEmpty);
+			}
+		}
+
+		function executarCopiaCapitulo() {
+			const selectVeiculo = document.getElementById('select-veiculo-copia');
+			const selectCapitulo = document.getElementById('select-capitulo-copia');
+
+			const selectedVeiculoValue = selectVeiculo.value;
+			const selectedCapituloIndex = parseInt(selectCapitulo.value, 10);
+
+			if (targetVeiculoIndexParaCopia === null || isNaN(selectedCapituloIndex)) {
+				alert('Erro: Veículo de destino ou capítulo de origem inválido.');
+				return;
+			}
+
+			let sourceSistemas = [];
+			if (selectedVeiculoValue === 'principal') {
+				sourceSistemas = sistemasData;
+			} else if (selectedVeiculoValue.startsWith('aplicavel_')) {
+				const veiculoIndex = parseInt(selectedVeiculoValue.split('_')[1], 10);
+				sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
+			}
+
+			const capituloParaCopiar = sourceSistemas[selectedCapituloIndex];
+
+			if (capituloParaCopiar) {
+				// Cópia profunda dos dados do capítulo
+				const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
+				
+				// Adiciona o capítulo copiado ao veículo de destino
+				const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
+				veiculoDestino.sistemas.push(copiaCapitulo);
+
+				// Atualiza a UI
+				veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
+				renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
+				renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+			}
+
+			// Fecha o modal
+			document.getElementById('copy-chapter-modal').style.display = 'none';
+			targetVeiculoIndexParaCopia = null; // Reseta o alvo
+		}
+
 
 		function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 			const container = document.getElementById(`sistemas-container-aplicaveis_${veiculoIndex}`);
@@ -2061,6 +2194,25 @@
 			renderizarPaginacaoAplicaveis(veiculoIndex);
 			renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
 		}
+
+		function moverSistemaAplicavel(veiculoIndex, direcao) {
+            const veiculo = veiculosAplicaveisData[veiculoIndex];
+            if (!veiculo || veiculo.sistemas.length < 2) return;
+
+            const sistemaIndex = veiculo.paginaAtual;
+            const newIndex = sistemaIndex + direcao;
+
+            if (newIndex < 0 || newIndex >= veiculo.sistemas.length) return;
+
+            salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex);
+
+            [veiculo.sistemas[sistemaIndex], veiculo.sistemas[newIndex]] = [veiculo.sistemas[newIndex], veiculo.sistemas[sistemaIndex]];
+
+            veiculo.paginaAtual = newIndex;
+
+            renderizarPaginacaoAplicaveis(veiculoIndex);
+            renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+        }
 
 		function removerUltimoSistemaAplicaveis(veiculoIndex) {
 			const veiculo = veiculosAplicaveisData[veiculoIndex];
@@ -2583,10 +2735,11 @@
             // ========================================================================
             // INÍCIO: AJUSTE NA FUNÇÃO htmlToFragments
             // ========================================================================
-			function htmlToFragments(element, parentStyle = {}) {
+			function htmlToFragments(element, parentStyle = {}, listState = null) {
 				let fragments = [];
 				const defaultStyle = { fontStyle: 'normal', fontWeight: 'normal', textDecoration: 'none', color: [0, 0, 0], fontSize: 12, isLink: false, url: '' };
 				let currentStyle = { ...defaultStyle, ...parentStyle };
+
 				for (const node of element.childNodes) {
 					if (node.nodeType === Node.TEXT_NODE) {
 						if (node.textContent.trim().length > 0 || node.textContent === ' ') {
@@ -2595,6 +2748,7 @@
 					} else if (node.nodeType === Node.ELEMENT_NODE) {
 						let newStyle = { ...currentStyle };
 						let specialFragment = null;
+                        let nextListState = listState;
 
                         // Adiciona quebra de linha ANTES de elementos de bloco
                         if (['div', 'p'].includes(node.tagName.toLowerCase())) {
@@ -2629,9 +2783,34 @@
 									newStyle.color = [0, 0, 255];
 								}
 								break;
+                            case 'ul':
+                                nextListState = { type: 'ul' };
+                                break;
+                            case 'ol':
+                                nextListState = { type: 'ol', counter: 1 };
+                                break;
+                            case 'li':
+                                if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
+                                    fragments.push({ type: 'br' });
+                                }
+                                if (listState) {
+                                    let marker = listState.type === 'ul' ? '•  ' : `${listState.counter++}.  `;
+                                    fragments.push({ type: 'text', text: marker, style: currentStyle });
+                                }
+                                break;
 						}
 						if (specialFragment) fragments.push(specialFragment);
-						if (node.hasChildNodes()) fragments = fragments.concat(htmlToFragments(node, newStyle));
+
+						if (node.hasChildNodes()) {
+                            fragments = fragments.concat(htmlToFragments(node, newStyle, nextListState));
+                        }
+
+                        // Adiciona quebra de linha DEPOIS de uma lista
+                        if (['ul', 'ol'].includes(node.tagName.toLowerCase())) {
+                            if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
+                                fragments.push({ type: 'br' });
+                            }
+                        }
 					}
 				}
 				return fragments;
@@ -2950,7 +3129,7 @@
 						if (sistema.paginas && sistema.paginas.length > 0) {
 							for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
 								addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 4);
-								y = await addRichContent(pagina.conteudo, y, 12, rootPrincipal, sistema, idx);
+								y = await addRichContent(pagina.conteudo, y, 9, rootPrincipal, sistema, idx);
 								y += lineHeight * 2;
 							}
 						} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
@@ -3189,5 +3368,4 @@
     </script>
 </body>
 </html>
-
 
