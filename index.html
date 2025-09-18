@@ -455,9 +455,13 @@
     .btn-adicionar-caixa:hover {
         background-color: #45a049;
     }
-    /* ==========================================================================
-       FIM: ESTILOS PARA A NOVA FUNCIONALIDADE "CAIXAS"
-       ========================================================================== */
+	
+	.caminho-pasta {
+	  color: green;
+	  text-decoration: underline;
+	  cursor: pointer;
+	}
+
 </style>
 </head>
 <body style="background-color: #f5fff5;">
@@ -831,9 +835,17 @@
 						contentInserted = true;
 					} 
 					else if (text) {
+						// --- INÍCIO DA MODIFICAÇÃO ---
+						const pathRegex = /((?:[A-Z]:\\|\\\\)[^\n\r]+)/g;
 						const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
-						
-						if (text.match(urlRegex)) {
+
+						if (text.match(pathRegex)) {
+							let newContent = text.replace(pathRegex, (path) => {
+								const sanitizedPath = path.replace(/"/g, '&quot;').trim();
+								return `<a href="${sanitizedPath}" title="${sanitizedPath}" target="_blank" style="color: green;">PASTA</a>`;
+							});
+							document.execCommand('insertHTML', false, newContent);
+						} else if (text.match(urlRegex)) {
 							let newContent = text.replace(urlRegex, (url) => {
 								const fullUrl = url.startsWith('http') ? url : `http://${url}`;
 								return `<a href="${fullUrl}" target="_blank">LINK</a>`;
@@ -843,6 +855,7 @@
 							document.execCommand('insertText', false, text);
 						}
 						contentInserted = true;
+						// --- FIM DA MODIFICAÇÃO ---
 					}
 				}
 				
@@ -2761,6 +2774,7 @@
 
 				for (const node of element.childNodes) {
 					if (node.nodeType === Node.TEXT_NODE) {
+						// Lógica de volta ao original, pois a detecção de pastas agora é feita no elemento <a>
 						if (node.textContent.trim().length > 0 || node.textContent === ' ') {
 							fragments.push({ type: 'text', text: node.textContent.replace(/\n/g, ''), style: { ...currentStyle } });
 						}
@@ -2768,8 +2782,8 @@
 						let newStyle = { ...currentStyle };
 						let specialFragment = null;
 						let nextListState = listState;
+						let skipChildren = false; // Flag para pular o processamento de nós filhos
 
-						// Adiciona quebra de linha ANTES de elementos de bloco
 						if (['div', 'p'].includes(node.tagName.toLowerCase())) {
 								if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
 									fragments.push({ type: 'br' });
@@ -2794,13 +2808,22 @@
 								specialFragment = { type: 'image', src: node.getAttribute('data-original-image'), filename: node.getAttribute('data-filename') || 'imagem.png' };
 								break;
 							case 'a':
-								if (node.classList.contains('attachment')) {
+								// --- INÍCIO DA MODIFICAÇÃO ---
+								if (node.textContent === 'PASTA' && node.hasAttribute('href')) {
+									fragments.push({
+										type: 'text',
+										text: node.getAttribute('href'), // Usa o caminho do atributo href
+										style: { ...currentStyle, color: [0, 128, 0], textDecoration: 'underline', isPath: true }
+									});
+									skipChildren = true; // Ignora o texto "PASTA" dentro do link
+								} else if (node.classList.contains('attachment')) {
 									specialFragment = { type: 'attachment', href: node.getAttribute('href'), filename: node.getAttribute('data-filename'), text: node.textContent };
 								} else {
 									newStyle.isLink = true;
 									newStyle.url = node.href;
-									newStyle.color = [0, 0, 255];
+									newStyle.color = [0, 0, 255]; // Link normal em azul
 								}
+								// --- FIM DA MODIFICAÇÃO ---
 								break;
 							case 'ul':
 								nextListState = { type: 'ul' };
@@ -2813,19 +2836,19 @@
 									fragments.push({ type: 'br' });
 								}
 								if (listState) {
-								let indent = '    '; // 4 espaços para indentação
+								let indent = '    ';
 								let marker = listState.type === 'ul' ? '•  ' : `${listState.counter++}.  `;
 								fragments.push({ type: 'text', text: indent + marker, style: currentStyle });
 								}
 								break;
 						}
+						
 						if (specialFragment) fragments.push(specialFragment);
 
-						if (node.hasChildNodes()) {
+						if (node.hasChildNodes() && !skipChildren) {
 							fragments = fragments.concat(htmlToFragments(node, newStyle, nextListState));
 						}
 
-						// Adiciona quebra de linha DEPOIS de uma lista
 						if (['ul', 'ol'].includes(node.tagName.toLowerCase())) {
 						if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
 							fragments.push({ type: 'br' });
@@ -2835,7 +2858,10 @@
 				}
 				return fragments;
 			}
-			
+
+
+			// 2. SUBSTITUA COMPLETAMENTE a sua função 'renderFragments' por esta:
+			// Esta versão agora calcula o tamanho da fonte para caminhos de pasta.
 			async function renderFragments(fragments, x, startY, maxWidth, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex) {
 				let currentX = x;
 				let currentY = startY;
@@ -2854,27 +2880,58 @@
 				for (const fragment of fragments) {
 					if (currentY > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
 					if (fragment.type === 'text') {
-						applyStyle(fragment.style);
-						const words = fragment.text.split(/(\s+)/).filter(w => w.length > 0);
-						for (const word of words) {
-							const isSpace = word.trim().length === 0;
-							const wordWidth = doc.getTextWidth(word);
-							if (currentX + wordWidth > maxWidth && !isSpace) {
-								currentY += lineHeight;
-								currentX = x;
-								if (currentY > pageBottom) { doc.addPage(); currentY = margin; }
+						
+						// --- INÍCIO DA NOVA LÓGICA ---
+						if (fragment.style.isPath) {
+							let pathFontSize = fragment.style.fontSize || 12; // Começa com o tamanho padrão
+							doc.setFont('helvetica', getCombinedFontStyle(fragment.style));
+							doc.setFontSize(pathFontSize);
+
+							let pathWidth = doc.getTextWidth(fragment.text);
+							const availableWidth = maxWidth - currentX;
+
+							// Reduz o tamanho da fonte até que o caminho caiba em uma linha
+							while (pathWidth > availableWidth && pathFontSize > 4) { // Não reduz abaixo de 4
+								pathFontSize -= 0.5;
+								doc.setFontSize(pathFontSize);
+								pathWidth = doc.getTextWidth(fragment.text);
 							}
-							if (!isSpace) {
-								if (fragment.style.isLink) doc.textWithLink(word, currentX, currentY, { url: fragment.style.url });
-								else doc.text(word, currentX, currentY);
-								if (fragment.style.textDecoration === 'underline') {
-									doc.setDrawColor(fragment.style.color[0], fragment.style.color[1], fragment.style.color[2]);
-									doc.line(currentX, currentY + 1, currentX + wordWidth, currentY + 1);
-									doc.setDrawColor(0,0,0);
+
+							applyStyle({ ...fragment.style, fontSize: pathFontSize }); // Aplica o estilo final calculado
+							doc.text(fragment.text, currentX, currentY);
+							if (fragment.style.textDecoration === 'underline') {
+								doc.setDrawColor(fragment.style.color[0], fragment.style.color[1], fragment.style.color[2]);
+								doc.line(currentX, currentY + 1, currentX + pathWidth, currentY + 1);
+								doc.setDrawColor(0,0,0);
+							}
+							currentX += pathWidth; // Move o cursor pela largura real
+						} else {
+							// Lógica original para texto normal
+							applyStyle(fragment.style);
+							const words = fragment.text.split(/(\s+)/).filter(w => w.length > 0);
+
+							for (const word of words) {
+								const isSpace = word.trim().length === 0;
+								const wordWidth = doc.getTextWidth(word);
+								if (currentX + wordWidth > maxWidth && !isSpace) {
+									currentY += lineHeight;
+									currentX = x;
+									if (currentY > pageBottom) { doc.addPage(); currentY = margin; }
 								}
+								if (!isSpace) {
+									if (fragment.style.isLink) doc.textWithLink(word, currentX, currentY, { url: fragment.style.url });
+									else doc.text(word, currentX, currentY);
+									if (fragment.style.textDecoration === 'underline') {
+										doc.setDrawColor(fragment.style.color[0], fragment.style.color[1], fragment.style.color[2]);
+										doc.line(currentX, currentY + 1, currentX + wordWidth, currentY + 1);
+										doc.setDrawColor(0,0,0);
+									}
+								}
+								currentX += wordWidth;
 							}
-							currentX += wordWidth;
 						}
+						// --- FIM DA NOVA LÓGICA ---
+
 					} else if (fragment.type === 'br') {
 						currentY += lineHeight;
 						currentX = x;
@@ -2886,13 +2943,11 @@
 						let finalWidth = imgProps.width;
 						let finalHeight = imgProps.height;
 
-						// Redimensiona se a largura original for maior que a largura da página
 						if (finalWidth > maxImgWidth) {
 							finalHeight = (imgProps.height * maxImgWidth) / imgProps.width;
 							finalWidth = maxImgWidth;
 						}
 
-						// Redimensiona novamente se a altura (potencialmente já reduzida) for maior que a altura da página
 						if (finalHeight > maxImgHeight) {
 							finalWidth = (finalWidth * maxImgHeight) / finalHeight;
 							finalHeight = maxImgHeight;
@@ -2946,6 +3001,7 @@
 				}
 				return currentY;
 			}
+
 			
 			const addText = (text, size, style = 'normal', indent = 0) => {
 				if (!text) return;
@@ -3088,13 +3144,16 @@
 			
 			addText('- IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold', 0);
 			y = await addRichContent(dataPrincipal.comentarios, y, 4, rootPrincipal, null, -1);
-			y += lineSpacing;
+			
+			y += 14;
 			
 			addLabeledValue('APLICAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
 			if (dataPrincipal.aplicacao_chassi_texto) {
 				addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
-			y += lineSpacing;
+			
+			y += lineHeight;
+			
 			addText('- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold', 0);
 			addText(dataPrincipal.ilustracao_texto || 'Nenhum pedido.', 10, 'italic', 4);
 			
