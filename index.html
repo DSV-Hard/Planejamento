@@ -297,6 +297,7 @@
 		.paginas-navegacao {
             display: flex;
             justify-content: center;
+            flex-wrap: wrap;
             gap: 5px;
             margin-top: 10px;
         }
@@ -420,6 +421,7 @@
         color: white;
         padding: 8px 12px;
         width: 100%;
+		font-size: 12px;
         min-width: 80px;
         border: none;
         cursor: pointer;
@@ -1289,12 +1291,12 @@
 						<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
 						<option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
 						<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
-						<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
+						<option value="Iluminação Interna e Externa" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação Interna e Externa</option>
 						<option value="Outro" ${dados.sistema && ![
 							'Fusíveis e Relés','Alimentação Positiva','Conectores de Peito','Central de Carroceria','Injeção Eletrônica',
 							'Sistema de Carga e Partida','Injeção Eletrônica e Transmissão','Transmissão Automática',
 							'Tração 4x4','Redes de Comunicação','Painel de Instrumentos','Airbag','Ar-condicionado',
-							'Freio ABS','Freio de Estacionamento Eletrônico','Rádio','Central Multimídia','Iluminação'
+							'Freio ABS','Freio de Estacionamento Eletrônico','Rádio','Central Multimídia','Iluminação Interna e Externa'
 						].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
 					</select>
 					<div id="outrocampo_${idx}" style="display:none; margin-top: 5px;">
@@ -1602,6 +1604,8 @@
 								<input type="number" id="idfusiveis_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idfusiveis || ''}" placeholder="Apenas números" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 							</div>
 						</div>
+						<label for="pasta_aplicaveis_${veiculoIndex}">PASTA DO VEÍCULO</label>
+						<input type="text" id="pasta_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.pasta || ''}" placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 						<div class="checkbox-block">
 							<label class="checkbox-title">PESQUISA (VEÍCULO PRINCIPAL OU SEMELHANTE)</label>
 							<div class="checkbox-inline" onchange="togglePesquisaTexto('aplicavel', ${veiculoIndex}); salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1989,6 +1993,7 @@
 				veiculo: document.getElementById(`veiculo_aplicaveis_${veiculoIndex}`).value,
 				iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`).value,
 				idfusiveis: document.getElementById(`idfusiveis_aplicaveis_${veiculoIndex}`).value,
+				pasta: document.getElementById(`pasta_aplicaveis_${veiculoIndex}`).value,
 				pesquisa: document.querySelector(`input[name="pesquisa_aplicaveis_${veiculoIndex}"]:checked`)?.value,
 				pesquisa_texto: document.getElementById(`pesquisa_texto_aplicaveis_${veiculoIndex}`).value,
 				comentarios: document.getElementById(`comentarios_aplicaveis_${veiculoIndex}`).innerHTML,
@@ -2131,17 +2136,17 @@
 					<option value="Conectores de Peito" ${dados.sistema === 'Conectores de Peito' ? 'selected' : ''}>Conectores de Peito</option>
 					<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
 					<option value="Central de Carroceria" ${dados.sistema === 'Central de Carroceria' ? 'selected' : ''}>Central de Carroceria</option>
-					<option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
-					<option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
-					<option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
-					<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
-					<option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
-					<option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
-					<option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
 					<option value="Airbag" ${dados.sistema === 'Airbag' ? 'selected' : ''}>Airbag</option>
 					<option value="Ar-condicionado" ${dados.sistema === 'Ar-condicionado' ? 'selected' : ''}>Ar-condicionado</option>
 					<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
 					<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
+					<option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
+					<option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
+					<option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
+					<option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
+					<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
+					<option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
+					<option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
 					<option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
 					<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
 					<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
@@ -2149,7 +2154,7 @@
 				</select>
 				<div id="outrocampo_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display:none; margin-top: 5px;">
 					<label>Especifique o título:</label>
-					<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Conectores de Peito', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+					<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Conectores de Peito', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação Interna e Externa'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 				</div>
 				<div id="formulario-capitulo-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
 			`;
@@ -2659,6 +2664,14 @@
 				  checarCampo('dificuldade', 'Dificuldade (Principal)');
 				  checarCampo('justificativa', 'Justificativa (Principal)');
 
+                  sistemasData.forEach((sistema, idx) => {
+                    if (!sistema.transferencia) {
+                        erros.push(`Opção de Transferência (Capítulo Principal ${idx + 1})`);
+                    } else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
+                        erros.push(`ID de Transferência (Capítulo Principal ${idx + 1})`);
+                    }
+                  });
+
 				  // --- 2. Aplicáveis (no array salvo) ---
 				  if (veiculosAplicaveisData.length > 0) {
 					salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
@@ -2669,6 +2682,7 @@
 					  if (!veiculo.dadosGerais.veiculo) erros.push(`Veículo Referência ${sfx}`);
 					  if (!veiculo.dadosGerais.iddiagramas) erros.push(`ID DIAGRAMAS ${sfx}`);
 					  if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
+                      if (!veiculo.dadosGerais.pasta) erros.push(`Pasta do Veículo ${sfx}`);
 					  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Aplicação / Chassi ${sfx}`);
 
 					  if (!Array.isArray(veiculo.itensSerie.atmt) || veiculo.itensSerie.atmt.length === 0) erros.push(`Transmissão ${sfx}`);
@@ -2676,6 +2690,14 @@
 					  if (!veiculo.itensSerie.startstop) erros.push(`Função Start/Stop ${sfx}`);
 					  if (!Array.isArray(veiculo.itensSerie.ac) || veiculo.itensSerie.ac.length === 0) erros.push(`Ar-Condicionado ${sfx}`);
 					  if (!veiculo.itensSerie.adas) erros.push(`ADAS ${sfx}`);
+                      
+                      veiculo.sistemas.forEach((sistema, sIdx) => {
+                        if (!sistema.transferencia) {
+                            erros.push(`Opção de Transferência (Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`);
+                        } else if (sistema.transferencia === 'transferencia_outro' && !sistema.idtransf) {
+                            erros.push(`ID de Transferência (Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`);
+                        }
+                      });
 					});
 
 					checarCampo('dificuldade_aplicaveis', 'Dificuldade (Aplicáveis)');
@@ -2732,9 +2754,6 @@
 				return sizeMap[sizeNum] || 12;
 			}
             
-            // ========================================================================
-            // INÍCIO: AJUSTE NA FUNÇÃO htmlToFragments
-            // ========================================================================
 			function htmlToFragments(element, parentStyle = {}, listState = null) {
 				let fragments = [];
 				const defaultStyle = { fontStyle: 'normal', fontWeight: 'normal', textDecoration: 'none', color: [0, 0, 0], fontSize: 12, isLink: false, url: '' };
@@ -2748,14 +2767,14 @@
 					} else if (node.nodeType === Node.ELEMENT_NODE) {
 						let newStyle = { ...currentStyle };
 						let specialFragment = null;
-                        let nextListState = listState;
+						let nextListState = listState;
 
-                        // Adiciona quebra de linha ANTES de elementos de bloco
-                        if (['div', 'p'].includes(node.tagName.toLowerCase())) {
-                            if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
-                                fragments.push({ type: 'br' });
-                            }
-                        }
+						// Adiciona quebra de linha ANTES de elementos de bloco
+						if (['div', 'p'].includes(node.tagName.toLowerCase())) {
+								if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
+									fragments.push({ type: 'br' });
+								}
+						}
 
 						switch (node.tagName.toLowerCase()) {
 							case 'b': case 'strong': newStyle.fontWeight = 'bold'; break;
@@ -2783,42 +2802,40 @@
 									newStyle.color = [0, 0, 255];
 								}
 								break;
-                            case 'ul':
-                                nextListState = { type: 'ul' };
-                                break;
-                            case 'ol':
-                                nextListState = { type: 'ol', counter: 1 };
-                                break;
-                            case 'li':
-                                if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
-                                    fragments.push({ type: 'br' });
-                                }
-                                if (listState) {
-                                    let marker = listState.type === 'ul' ? '•  ' : `${listState.counter++}.  `;
-                                    fragments.push({ type: 'text', text: marker, style: currentStyle });
-                                }
-                                break;
+							case 'ul':
+								nextListState = { type: 'ul' };
+								break;
+							case 'ol':
+								nextListState = { type: 'ol', counter: 1 };
+								break;
+							case 'li':
+								if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
+									fragments.push({ type: 'br' });
+								}
+								if (listState) {
+								let indent = '    '; // 4 espaços para indentação
+								let marker = listState.type === 'ul' ? '•  ' : `${listState.counter++}.  `;
+								fragments.push({ type: 'text', text: indent + marker, style: currentStyle });
+								}
+								break;
 						}
 						if (specialFragment) fragments.push(specialFragment);
 
 						if (node.hasChildNodes()) {
-                            fragments = fragments.concat(htmlToFragments(node, newStyle, nextListState));
-                        }
+							fragments = fragments.concat(htmlToFragments(node, newStyle, nextListState));
+						}
 
-                        // Adiciona quebra de linha DEPOIS de uma lista
-                        if (['ul', 'ol'].includes(node.tagName.toLowerCase())) {
-                            if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
-                                fragments.push({ type: 'br' });
-                            }
-                        }
+						// Adiciona quebra de linha DEPOIS de uma lista
+						if (['ul', 'ol'].includes(node.tagName.toLowerCase())) {
+						if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
+							fragments.push({ type: 'br' });
+							}
+						}
 					}
 				}
 				return fragments;
 			}
-            // ========================================================================
-            // FIM: AJUSTE NA FUNÇÃO htmlToFragments
-            // ========================================================================
-
+			
 			async function renderFragments(fragments, x, startY, maxWidth, rootFolder, sistema, idx, isAplicavel, veiculo, veiculoIndex) {
 				let currentX = x;
 				let currentY = startY;
@@ -2863,11 +2880,32 @@
 						currentX = x;
 					} else if (fragment.type === 'image' && fragment.src) {
 						const imgProps = doc.getImageProperties(fragment.src);
-						const imgWidth = maxWidth - x;
-						const imgHeight = (imgProps.height * imgWidth) / imgProps.width;
-						if (currentY + imgHeight > pageBottom) { doc.addPage(); currentY = margin; }
-						doc.addImage(fragment.src, 'JPEG', x, currentY, imgWidth, imgHeight);
-						currentY += imgHeight;
+						const maxImgWidth = doc.internal.pageSize.width - margin * 2;
+						const maxImgHeight = doc.internal.pageSize.height - margin * 2;
+
+						let finalWidth = imgProps.width;
+						let finalHeight = imgProps.height;
+
+						// Redimensiona se a largura original for maior que a largura da página
+						if (finalWidth > maxImgWidth) {
+							finalHeight = (imgProps.height * maxImgWidth) / imgProps.width;
+							finalWidth = maxImgWidth;
+						}
+
+						// Redimensiona novamente se a altura (potencialmente já reduzida) for maior que a altura da página
+						if (finalHeight > maxImgHeight) {
+							finalWidth = (finalWidth * maxImgHeight) / finalHeight;
+							finalHeight = maxImgHeight;
+						}
+
+						if (currentY + finalHeight > pageBottom) {
+							doc.addPage();
+							currentY = margin;
+						}
+
+						doc.addImage(fragment.src, 'JPEG', x, currentY, finalWidth, finalHeight);
+						currentY += finalHeight;
+
 						currentX = x;
 						const capTitulo = sanitizeName(sistema ? sistema.sistema : `Geral`);
 						const chapterFolderName = `Capítulo ${idx + 1} - ${capTitulo}`;
@@ -2984,12 +3022,15 @@
 				doc.setTextColor(0, 0, 0);
 			};
 			
+			
 			const addColoredText = (text, size, style = 'normal', indent = 0, color = [0, 0, 0]) => {
 				if (y > pageHeight - margin) { doc.addPage(); y = margin; }
 				doc.setFontSize(size);
 				doc.setFont('helvetica', style);
 				doc.setTextColor(color[0], color[1], color[2]);
-				doc.text(text, margin + indent, y);
+				const textWidth = doc.getTextWidth(text);
+				const centerX = (doc.internal.pageSize.width - textWidth) / 2;
+				doc.text(text, centerX, y);
 				y += lineHeight;
 				doc.setTextColor(0, 0, 0);
 			};
@@ -3026,44 +3067,46 @@
 
 			// --- VEÍCULO PRINCIPAL ---
 			addCenteredText("PLANEJAMENTO - VEÍCULO PRINCIPAL", 20, 'bold');
-			addCenteredText(dataPrincipal.clickup, 16, 'normal')
+			addColoredText(dataPrincipal.clickup, 14, 'italic', 0, titleColor);
+			
 			y += lineHeight * 2;
 			addColoredText("INFORMAÇÕES GERAIS", 18, 'bold', 0, titleColor);
 			y += lineSpacing;
-			addLabeledValue('Planejado por', dataPrincipal.planejado_por);
-			addText('- Veículo Referência:', 12, "bold", 0);
-			addText(dataPrincipal.veiculo, 10, "italic", 0);
+			addLabeledValue('PLANEJADO POR', dataPrincipal.planejado_por);
+			addText('- VEÍCULO REFERÊNCIA:', 12, "bold", 0);
+			addText(dataPrincipal.veiculo, 10, "italic", 4);
 			y += lineHeight;
 			addLabeledValue('ID DIAGRAMAS', dataPrincipal.iddiagramas);
 			addLabeledValue('ID FUSÍVEIS', dataPrincipal.idfusiveis);
-			y += lineHeight;
-			addText('- Pasta do Veículo:', 12, "bold", 0);
-			addText(dataPrincipal.pasta, 8, "italic", 4);
-			//addLabeledValue('Pesquisa', dataPrincipal.pesquisa === 'sim' ? `Sim\n${dataPrincipal.pesquisa_texto}` : 'Não');
 			
 			y += lineHeight;
-			addLabeledValue('Pesquisa', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
-			if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
-				addText(dataPrincipal.pesquisa_texto, 8, 'italic', 4);
-			}
+			
+			addText('- PASTA DO VEÍCULO:', 12, "bold", 0);
+			addText(dataPrincipal.pasta, 8, "italic", 4);
+					
 			y += lineHeight;
-
-			addText('IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold', 0);
+			
+			addText('- IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold', 0);
 			y = await addRichContent(dataPrincipal.comentarios, y, 4, rootPrincipal, null, -1);
 			y += lineSpacing;
-			//addLabeledValue('Aplicação / Chassi', dataPrincipal.aplicacao_chassi === 'mesma' ? `Mesma aplicação\n${dataPrincipal.aplicacao_chassi_texto}` : `Ajustar aplicação\n${dataPrincipal.aplicacao_chassi_texto}`);
+			
 			addLabeledValue('APLICAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
 			if (dataPrincipal.aplicacao_chassi_texto) {
 				addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
 			y += lineSpacing;
-			addText('PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold', 0);
-			addText(dataPrincipal.ilustracao_texto || 'Nenhum pedido.', 8, 'italic', 0);
+			addText('- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold', 0);
+			addText(dataPrincipal.ilustracao_texto || 'Nenhum pedido.', 10, 'italic', 4);
 			
-			y += lineHeight * 2;
+			y += lineHeight;
+			
+			addLabeledValue('PESQUISA', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
+			if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
+				addText(dataPrincipal.pesquisa_texto, 8, 'italic', 4);
+			}
+			y += lineHeight;
 
-			addColoredText("ITENS DE SÉRIE / OPCIONAIS", 18, "bold", 0, titleColor);
-			y += lineSpacing;
+			addText('- ITENS DE SÉRIE / OPCIONAIS:', 12, "bold", 0);
             addLabeledValue('Tipo de Chave', formatArray(dataPrincipal.chave));
             addLabeledValue('Função Start/Stop', mapStartStop(dataPrincipal.startstop));
             addLabeledValue('Ar-condicionado', formatArray(dataPrincipal.ac));
@@ -3094,23 +3137,24 @@
 					
 					addHighlightedText(`CAPÍTULO: ${sistema.sistema || ''}`, 14, 'bold', 0, 212, 255, 214);
 					let linhaTransferencia = '';
-					if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência (ID: ${sistema.idtransf || ''})`;
+					if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
 					else if (sistema.transferencia === 'zero') linhaTransferencia = `Fazer do Zero`;
-					else if (sistema.transferencia === 'modificar') linhaTransferencia = `Modificar Publicado`;
-					if (linhaTransferencia) addText(linhaTransferencia, 12, "normal", 4);
+					else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
+					if (linhaTransferencia) addText(linhaTransferencia, 12, "bold", 0);
 					
-					addText(`- Nº páginas prevista: ${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`, 12, "normal", 4);
+					addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
+					//addText(`- Nº páginas prevista: ${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`, 12, "normal", 4);
 					const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
 					const isPaginasForm = sistema.sistema === "Alimentação Positiva" || sistema.sistema === "Conectores de Peito";
 
 					if (!isCaixasForm && !isPaginasForm) {
-						addText(`- Módulo principal: ${sistema.modulo || ''}`, 12, "normal", 4);
-						addText(`- Nome no material: ${sistema.nomematerial || ''}`, 12, "normal", 4);
-						addText(`- Código de Peça / Link:`, 12, "normal", 4);
-						y = await addRichContent(sistema.codmodulo, y, 9, rootPrincipal, sistema, idx);
+						addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
+						addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
+						addText(`- Códigos de Conectores:`, 12, "bold", 0);
+						addText(`${sistema.codconectores || ''}`, 12, 'normal', 4)
+						addText(`- Código de Peça / Link:`, 12, "bold", 0);
+						y = await addRichContent(sistema.codmodulo, y, 4, rootPrincipal, sistema, idx);
 						y += 6;
-						addText(`- Códigos de Conectores:`, 12, "normal", 4);
-						addText(`${sistema.codconectores || ''}`, 12, 'normal', 9)
 					}
 					y += 6;
 
@@ -3120,28 +3164,28 @@
 					if (isCaixasForm) {
 						if (sistema.caixas && sistema.caixas.length > 0) {
 							for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
-								addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 4);
-								y = await addRichContent(caixa.descricoes, y, 9, rootPrincipal, sistema, idx);
+								addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
+								y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
 								y += lineHeight * 2;
 							}
 						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
 					} else if (isPaginasForm) {
 						if (sistema.paginas && sistema.paginas.length > 0) {
 							for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
-								addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 4);
-								y = await addRichContent(pagina.conteudo, y, 9, rootPrincipal, sistema, idx);
+								addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
+								y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
 								y += lineHeight * 2;
 							}
 						} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
 					} else {
-                        addText(`- Página de Localização:`, 12, "bold", 4);
-						y = await addRichContent(sistema.pagloc, y, 9, rootPrincipal, sistema, idx);
+                        addText(`- Página de Localização:`, 12, "bold", 0);
+						y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
-						addText(`- Página de Conectores:`, 12, "bold", 4);
-						y = await addRichContent(sistema.pagcon, y, 9, rootPrincipal, sistema, idx);
+						addText(`- Página de Conectores:`, 12, "bold", 0);
+						y = await addRichContent(sistema.pagcon, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
-						addText(`- Página de Diagramas:`, 12, "bold", 4);
-						y = await addRichContent(sistema.pagdiag, y, 9, rootPrincipal, sistema, idx);
+						addText(`- Página de Diagramas:`, 12, "bold", 0);
+						y = await addRichContent(sistema.pagdiag, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
 				}
@@ -3176,40 +3220,48 @@
 					y += lineSpacing;
 					y += lineHeight;
 					
-					addColoredText(`VEÍCULO APLICÁVEL #${index + 1}`, 14, "bold", 0, titleColor);
-					addText('- Veículo Referência:', 12, "bold", 0);
-					addText(veiculo.dadosGerais.veiculo, 10, "italic", 0);
+					addColoredText(`VEÍCULO APLICÁVEL #${index + 1}`, 18, "bold", 0, titleColor);
+					y += lineSpacing;
+					
+					addText('- VEÍCULO REFERÊNCIA:', 12, "bold", 0);
+					addText(veiculo.dadosGerais.veiculo, 10, "italic", 4);
+					
 					y += lineSpacing;
 					
 					addLabeledValue('ID DIAGRAMAS', veiculo.dadosGerais.iddiagramas);
 					addLabeledValue('ID FUSÍVEIS', veiculo.dadosGerais.idfusiveis);
+					
 					y += lineSpacing;
 					
-					//addLabeledValue('Pesquisa', veiculo.dadosGerais.pesquisa === 'sim' ? `Sim\n${veiculo.dadosGerais.pesquisa_texto}` : 'Não');
-					addLabeledValue('Pesquisa', veiculo.dadosGerais.pesquisa === 'sim' ? 'Sim' : 'Não');
-					if (veiculo.dadosGerais.pesquisa === 'sim' && veiculo.dadosGerais.pesquisa_texto) {
-						addText(veiculo.dadosGerais.pesquisa_texto, 12, "italic", 4);
-					}
-					y += lineHeight;
+					addText('- PASTA DO VEÍCULO:', 12, "bold");
+                    addText(veiculo.dadosGerais.pasta, 8, 'italic', 0);
 					
-					addText('IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold');
+					y += lineSpacing;
+					
+					addText('- IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold');
 					y = await addRichContent(veiculo.dadosGerais.comentarios, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
 					
 					y += lineHeight;
 					y += lineHeight / 2;
 					
-					//addLabeledValue('Aplicação / Chassi', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? `Mesma aplicação\n${veiculo.dadosGerais.aplicacao_chassi_texto}` : `Ajustar aplicação\n${veiculo.dadosGerais.aplicacao_chassi_texto}`);
 					addLabeledValue('APLICAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
 					if (veiculo.dadosGerais.aplicacao_chassi_texto) {
 						addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12, 'normal', 4);
 					}
 					y += lineHeight;
 
-					addText('PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold');
+					addText('- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold');
 					addText(veiculo.dadosGerais.ilustracao_texto || 'Nenhum pedido.', 12, 'italic', 4);
+					
 					y += lineHeight;
-                    
-					addText('ITENS DE SÉRIE/OPCIONAIS:', 12, "bold");
+					
+					addLabeledValue('PESQUISA', veiculo.dadosGerais.pesquisa === 'sim' ? 'Sim' : 'Não');
+					if (veiculo.dadosGerais.pesquisa === 'sim' && veiculo.dadosGerais.pesquisa_texto) {
+						addText(veiculo.dadosGerais.pesquisa_texto, 10, "italic", 4);
+					}
+					y += lineHeight;
+					                    
+					addText('- ITENS DE SÉRIE/OPCIONAIS:', 12, "bold");
                     addLabeledValue('Tipo de Chave', formatArray(veiculo.itensSerie.chave));
                     addLabeledValue('Função Start/Stop', mapStartStop(veiculo.itensSerie.startstop));
                     addLabeledValue('Ar-condicionado', formatArray(veiculo.itensSerie.ac));
@@ -3238,9 +3290,9 @@
 								const idPrincipal = (sistema.sistema === 'Fusíveis e Relés')
 									? dataPrincipal.idfusiveis
 									: dataPrincipal.iddiagramas;
-								addLabeledValue('Método', `Transferência (do Principal) - ID: ${idPrincipal || 'N/A'}`);
+								addLabeledValue('Transferência (do Principal) - ID', ` ${idPrincipal || 'N/A'}`);
 							} else if (sistema.transferencia === 'transferencia_outro') {
-								addLabeledValue('Método', `Transferência (Outro) - ID: ${sistema.idtransf || 'N/A'}`);
+								addLabeledValue('Transferência (Outro) - ID', ` ${sistema.idtransf || 'N/A'}`);
 							} else if (sistema.transferencia === 'modificar') {
 								addText(`- Modificar Publicado`, 12, "normal", 0);
 							}
@@ -3252,11 +3304,11 @@
 							if (!isCaixasForm && !isPaginasForm) {
 								addLabeledValue('Módulo principal', sistema.modulo);
 								addLabeledValue('Nome no material', sistema.nomematerial);
+								addText(`- Códigos de Conectores:`, 12, "bold", 0);
+						        addText(sistema.codconectores, 12, 'normal', 4)
 								addText(`- Código de Peça / Link:`, 12, "bold", 0);
 								y = await addRichContent(sistema.codmodulo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
                                 y += 6;
-								addText(`- Códigos de Conectores:`, 12, "bold", 0);
-						        addText(sistema.codconectores, 12, 'normal', 4)
 							}
 							y += 6;
 							
@@ -3267,8 +3319,8 @@
 								if (sistema.caixas && sistema.caixas.length > 0) {
 									for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
 										y += lineSpacing / 2;
-										addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 4);
-										y = await addRichContent(caixa.descricoes, y, 9, rootAplicaveis, sistema, idx, true, veiculo, index);
+										addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
+										y = await addRichContent(caixa.descricoes, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 										y += lineHeight;
 									}
 								} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight;}
@@ -3276,20 +3328,20 @@
 								if (sistema.paginas && sistema.paginas.length > 0) {
 									for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
 										y += lineSpacing / 2;
-										addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 4);
-										y = await addRichContent(pagina.conteudo, y, 9, rootAplicaveis, sistema, idx, true, veiculo, index);
+										addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
+										y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 										y += lineHeight;
 									}
 								} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
 							} else {
-								addText(`- Página de Localização:`, 12, "bold", 4);
-								y = await addRichContent(sistema.pagloc, y, 9, rootAplicaveis, sistema, idx, true, veiculo, index);
+								addText(`- Página de Localização:`, 12, "bold", 0);
+								y = await addRichContent(sistema.pagloc, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 12;
-								addText(`- Página de Conectores:`, 12, "bold", 4);
-								y = await addRichContent(sistema.pagcon, y, 9, rootAplicaveis, sistema, idx, true, veiculo, index);
+								addText(`- Página de Conectores:`, 12, "bold", 0);
+								y = await addRichContent(sistema.pagcon, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 12;
-								addText(`- Página de Diagramas:`, 12, "bold", 4);
-								y = await addRichContent(sistema.pagdiag, y, 9, rootAplicaveis, sistema, idx, true, veiculo, index);
+								addText(`- Página de Diagramas:`, 12, "bold", 0);
+								y = await addRichContent(sistema.pagdiag, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 12;
 							}
 						}
@@ -3350,6 +3402,8 @@
 				document.body.removeChild(a);
 				URL.revokeObjectURL(url);
 			}
+            
+            salvarComoJSON();
 		}
 		
 		
@@ -3368,4 +3422,3 @@
     </script>
 </body>
 </html>
-
