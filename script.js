@@ -85,7 +85,6 @@ function setupEditableContent(elementId) {
 		const clipboardData = e.clipboardData || window.clipboardData;
 		let contentInserted = false;
 
-		// 1. Verifica se há arquivos colados (ex: imagens)
 		if (clipboardData.files.length > 0) {
 			const file = clipboardData.files[0];
 			if (file.type.indexOf('image') !== -1) {
@@ -94,7 +93,6 @@ function setupEditableContent(elementId) {
 			}
 		}
 
-		// 2. Se for texto, transforma links e pastas
 		if (!contentInserted) {
 			const text = clipboardData.getData('text/plain');
 
@@ -128,7 +126,6 @@ function setupEditableContent(elementId) {
 
 function toggleItensSerie(veiculoIndex) {
 	const checkbox = document.getElementById(`toggle_itens_serie_${veiculoIndex}`);
-     // Esta função agora procura o 'container' interno, não o 'fieldset'
 	const container = document.getElementById(`container_itens_serie_${veiculoIndex}`);
 	if (checkbox && container) {
 		container.style.display = checkbox.checked ? 'block' : 'none';
@@ -210,15 +207,13 @@ function renderizarFormularioCapitulo(idx) {
 	container.innerHTML = ""; // limpa antes
 	if (!valor) return;
 
-	// --- NOVAS REGRAS DE FORMULÁRIO ---
 	const isCaixasForm = valor === "Fusíveis e Relés";
 	const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
 	const isIluminacaoForm = valor === "Iluminação";
 	const isOutroForm = valor === "Outro";
 	const isStandardModuleForm = !isCaixasForm && !isPaginasForm && !isIluminacaoForm && !isOutroForm;
 
-	// --- Bloco Comum (Transferência e Páginas Previstas) ---
-	// Aparece para todos, exceto "Caixas" e "Páginas" que têm seu próprio HTML
+	// --- Bloco Comum (Transferência e Páginas Previstas), Aparece para todos, exceto "Caixas" e "Páginas" que têm seu próprio HTML ---
 	const commonTransferHtml = `
 		<div class="checkbox-block">
 			<div class="checkbox-inline" onchange="toggleIdTransfPrincipal(${idx}); togglePaginasPrevistaPrincipal(${idx}); salvarDadosSistema(${idx})">
@@ -235,8 +230,7 @@ function renderizarFormularioCapitulo(idx) {
 		</div>
 	`;
 	
-	// --- Bloco Padrão (Módulo, Nome, Conectores, etc.) ---
-	// Usado pelo "Standard", e condicionalmente por "Iluminação" e "Outro"
+	// --- Bloco Padrão (Módulo, Nome, Conectores, etc.), Usado pelo "Standard", e condicionalmente por "Iluminação" e "Outro" ---
 	const standardModuleHtml = `
 		<label>Módulo principal</label>
 		<input type="text" name="modulo_${idx}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistema(${idx})">
@@ -295,8 +289,6 @@ function renderizarFormularioCapitulo(idx) {
 			<button type="button" class="btn-adicionar-caixa" onclick="adicionarCaixa(${idx})">+ Adicionar Caixa</button>
 		</fieldset>
 	`;
-
-	// --- RENDERIZAÇÃO CONDICIONAL ---
 
 	if (isCaixasForm) {
          const fusiveisOptionsHtml = `
@@ -367,7 +359,6 @@ function renderizarFormularioCapitulo(idx) {
 		container.innerHTML = commonTransferHtml + standardModuleHtml + standardDevelopmentHtml;
 	}
 	
-	// Configura os campos editáveis
 	if (dados.modulo_dedicado === 'sim' || isStandardModuleForm) {
 		setupDragAndDrop(`pagloc_${idx}`);
 		setupEditableContent(`pagloc_${idx}`);
@@ -495,7 +486,6 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 container.innerHTML = ""; // Limpa o container antes de adicionar o novo formulário
 if (!valor) return;
 
-// --- NOVAS REGRAS DE FORMULÁRIO ---
 const isCaixasForm = valor === "Fusíveis e Relés";
 const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
 const isIluminacaoForm = valor === "Iluminação";
@@ -570,8 +560,6 @@ const caixasDevelopmentHtml = `
 	</fieldset>
 `;
 
-// --- RENDERIZAÇÃO CONDICIONAL ---
-
 if (isCaixasForm) {
      const fusiveisOptionsHtml = `
          <div class="checkbox-blockk"></div>
@@ -641,7 +629,6 @@ if (isCaixasForm) {
 	container.innerHTML = commonTransferHtml + standardModuleHtml + standardDevelopmentHtml;
 }
 
-// Configura os campos editáveis
 if (dados.modulo_dedicado === 'sim' || isStandardModuleForm) {
 	setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
@@ -665,7 +652,6 @@ function renderizarSistema(index) {
 		div.className = "system-block";
 		const idx = index;
 
-		// Campo de seleção do sistema
 		div.innerHTML = `
 		<label>Título do capítulo</label>
 			<select name="sistema_${idx}" id="sistema_${idx}" onchange="salvarDadosSistema(${idx}); renderizarFormularioCapitulo(${idx});">
@@ -709,7 +695,6 @@ function renderizarSistema(index) {
 
 		container.appendChild(div);
 
-		// Lógica para mostrar/esconder o campo "Outro"
 		const selectElement = div.querySelector(`#sistema_${idx}`);
 		const outroCampo = div.querySelector(`#outrocampo_${idx}`);
 		const outroInput = div.querySelector(`input[name="sistema_outro_${idx}"]`);
@@ -744,7 +729,6 @@ function toggleModuloDedicadoPrincipal(index) {
 	}
 
 	if (developmentContainer) {
-		// Recria o HTML de desenvolvimento com base na seleção
 		if (moduloDedicado === 'sim') {
 			developmentContainer.innerHTML = `
 				<fieldset>
@@ -769,7 +753,6 @@ function toggleModuloDedicadoPrincipal(index) {
 					</div>
 				</fieldset>
 			`;
-			// Configura os campos editáveis
 			setupDragAndDrop(`pagloc_${index}`);
 			setupEditableContent(`pagloc_${index}`);
 			setupDragAndDrop(`pagcon_${index}`);
@@ -784,7 +767,6 @@ function toggleModuloDedicadoPrincipal(index) {
 					<button type="button" class="btn-adicionar-caixa" onclick="adicionarPagina(${index})">+ Adicionar Página</button>
 				</fieldset>
 			`;
-			// Limpa dados de módulo dedicado e renderiza páginas (se houver)
 			const dados = sistemasData[index];
 			dados.modulo = '';
 			dados.nomematerial = '';
@@ -833,19 +815,13 @@ function adicionarSistema() {
 
 function moverSistema(direcao) {
      if (sistemasData.length < 2) return; 
-
      const newIndex = paginaAtual + direcao;
-
      if (newIndex < 0 || newIndex >= sistemasData.length) return;
-
-     salvarDadosSistema(paginaAtual);
-
-     [sistemasData[paginaAtual], sistemasData[newIndex]] = [sistemasData[newIndex], sistemasData[paginaAtual]];
-
-     paginaAtual = newIndex;
-
-     renderizarPaginacao();
-     renderizarSistema(paginaAtual);
+		 salvarDadosSistema(paginaAtual);
+		 [sistemasData[paginaAtual], sistemasData[newIndex]] = [sistemasData[newIndex], sistemasData[paginaAtual]];
+		 paginaAtual = newIndex;
+		 renderizarPaginacao();
+		 renderizarSistema(paginaAtual);
  }
 
 function removerUltimoSistema() {
@@ -940,22 +916,15 @@ if (!selectElement) return;
 	const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
 
 	sistemasData[index] = {
-		// Preserva dados de "páginas" ou "caixas"
 		caixas: caixasExistentes,
 		paginas: paginasExistentes,
-		
-		// Dados Comuns
 		sistema: sistemaValor,
 		transferencia: transferenciaValue,
 		idtransf: getVal(`#idtransf_${index}`),
 		paginasprev: getVal(`input[name="paginasprev_${index}"]`),
-		
-		// Novos dados (Iluminação e Outro)
 		tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
 		modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
-         tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
-
-		// Dados de Módulo Padrão
+        tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
 		modulo: getVal(`input[name="modulo_${index}"]`),
 		nomematerial: getVal(`input[name="nomematerial_${index}"]`),
 		codmodulo: getHtml(`#codmodulo_${index}`),
@@ -1058,7 +1027,6 @@ function removerUltimoVeiculoAplicavel() {
 	};
 }
 
-
 function renderizarVeiculoAplicavel(veiculoIndex) {
 	const container = document.getElementById("veiculos-aplicaveis-container");
 	container.innerHTML = "";
@@ -1127,8 +1095,6 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
 			<fieldset>
 				<legend>ITENS DE SÉRIE / OPCIONAIS (Veículo ${veiculoIndex + 1})</legend>
-				
-                 <!-- A. O CHECKBOX DE CONTROLE VEM AQUI DENTRO -->
 				<div class="checkbox-block">
 					<label class="checkbox-title">
 						<input type="checkbox" id="toggle_itens_serie_${veiculoIndex}" 
@@ -1139,11 +1105,8 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				</div>
 
 				<div class="checkbox-blockk"></div>
-
-                 <!-- B. OS ITENS SÃO AGRUPADOS NESTE NOVO DIV -->
+				
                  <div id="container_itens_serie_${veiculoIndex}" style="display: ${veiculo.dadosGerais.precisaPreencherItensSerie ? 'block' : 'none'};">
-                     
-                     <!-- CHAVE / BOTÃO / ENCAIXE -->
                      <div class="checkbox-block">
                        <label class="checkbox-title">TIPO DE CHAVE:</label>
                        <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1155,7 +1118,6 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
                      <div class="checkbox-blockk"></div>
 
-                     <!-- FUNÇÃO START/STOP -->
                      <div class="checkbox-block">
                        <label class="checkbox-title">FUNÇÃO START/STOP:</label>
                        <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1167,7 +1129,6 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
                      <div class="checkbox-blockk"></div>
 
-                     <!-- AR-CONDICIONADO -->
                      <div class="checkbox-block">
                        <label class="checkbox-title">AR-CONDICIONADO:</label>
                        <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1178,8 +1139,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
                      </div>
 
                      <div class="checkbox-blockk"></div>
-                     
-                     <!-- TRANSMISSÃO -->
+
                      <div class="checkbox-block">
                        <label class="checkbox-title">TRANSMISSÃO:</label>
                        <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1189,8 +1149,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
                      </div>
 
                      <div class="checkbox-blockk"></div>
-                     
-                     <!-- TRAÇÃO -->
+
                      <div class="checkbox-block">
                          <label class="checkbox-title">TRAÇÃO:</label>
                          <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
@@ -1212,7 +1171,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
                  <label for="outros_opcional_aplicaveis_${veiculoIndex}">OUTROS (OPCIONAIS):</label>
                  <textarea id="outros_opcional_aplicaveis_${veiculoIndex}" rows="3" placeholder="Itens opcionais não listados acima..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.itensSerie.outros_opcional || ''}</textarea>
              
-             </div> <!-- Fim do container_itens_serie -->  
+             </div>
 			</fieldset>
 
 			<fieldset>
@@ -1464,7 +1423,6 @@ function autoResizeEditableContent(element) {
 }
 
 function getChapterFolderName(veiculo, sistema, capTitulo) {
-	// CORREÇÃO: Usa 'veiculo.sistemas' que é o array correto
 	const sistemaIndex = sistema && veiculo.sistemas ? veiculo.sistemas.indexOf(sistema) + 1 : 1;
 	return `Capítulo ${sistemaIndex} - ${capTitulo}`;
 }
@@ -1526,7 +1484,7 @@ function abrirModalCopia(veiculoIndex) {
 		selectVeiculo.appendChild(optAplicavel);
 	});
 
-	popularCapitulosParaCopia(); // Popula os capítulos para o veículo inicialmente selecionado
+	popularCapitulosParaCopia();
 
 	document.getElementById('copy-chapter-modal').style.display = 'flex';
 }
@@ -1587,20 +1545,16 @@ function executarCopiaCapitulo() {
 	const capituloParaCopiar = sourceSistemas[selectedCapituloIndex];
 
 	if (capituloParaCopiar) {
-		// Cópia profunda dos dados do capítulo
 		const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
 		
-		// Adiciona o capítulo copiado ao veículo de destino
 		const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
 		veiculoDestino.sistemas.push(copiaCapitulo);
 
-		// Atualiza a UI
 		veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
 		renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
 		renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
 	}
-
-	// Fecha o modal
+	
 	document.getElementById('copy-chapter-modal').style.display = 'none';
 	targetVeiculoIndexParaCopia = null; // Reseta o alvo
 }
@@ -1735,7 +1689,6 @@ function toggleModuloDedicadoAplicaveis(veiculoIndex, sistemaIndex) {
 						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
 					</fieldset>
 				`;
-				// Limpa dados de módulo dedicado e renderiza páginas (se houver)
 				const dados = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
 				dados.modulo = '';
 				dados.nomematerial = '';
@@ -1872,22 +1825,18 @@ if (!veiculo || !veiculo.sistemas[sistemaIndex]) return;
 		const paginasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].paginas : [];
 
 		veiculo.sistemas[sistemaIndex] = {
-			// Preserva dados
 			caixas: caixasExistentes,
 			paginas: paginasExistentes,
 
-			// Dados Comuns
 			sistema: sistemaValor,
 			transferencia: transferenciaValue,
 			idtransf: getVal(`#idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 			paginasprev: getVal(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
 
-			// Novos dados (Iluminação e Outro)
 			tipo_iluminacao: getRadio(`tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 			modulo_dedicado: getRadio(`modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 			tipo_fusiveis: getRadio(`tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 			
-			// Dados de Módulo Padrão
 			modulo: getVal(`input[name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
 			nomematerial: getVal(`input[name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
 			codmodulo: getHtml(`#codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
@@ -1900,7 +1849,6 @@ if (!veiculo || !veiculo.sistemas[sistemaIndex]) return;
 		renderizarPaginacaoAplicaveis(veiculoIndex);
 }
 
- 
  function adicionarCaixaAplicaveis(veiculoIndex, sistemaIndex) {
      const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
      if (!sistema.caixas) sistema.caixas = [];
@@ -2036,13 +1984,11 @@ function coletarDadosFormulario() {
 		iddiagramas: document.getElementById("iddiagramas").value,
 		idfusiveis: document.getElementById("idfusiveis").value,
 
-		// Campos contenteditable
 		pasta: document.getElementById("pasta")?.value || '',
 		pesquisa_texto: document.getElementById("pesquisa_texto")?.value || '',
 		comentarios: document.getElementById("comentarios")?.innerHTML || '',
 		ilustracao_texto: document.getElementById("ilustracao_texto")?.value || '',
 
-		// Outros
 		pesquisa: document.querySelector('input[name="pesquisa"]:checked')?.value,
 		aplicacao_chassi: document.querySelector('input[name="aplicacao_chassi"]:checked')?.value,
 		aplicacao_chassi_texto: document.getElementById("aplicacao_chassi_texto").value,
@@ -2118,7 +2064,6 @@ function carregarDeJSON(input) {
 					});
 				};
 
-				// Carrega dados da aba Principal
                  setData('planejado_por', dataPrincipal.planejado_por);
 				setData('veiculo', dataPrincipal.veiculo);
 				setData('clickup', dataPrincipal.clickup);
@@ -2155,7 +2100,6 @@ function carregarDeJSON(input) {
 					document.getElementById('paginas-navegacao').innerHTML = '';
 				}
 
-				// Carrega dados da aba Aplicaveis
 				veiculosAplicaveisData = dataAplicaveis;
 				if (veiculosAplicaveisData.length > 0) {
 					veiculoAplicavelAtual = 0;
@@ -2186,7 +2130,6 @@ function carregarDeJSON(input) {
 
 		  const checarCampo = (id, nome) => {
 			const el = document.getElementById(id);
-			// CORREÇÃO: Checa 'value' para inputs/textareas, e 'innerHTML' para contenteditable
 			let valor = '';
 			if (el) {
 				if (el.isContentEditable) {
@@ -2196,7 +2139,7 @@ function carregarDeJSON(input) {
 				}
 			}
 			
-			if (!el || valor === '' || valor === '<br>') { // <br> é lixo do contenteditable
+			if (!el || valor === '' || valor === '<br>') {
 			  erros.push(nome);
 			  if (el) el.classList.add('campo-invalido');
 			}
@@ -2249,9 +2192,7 @@ function carregarDeJSON(input) {
              } else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
                  erros.push(`ID de Transferência ${capLabel}`);
              } else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
-				// <-- LINHA ADICIONADA
-                 erros.push(`Nº páginas prevista ${capLabel}`); // <-- LINHA ADICIONADA
-				// Tenta destacar o campo se a página estiver ativa
+                 erros.push(`Nº páginas prevista ${capLabel}`);
 				const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
 				if (el) el.classList.add('campo-invalido');
 			}
@@ -2268,8 +2209,7 @@ function carregarDeJSON(input) {
 			  if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
                if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
 			  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Aplicação / Chassi ${sfx}`);
-
-			  // --- SÓ VALIDA ITENS DE SÉRIE SE O CHECKBOX ESTIVER MARCADO ---
+			  
 			  if (veiculo.dadosGerais.precisaPreencherItensSerie) {
 				if (!Array.isArray(veiculo.itensSerie.atmt) || veiculo.itensSerie.atmt.length === 0) erros.push(`Transmissão ${sfx}`);
 				if (!Array.isArray(veiculo.itensSerie.chave) || veiculo.itensSerie.chave.length === 0) erros.push(`Comutador de Ignição ${sfx}`);
@@ -2283,9 +2223,8 @@ function carregarDeJSON(input) {
                      erros.push(`Opção de Transferência ${capLabel}`);
                  } else if (sistema.transferencia === 'transferencia_outro' && !sistema.idtransf) {
                      erros.push(`ID de Transferência ${capLabel}`);
-                 } else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) { // <-- LINHA ADICIONADA
-					erros.push(`Nº páginas prevista ${capLabel}`); // <-- LINHA ADICIONADA
-					// Tenta destacar o campo se a página estiver ativa
+                 } else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
+					erros.push(`Nº páginas prevista ${capLabel}`);
 					const el = document.querySelector(`input[name="paginasprev_aplicaveis_${idx}_${sIdx}"]`);
 					if (el) el.classList.add('campo-invalido');
 				}
@@ -2299,15 +2238,8 @@ function carregarDeJSON(input) {
 		  return [...new Set(erros)];
 		}
 
+// INÍCIO: LÓGICA DE GERAÇÃO DE PDF/ZIP
 
-// =================================================================================
-// INÍCIO: LÓGICA DE GERAÇÃO DE PDF/ZIP (VERSÃO CORRIGIDA E FUNDIDA)
-// =================================================================================
-
-/**
- * Esta é a nova função "controladora".
- * Ela é chamada pelos botões do modal e decide o que será gerado.
- */
 async function gerarPDF(sistemasParte2 = null) {
 	// 1. Validar formulário
 	const erros = validarFormularioGlobal();
@@ -2332,21 +2264,14 @@ async function gerarPDF(sistemasParte2 = null) {
 	let partsToGenerate = [];
 
 	if (isSplit) {
-		// MODO DIVIDIDO
 		const todosSistemas = dataPrincipalOriginal.sistemas;
-
-		// 1. Sistemas Parte 1 (NÃO selecionados)
 		const sistemasParte1 = todosSistemas.filter(sistema => 
 			!sistemasParte2.some(s2 => s2.sistema === sistema.sistema)
 		);
 		
-		// 2. Calcular PPP (Páginas) Parte 1
 		const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
 		
-		// 3. Calcular PPP (Páginas) Parte 2
 		const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-
-		// Configuração Parte 1
 		partsToGenerate.push({
 			prefixo: "PARTE 1 - ",
 			sufixoTitulo: " (PARTE 1)",
@@ -2355,12 +2280,11 @@ async function gerarPDF(sistemasParte2 = null) {
 				sistemas: sistemasParte1,
 				ppp_calculado: pppParte1
 			},
-			dataAplicaveis: [], // Parte 1 NÃO tem aplicáveis
+			dataAplicaveis: [],
 			incluirInfoGerais: true,
 			incluirItensSerie: true
 		});
 
-		// Configuração Parte 2
 		partsToGenerate.push({
 			prefixo: "PARTE 2 - ",
 			sufixoTitulo: " (PARTE 2)",
@@ -2375,7 +2299,6 @@ async function gerarPDF(sistemasParte2 = null) {
 		});
 
 	} else {
-		// MODO ÚNICO (Clicou NÃO ou não selecionou capítulos)
 		const pppTotal = dataPrincipalOriginal.sistemas.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
 
 		partsToGenerate.push({
@@ -2391,21 +2314,16 @@ async function gerarPDF(sistemasParte2 = null) {
 		});
 	}
 
-	// 3. Gerar os documentos (PDF e ZIP)
-	// O ZIP será gerado pela última parte (Parte 2 ou Único)
 	for (const [index, part] of partsToGenerate.entries()) {
 		const isLastPart = index === partsToGenerate.length - 1;
 		await gerarPDFDocumento(part, isLastPart, dadosCompletos);
 	}
-
-	// 4. Salvar JSON (sempre)
 	salvarComoJSON();
 }
 
 async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	
 	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais, incluirItensSerie } = partData;
-	// dadosCompletosJSON é o JSON inteiro, usado para o ZIP
 	const dataPrincipalOriginalParaZip = dadosCompletosJSON.principal;
 	const dataAplicaveisOriginalParaZip = dadosCompletosJSON.aplicaveis;
 
@@ -2417,7 +2335,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const pageHeight = doc.internal.pageSize.height;
 	const lineSpacing = 6;
 
-	// O ZIP é criado em todas as partes, mas só é salvo na ÚLTIMA
 	const zip = new JSZip();
 	const rootPrincipal = zip.folder('Veículo Principal');
 	const rootAplicaveis = zip.folder('Veículos Aplicáveis');
@@ -2616,7 +2533,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 
 			if (fragment.type === 'text' || fragment.type === 'link') {
-				// CASO 1: É um caminho de pasta/rede (isPath) - Escreve endereço completo em verde
 				if (fragment.style && fragment.style.isPath) {
 					const pathFontSize = fragment.style.fontSize || 12;
 					applyStyle({ ...fragment.style, fontSize: pathFontSize });
@@ -2653,8 +2569,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 					continue;
 				}
-
-				// CASO 2: É um link de internet - Escreve apenas "LINK" em azul com ÁREA CLICÁVEL MANUAL
+				
 				if (fragment.type === 'link' || (fragment.style && fragment.style.isLink)) {
 					applyStyle(fragment.style);
 					
@@ -2671,18 +2586,13 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 
 					doc.setTextColor(0, 0, 255);
 					doc.text(displayLinkText, currentX, currentY);
-					
-					// Cria a anotação de link manualmente sobre o texto escrito
-					// Parâmetros: x, y (superior esquerdo), largura, altura, objeto com a URL
 					doc.link(currentX, currentY - th, tw, th, { url: urlDest });
 					
-					// Desenha a linha de sublinhado
 					doc.setDrawColor(0, 0, 255);
 					doc.line(currentX, currentY + 0.5, currentX + tw, currentY + 0.5);
 					
 					currentX += tw + 2;
 				} 
-				// CASO 3: Texto comum (com suporte a Enter \n)
 				else {
 					applyStyle(fragment.style);
 					const textContent = fragment.text || "";
@@ -2714,9 +2624,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				currentY += lineHeight;
 				currentX = x;
 			} else if (fragment.type === 'image' && fragment.src) {
-				// Lógica de imagem mantida...
 			} else if (fragment.type === 'attachment') {
-				// Lógica de anexo mantida...
 			}
 		}
 		return currentY;
@@ -2855,7 +2763,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		y += lineHeight;
 		
 		addText('- PASTA DO VEÍCULO:', 12, "bold", 0);
-		// A popuplação do ZIP acontece aqui dentro
 		y = await addRichContent(dataPrincipal.pasta, y, 4, rootPrincipal, null, -1);
 				
 		y += lineHeight;
@@ -2908,7 +2815,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 			y += lineSpacing / 2;
 
-			// --- LÓGICA DE TÍTULO (ILUMINAÇÃO) ---
 			let tituloCapitulo = sistema.sistema || '';
 			if (sistema.sistema === 'Iluminação') {
 				if (sistema.tipo_iluminacao === 'interna') tituloCapitulo = 'ILUMINAÇÃO INTERNA';
@@ -2943,7 +2849,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 
 			if (!isCaixasForm && !isPaginasForm && isModuloDedicado) {
-				// Renderiza campos do módulo (Standard, Iluminação-SIM, Outro-SIM)
 				addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
 				addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
 				addText(`- Códigos de Conectores:`, 12, "bold", 0);
@@ -2966,7 +2871,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 				} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
 			} else if (isPaginasForm || (!isModuloDedicado && (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')))) {
-				// Renderiza "+ Adicionar Página" (Alimentação, Carga, Iluminação-NÃO, Outro-NÃO)
 				if (sistema.paginas && sistema.paginas.length > 0) {
 					for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
 						addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
@@ -2975,7 +2879,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
 			} else {
-				// Renderiza Loc/Con/Diag (Standard, Iluminação-SIM, Outro-SIM)
 				addText(`- Página de Localização:`, 12, "bold", 0);
 				y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
 				y += lineHeight * 2;
@@ -2997,12 +2900,11 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	addLabeledValue('Dificuldade', dataPrincipal.dificuldade);
 	addLabeledValue('Justificativa', dataPrincipal.justificativa);
 	
-	// CORREÇÃO: Usa o 'ppp_calculado' vindo do partData
+
 	let somaTotal = dataPrincipal.ppp_calculado || 0;
 	let somaTransferidas = 0, somaCriadas = 0;
 	if (dataPrincipal.sistemas) dataPrincipal.sistemas.forEach(s => {
 		const paginas = parseInt(s.paginasprev) || 0;
-		//somaTotal += paginas; // Não precisa mais somar
 		if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') somaTransferidas += paginas;
 		else somaCriadas += paginas;
 	});
@@ -3011,7 +2913,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	addText(`- Total (esta parte): ${somaTotal}\n- Páginas Criadas do zero: ${somaCriadas}\n- Páginas Transferidas: ${somaTransferidas}`, 12, "normal", 0);
 
 	//VEÍCULOS APLICÁVEIS
-	// CORREÇÃO: Usa 'dataAplicaveis' que veio do partData (vazio se for Parte 1)
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		doc.addPage();
 		y = margin;
@@ -3084,7 +2985,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineHeight;
 
-					// --- LÓGICA DE TÍTULO (ILUMINAÇÃO) ---
 					let tituloCapitulo = sistema.sistema || '';
 					if (sistema.sistema === 'Iluminação') {
 						if (sistema.tipo_iluminacao === 'interna') tituloCapitulo = 'ILUMINAÇÃO INTERNA';
@@ -3123,7 +3023,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 
 					if (!isCaixasForm && !isPaginasForm && isModuloDedicado) {
-						// Renderiza campos do módulo (Standard, Iluminação-SIM, Outro-SIM)
 						addLabeledValue('Módulo principal', sistema.modulo);
 						addLabeledValue('Nome no material', sistema.nomematerial);
 						addText(`- Códigos de Conectores:`, 12, "bold", 0);
@@ -3147,7 +3046,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 							}
 						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight;}
 					} else if (isPaginasForm || (!isModuloDedicado && (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')))) {
-						// Renderiza "+ Adicionar Página" (Alimentação, Carga, Iluminação-NÃO, Outro-NÃO)
 						if (sistema.paginas && sistema.paginas.length > 0) {
 							for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
 								y += lineSpacing / 2;
@@ -3157,7 +3055,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 							}
 						} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
 					} else {
-						// Renderiza Loc/Con/Diag (Standard, Iluminação-SIM, Outro-SIM)
 						addText(`- Página de Localização:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagloc, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
@@ -3176,7 +3073,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		
 			y += lineHeight;
 			addSeparatorLine();
-		} // Fim do loop de Veículos Aplicáveis
+		}
 
 		y += lineHeight;
 		addColoredText("DADOS DO CARD (APLICÁVEIS)", 18, 'bold', 0, titleColor);
@@ -3198,7 +3095,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		y += lineHeight;
 		addText(`PPA:`, 14, "bold");
 		addText(`- Total: ${somaTotalAplicaveis}\n- Páginas Aplicadas: ${somaTransferidasAplicaveis}`, 12, "normal", 4);
-	} // Fim do if(dataAplicaveis)
+	}
 	
 	let nomeBase = "planejamento";
 	if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
@@ -3216,12 +3113,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const nomeArquivoPDF = `${prefixo}${nomeBase}.pdf`;
 	doc.save(nomeArquivoPDF);
 
-	// O ZIP só é salvo se for a última parte (Parte 2 ou Único)
-	// E só se tivermos arquivos (o zip não está vazio)
 	if (isLastPart) {
-		// Na última parte, populamos o ZIP com os dados *completos*
-		// A função 'addRichContent' já populou o 'zip' com os dados da *parte atual*.
-		// Se for dividido, precisamos popular o zip com os dados da *outra parte* também.
 		
 		const zipCompleto = new JSZip();
 		const zipRootPrincipal = zipCompleto.folder('Veículo Principal');
@@ -3230,7 +3122,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		const dadosZipPrincipal = dadosCompletosJSON.principal;
 		const dadosZipAplicaveis = dadosCompletosJSON.aplicaveis;
 
-		// 1. Popula ZIP (Principal - COMPLETO)
 		await addRichContent(dadosZipPrincipal.pasta, 0, 0, zipRootPrincipal, null, -1);
 		await addRichContent(dadosZipPrincipal.comentarios, 0, 0, zipRootPrincipal, null, -1);
 		await addRichContent(dadosZipPrincipal.ilustracao_texto, 0, 0, zipRootPrincipal, null, -1);
@@ -3254,7 +3145,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 		}
 
-		// 2. Popula ZIP (Aplicáveis - COMPLETO)
 		if (dadosZipAplicaveis) {
 			for (const [vIdx, veiculo] of dadosZipAplicaveis.entries()) {
 				await addRichContent(veiculo.dadosGerais.pasta, 0, 0, zipRootAplicaveis, null, -1, true, veiculo, vIdx);
@@ -3282,12 +3172,9 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				}
 			}
 		}
-
-		// 3. Gera o arquivo ZIP
 		const zipContent = await zipCompleto.generateAsync({ type: 'blob' });
 		
 		if (zipContent && zipContent.size > 22) { // Garante que o ZIP não está vazio
-			// O ZIP não deve ter prefixo de "PARTE"
 			const nomeZip = `${nomeBase}.zip`;
 			const a = document.createElement('a');
 			const url = URL.createObjectURL(zipContent);
@@ -3300,19 +3187,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		}
 	}
 }
-
-// =================================================================================
-// FIM: LÓGICA DE GERAÇÃO DE PDF/ZIP
-// =================================================================================
-
-
-// =================================================================================
-// INÍCIO: FUNÇÕES DO MODAL DE DIVISÃO
-// =================================================================================
-
-// Abre o Modal de "SIM/NÃO"
+// FIM: LÓGICA DE GERAÇÃO DE PDF/ZIP e INÍCIO: FUNÇÕES DO MODAL DE DIVISÃO: Abre o Modal de "SIM/NÃO"
 function abrirModalDivisaoPDF() {
-	// A validação agora é feita dentro da função 'gerarPDF' (controladora)
 	document.getElementById('pdfSplitModal').style.display = 'flex';
 }
 
@@ -3337,33 +3213,24 @@ function abrirModalSelecaoCapitulos() {
 		document.getElementById('confirmSelection').textContent = 'OK';
 		sistemas.forEach((sistema, index) => {
 			const label = document.createElement('label');
-			// Usa 'sistema.sistema' (nome) e 'sistema.paginasprev' ("PPP")
 			label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema}" value="${sistema.sistema}"> Capítulo: ${sistema.sistema} (Páginas: ${sistema.paginasprev || '0'})`;
 			checkboxesDiv.appendChild(label);
 		});
 	}
 
 	document.getElementById('chapterSelectionModal').style.display = 'flex';
-}
+} // Fecha o Modal de Seleção
 
-// Fecha o Modal de Seleção
 function fecharModalSelecaoCapitulos() {
 	document.getElementById('chapterSelectionModal').style.display = 'none';
 }
 
-// =================================================================================
-// FIM: FUNÇÕES DO MODAL DE DIVISÃO
-// =================================================================================
-
-
 document.addEventListener('DOMContentLoaded', (event) => {
 	
-	// INÍCIO: Adição de Event Listeners para os Modais (CORRIGIDO)
 	const splitSim = document.getElementById('splitSim');
 	const splitNao = document.getElementById('splitNao');
 
 	if (splitSim && splitNao) {
-		// Lógica para o primeiro Modal (SIM/NÃO)
 		splitSim.addEventListener('click', abrirModalSelecaoCapitulos); // SIM abre a seleção
 		splitNao.addEventListener('click', () => {
 			fecharModalDivisaoPDF();
@@ -3400,14 +3267,12 @@ document.addEventListener('DOMContentLoaded', (event) => {
 		});
 	} else {
 		console.error("Erro: Botões do modal 'chapterSelectionModal' (confirmSelection, cancelSelection) não encontrados.");
-	}
-	// FIM: Adição de Event Listeners para os Modais
-
+	}  
+	
      alternarAbas('principal');
      setupDragAndDrop('comentarios');
      setupEditableContent('comentarios');
 	
-	// Setup inicial dos placeholders e áreas editáveis
 	document.querySelectorAll('.editable-content').forEach(el => {
 		updateEditablePlaceholder(el);
 		autoResizeEditableContent(el);
