@@ -3523,10 +3523,37 @@
 						targetFolder.file(fragment.filename, fileBuffer);
 						
 						// Adiciona texto "imagem.png (ANEXADO NO ZIP)"
-						applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
-						const zipText = `${fragment.filename} (ANEXADO NO ZIP)`;
-						doc.text(zipText, currentX, currentY);
-						currentX += doc.getTextWidth(zipText) + 2;
+						// applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
+						// const zipText = `${fragment.filename} (ANEXADO NO ZIP)`;
+						// doc.text(zipText, currentX, currentY);
+						// currentX += doc.getTextWidth(zipText) + 2;
+						
+						try {
+							const imgProps = doc.getImageProperties(fragment.src);
+							// Define largura igual à largura útil da página (maxWidth)
+							let imgW = maxWidth;
+							// Calcula altura proporcional
+							let imgH = (imgProps.height * imgW) / imgProps.width;
+
+							// Verifica se cabe na página atual, senão cria nova
+							if (currentY + imgH > pageBottom) {
+								doc.addPage();
+								currentY = margin;
+							}
+
+							doc.addImage(fragment.src, imgProps.fileType, x, currentY, imgW, imgH);
+							
+							// Atualiza a posição Y para depois da imagem (+ um pequeno espaço)
+							currentY += imgH + 5; 
+							currentX = x; // Reseta X para a margem esquerda
+						} catch (err) {
+							console.error("Erro ao renderizar imagem:", err);
+							// Fallback: Se der erro na imagem, mostra o texto antigo
+							applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
+							const zipText = `${fragment.filename} (ANEXADO NO ZIP - Erro ao renderizar)`;
+							doc.text(zipText, currentX, currentY);
+							currentX += doc.getTextWidth(zipText) + 2;
+							}
 
 					} else if (fragment.type === 'attachment') {
 						if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
