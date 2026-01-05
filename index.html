@@ -3321,7 +3321,8 @@
 								specialFragment = {
 									type: 'image',
 									src: node.getAttribute('data-original-image'),
-									filename: node.getAttribute('data-filename') || 'imagem.png'
+									filename: node.getAttribute('data-filename') || 'imagem.png',
+									style: { ...currentStyle }
 								};
 								break;
 							case 'a':
@@ -3346,7 +3347,8 @@
 									specialFragment = {
 										type: 'attachment',
 										src: node.getAttribute('href'),
-										filename: node.getAttribute('data-filename') || 'anexo'
+										filename: node.getAttribute('data-filename') || 'anexo',
+										style: { ...currentStyle }
 									};
 									skipChildren = true; // Ignora o texto do link
 								} else {
