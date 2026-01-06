@@ -194,7 +194,12 @@ function togglePesquisaTexto(type, index) {
 	const textarea = document.getElementById(textareaId);
 
 	if (radio && textarea) {
-		textarea.style.display = (radio.value === 'sim') ? 'block' : 'none';
+		const container = textarea.closest('.editable-container');
+		if (container) {
+			container.style.display = (radio.value === 'sim') ? 'block' : 'none';
+		} else {
+			textarea.style.display = (radio.value === 'sim') ? 'block' : 'none';
+		}
 	}
 }
 
@@ -2006,9 +2011,57 @@ function coletarDadosFormulario() {
 		sistemas: sistemasData
 	};
 
+	const aplicaveisAtualizados = veiculosAplicaveisData.map((veiculo, index) => {
+		const container = document.querySelector(`.veiculo-aplicavel-item[data-index="${index}"]`);
+		if (!container) return veiculo;
+
+		const sistemaSelect = container.querySelector('.sistema-aplicavel');
+		const sistemaValue = sistemaSelect ? sistemaSelect.value : veiculo.sistema;
+		
+		let sistemasDoVeiculo = veiculo.sistemas || [{}];
+		let paginasColetadas = [];
+
+		if (sistemaValue === "OUTROS") {
+			const paginasContainer = container.querySelector('.paginas-extras-container');
+			if (paginasContainer) {
+				const itensPagina = paginasContainer.querySelectorAll('.pagina-extra-item');
+				itensPagina.forEach(item => {
+					const tituloInput = item.querySelector('.titulo-pagina-extra');
+					const conteudoDiv = item.querySelector('.editable-content');
+					paginasColetadas.push({
+						titulo: tituloInput ? tituloInput.value : "Página Extra",
+						conteudo: conteudoDiv ? conteudoDiv.innerHTML : "Nenhum conteúdo informado"
+					});
+				});
+			}
+		} else {
+			const labels = ["Página de Localização", "Página de conectores", "Página de Diagrama"];
+			const conteudos = container.querySelectorAll('.editable-content');
+			labels.forEach((label, i) => {
+				if (conteudos[i]) {
+					paginasColetadas.push({
+						titulo: label,
+						conteudo: conteudos[i].innerHTML
+					});
+				}
+			});
+		}
+
+		if (sistemasDoVeiculo[0]) {
+			sistemasDoVeiculo[0].sistema = sistemaValue;
+			sistemasDoVeiculo[0].paginas = paginasColetadas;
+			sistemasDoVeiculo[0].outrosTitulo = container.querySelector('.outros-titulo-input')?.value || "";
+		}
+
+		return {
+			...veiculo,
+			sistemas: sistemasDoVeiculo
+		};
+	});
+
 	return {
 		principal: dataPrincipal,
-		aplicaveis: veiculosAplicaveisData
+		aplicaveis: aplicaveisAtualizados
 	};
 }
 
@@ -2329,6 +2382,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 
 	const { jsPDF } = window.jspdf;
 	const doc = new jsPDF();
+	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 	let y = 10;
 	const margin = 10;
 	const lineHeight = 7;
@@ -2533,42 +2587,54 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 
 			if (fragment.type === 'text' || fragment.type === 'link') {
-				if (fragment.style && fragment.style.isPath) {
-					const pathFontSize = fragment.style.fontSize || 12;
-					applyStyle({ ...fragment.style, fontSize: pathFontSize });
+            if (fragment.style && fragment.style.isPath) {
+                const pathFontSize = fragment.style.fontSize || 12;
+                applyStyle({ ...fragment.style, fontSize: pathFontSize });
 
-					let pathText = fragment.text;
-					while (pathText.length > 0) {
-						if (currentY > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
-						
-						let fitLength = pathText.length;
-						let part = pathText;
-						let currentMaxWidth = (currentX === x) ? maxWidth : (maxWidth - (currentX - x));
+                const rawLines = fragment.text.split('\n');
 
-						while (doc.getTextWidth(part) > currentMaxWidth && fitLength > 1) {
-							fitLength--;
-							part = pathText.substring(0, fitLength);
-						}
+                for (let k = 0; k < rawLines.length; k++) {
+                    let pathText = rawLines[k];
 
-						let needsHyphen = fitLength < pathText.length && part.length > 0;
-						if (needsHyphen) {
-							let breakPoint = part.lastIndexOf('\\');
-							if (breakPoint > 10) {
-								part = pathText.substring(0, breakPoint + 1);
-								fitLength = breakPoint + 1;
-								needsHyphen = false;
-							} else if (part.length > 0) {
-								part = part.slice(0, -1) + '-';
-							}
-						}
+                    if (pathText.length === 0) {
+                        currentY += lineHeight;
+                        currentX = x;
+                        if (currentY > pageBottom) { doc.addPage(); currentY = margin; }
+                        continue;
+                    }
+					
+                    while (pathText.length > 0) {
+                        if (currentY > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
+                        
+                        let fitLength = pathText.length;
+                        let part = pathText;
+                        let currentMaxWidth = (currentX === x) ? maxWidth : (maxWidth - (currentX - x));
 
-						doc.text(part, currentX, currentY);
-						pathText = pathText.substring(fitLength);
-						currentY += lineHeight;
-						currentX = x;
-					}
-					continue;
-				}
+                        while (doc.getTextWidth(part) > currentMaxWidth && fitLength > 1) {
+                            fitLength--;
+                            part = pathText.substring(0, fitLength);
+                        }
+
+                        let needsHyphen = fitLength < pathText.length && part.length > 0;
+                        if (needsHyphen) {
+                            let breakPoint = part.lastIndexOf('\\');
+                            if (breakPoint > 10) {
+                                part = pathText.substring(0, breakPoint + 1);
+                                fitLength = breakPoint + 1;
+                                needsHyphen = false;
+                            } else if (part.length > 0) {
+                                part = part.slice(0, -1) + '-';
+                            }
+                        }
+
+                        doc.text(part, currentX, currentY);
+                        pathText = pathText.substring(fitLength);
+                        currentY += lineHeight;
+                        currentX = x;
+                    }
+                }
+                continue;
+            }
 				
 				if (fragment.type === 'link' || (fragment.style && fragment.style.isLink)) {
 					applyStyle(fragment.style);
@@ -2621,14 +2687,98 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 				}
 			} else if (fragment.type === 'br') {
-				currentY += lineHeight;
-				currentX = x;
-			} else if (fragment.type === 'image' && fragment.src) {
-			} else if (fragment.type === 'attachment') {
+						currentY += lineHeight;
+						currentX = x;
+					} else if (fragment.type === 'image' && fragment.src) {
+						if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
+						
+						let folderName;
+						let baseFolder;
+
+						if(isAplicavel) {
+							const veiculoRef = veiculo ? sanitizeName(extrairTooltipVeiculo(veiculo.dadosGerais.veiculo)) : `Veiculo ${veiculoIndex + 1}`;
+							baseFolder = rootAplicaveis.folder(veiculoRef);
+						} else {
+							baseFolder = rootPrincipal;
+						}
+
+						if(sistema) {
+							const capTitulo = sanitizeName(sistema.sistema || `Capitulo ${idx + 1}`);
+							folderName = getChapterFolderName(isAplicavel ? veiculo : dataPrincipalOriginal, sistema, capTitulo);
+						} else {
+							folderName = "Informações Gerais";
+						}
+						
+						const targetFolder = baseFolder.folder(folderName);
+						const fileBuffer = await toArrayBuffer(fragment.src);
+						targetFolder.file(fragment.filename, fileBuffer);
+						
+						// Adiciona texto "imagem.png (ANEXADO NO ZIP)"
+						// applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
+						// const zipText = `${fragment.filename} (ANEXADO NO ZIP)`;
+						// doc.text(zipText, currentX, currentY);
+						// currentX += doc.getTextWidth(zipText) + 2;
+						
+						try {
+							const imgProps = doc.getImageProperties(fragment.src);
+							// Define largura igual à largura útil da página (maxWidth)
+							let imgW = maxWidth;
+							// Calcula altura proporcional
+							let imgH = (imgProps.height * imgW) / imgProps.width;
+
+							// Verifica se cabe na página atual, senão cria nova
+							if (currentY + imgH > pageBottom) {
+								doc.addPage();
+								currentY = margin;
+							}
+
+							doc.addImage(fragment.src, imgProps.fileType, x, currentY, imgW, imgH);
+							
+							// Atualiza a posição Y para depois da imagem (+ um pequeno espaço)
+							currentY += imgH + 5; 
+							currentX = x; // Reseta X para a margem esquerda
+						} catch (err) {
+							console.error("Erro ao renderizar imagem:", err);
+							// Fallback: Se der erro na imagem, mostra o texto antigo
+							applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
+							const zipText = `${fragment.filename} (ANEXADO NO ZIP - Erro ao renderizar)`;
+							doc.text(zipText, currentX, currentY);
+							currentX += doc.getTextWidth(zipText) + 2;
+							}
+
+					} else if (fragment.type === 'attachment') {
+						if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
+						
+						let folderName;
+						let baseFolder;
+
+						if(isAplicavel) {
+							const veiculoRef = veiculo ? sanitizeName(extrairTooltipVeiculo(veiculo.dadosGerais.veiculo)) : `Veiculo ${veiculoIndex + 1}`;
+							baseFolder = rootAplicaveis.folder(veiculoRef);
+						} else {
+							baseFolder = rootPrincipal;
+						}
+
+						if(sistema) {
+							const capTitulo = sanitizeName(sistema.sistema || `Capitulo ${idx + 1}`);
+							folderName = getChapterFolderName(isAplicavel ? veiculo : dataPrincipalOriginal, sistema, capTitulo);
+						} else {
+							folderName = "Informações Gerais";
+						}
+						
+						const targetFolder = baseFolder.folder(folderName);
+						const fileBuffer = await toArrayBuffer(fragment.src);
+						targetFolder.file(fragment.filename, fileBuffer);
+
+						applyStyle({ ...fragment.style, color: [0, 0, 150], fontStyle: 'italic' });
+						const zipText = `${fragment.filename} (ANEXADO NO ZIP)`;
+						doc.text(zipText, currentX, currentY);
+						currentX += doc.getTextWidth(zipText) + 2;
+					}
+				}
+
+				return currentY;
 			}
-		}
-		return currentY;
-	}
 	
 	const addText = (text, size, style = 'normal', indent = 0) => {
 		if (!text) return;
@@ -2786,10 +2936,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		
 		addLabeledValue('PESQUISA', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
 		if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
-			y = await addRichContent(dataPrincipal.pesquisa_texto, y, 4, rootPrincipal, null, -1);
+		y = await addRichContent(dataPrincipal.pesquisa_texto, y, 4, rootPrincipal, null, -1);
 		}
+		
 		y += lineHeight;
-	} // Fim do if (incluirInfoGerais)
+		
+	}
 
 	if (incluirItensSerie) {
 		addText('- ITENS DE SÉRIE / OPCIONAIS:', 12, "bold", 0);
@@ -2840,9 +2992,10 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			
 			addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
 			
+			const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 			const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-			const isPaginasForm = sistema.sistema === "Alimentação Positiva" || sistema.sistema === "Conectores de Peito" || sistema.sistema === "Sistema de Carga e Partida";
-			const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+            const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+            const isModuloDedicado = sistema.modulo_dedicado === 'sim';
 			
 			if (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')) {
 				addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
@@ -2862,33 +3015,38 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('DESENVOLVIMENTO:', 14, "bold", 0);
 			y += lineSpacing / 2;
 
-			if (isCaixasForm) {
-				if (sistema.caixas && sistema.caixas.length > 0) {
-					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
-						addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
-						y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
-						y += lineHeight * 2;
-					}
-				} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
-			} else if (isPaginasForm || (!isModuloDedicado && (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')))) {
-				if (sistema.paginas && sistema.paginas.length > 0) {
-					for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
-						addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
-						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
-						y += lineHeight * 2;
-					}
-				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
-			} else {
-				addText(`- Página de Localização:`, 12, "bold", 0);
-				y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
-				y += lineHeight * 2;
-				addText(`- Página de Conectores:`, 12, "bold", 0);
-				y = await addRichContent(sistema.pagcon, y, 4, rootPrincipal, sistema, idx);
-				y += lineHeight * 2;
-				addText(`- Página de Diagramas:`, 12, "bold", 0);
-				y = await addRichContent(sistema.pagdiag, y, 4, rootPrincipal, sistema, idx);
-				y += lineHeight * 2;
-			}
+			// Se for Fusíveis, usa layout de Caixas
+            if (isCaixasForm) {
+                if (sistema.caixas && sistema.caixas.length > 0) {
+                    for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
+                        addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
+                        y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
+                        y += lineHeight * 2;
+                    }
+                } else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
+            } 
+
+            else if (isPaginasForm || (!isModuloDedicado && !standardSystems.includes(sistema.sistema))) {
+                if (sistema.paginas && sistema.paginas.length > 0) {
+                    for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
+                        addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
+                        y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+                        y += lineHeight * 2;
+                    }
+                } else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
+            } 
+            // Caso contrário, layout padrão Loc/Con/Diag
+            else {
+                addText(`- Página de Localização:`, 12, "bold", 0);
+                y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
+                y += lineHeight * 2;
+                addText(`- Página de Conectores:`, 12, "bold", 0);
+                y = await addRichContent(sistema.pagcon, y, 4, rootPrincipal, sistema, idx);
+                y += lineHeight * 2;
+                addText(`- Página de Diagramas:`, 12, "bold", 0);
+                y = await addRichContent(sistema.pagdiag, y, 4, rootPrincipal, sistema, idx);
+                y += lineHeight * 2;
+            }
 		}
 	} else { addText("Nenhum sistema adicionado (nesta parte).", 12, "italic", 4); y += lineHeight; }
 	y += lineHeight;
@@ -2938,7 +3096,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('- PASTA DO VEÍCULO:', 12, "bold");
 			y = await addRichContent(veiculo.dadosGerais.pasta, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
 			
-			y += lineSpacing;
+			y += lineHeight * 2;
 			
 			addText('- IMPORTANTE PARA O DESENVOLVIMENTO:', 12, 'bold');
 			y = await addRichContent(veiculo.dadosGerais.comentarios, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
@@ -2955,14 +3113,13 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold');
 			y = await addRichContent(veiculo.dadosGerais.ilustracao_texto || 'Nenhum pedido.', y, 4, rootAplicaveis, null, -1, true, veiculo, index);
 			
-			y += lineHeight;
+			y += lineHeight * 2;
 			
 			addLabeledValue('PESQUISA', veiculo.dadosGerais.pesquisa === 'sim' ? 'Sim' : 'Não');
 			if (veiculo.dadosGerais.pesquisa === 'sim' && veiculo.dadosGerais.pesquisa_texto) {
 				y = await addRichContent(veiculo.dadosGerais.pesquisa_texto, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
 			}
-			y += lineHeight;
-			
+						
 			if (veiculo.dadosGerais.precisaPreencherItensSerie) {                    
 				addText('- ITENS DE SÉRIE/OPCIONAIS:', 12, "bold");
 				addLabeledValue('Tipo de Chave', formatArray(veiculo.itensSerie.chave));
@@ -2978,7 +3135,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				y += 6;
 			}
 			
-			
+			y += lineHeight * 2;
 			addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
 			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
 				for (const [idx, sistema] of veiculo.sistemas.entries()) {
@@ -3015,9 +3172,21 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					addLabeledValue('Nº páginas prevista', sistema.transferencia === 'modificar' ? '0' : sistema.paginasprev);
 					
 					const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-					const isPaginasForm = sistema.sistema === "Alimentação Positiva" || sistema.sistema === "Conectores de Peito" || sistema.sistema === "Sistema de Carga e Partida";
-					const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+					const isPaginasFixas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+					const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
 					
+					// Determina se o sistema é do tipo "Manual/Outro" (Iluminação ou qualquer coisa que não seja as fixas/padrão)
+					const sistemasPadrao = [
+						"Airbag", "Ar-condicionado", "Central de Carroceria", "Central Multimídia", 
+						"Freio ABS", "Freio de Estacionamento Eletrônico", "Injeção Eletrônica", 
+						"Injeção Eletrônica e Transmissão", "Painel de Instrumentos", "Rádio", 
+						"Redes de Comunicação", "Tração 4x4", "Transmissão Automática"
+					];
+					const isSistemaManual = !sistemasPadrao.includes(sistema.sistema) && !isCaixasForm && !isPaginasFixas;
+
+					// REGRA DE OURO: Usa páginas manuais se for uma página fixa OU se for um sistema manual sem módulo dedicado
+					const isPaginasForm = isPaginasFixas || (isSistemaManual && !isModuloDedicado);
+		
 					if (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')) {
 						addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 					}
@@ -3037,39 +3206,49 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					y += lineSpacing / 2;
 					
 					if (isCaixasForm) {
+						// Layout de Fusíveis (Caixas)
 						if (sistema.caixas && sistema.caixas.length > 0) {
-							for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
-								y += lineSpacing / 2;
-								addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
-								y = await addRichContent(caixa.descricoes, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-								y += lineHeight;
+							for (const caixa of sistema.caixas) {
+								addText(`- ${caixa.nome || 'Caixa'}:`, 12, "bold", 0);
+								y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
+								y += 5;
 							}
-						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight;}
-					} else if (isPaginasForm || (!isModuloDedicado && (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')))) {
+						}
+					} 
+					else if (isPaginasForm) {
+						// Layout de Páginas Dinâmicas (+ Adicionar Página)
+						// Entra aqui: Alimentação, Peito, Carga e Partida OU (Outro/Iluminação com Módulo NÃO)
 						if (sistema.paginas && sistema.paginas.length > 0) {
-							for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
-								y += lineSpacing / 2;
-								addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
-								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-								y += lineHeight;
+							for (const [pIdx, pagina] of sistema.paginas.entries()) {
+								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
+								addText(`- ${tituloPg}:`, 12, "bold", 0);
+								y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+								y += 8;
 							}
-						} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
-					} else {
+						} else {
+							addText('Nenhuma página adicionada.', 12, 'italic', 4);
+							y += lineHeight;
+						}
+					} 
+					else {
 						addText(`- Página de Localização:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagloc, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
+						// y += lineHeight;
+						
 						addText(`- Página de Conectores:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagcon, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
+						// y += lineHeight;
+						
 						addText(`- Página de Diagramas:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagdiag, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
+						// y += lineHeight;
 					}
 				}
 			} else {
-				addText("Nenhum sistema adicionado.", 12, "normal", 4);
-			}
-		
+				addText("Nenhum sistema adicionado.", 12, "normal", 4); y += lineHeight;}
 		
 			y += lineHeight;
 			addSeparatorLine();
