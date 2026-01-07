@@ -3019,14 +3019,16 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			
 			const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 			const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-            const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
-            const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+			const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+			const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+			const isStandardModuleForm = standardSystems.includes(sistema.sistema);
 			
 			if (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')) {
 				addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 			}
 
-			if (!isCaixasForm && !isPaginasForm && isModuloDedicado) {
+			// EXIBE OS CAMPOS DE MÓDULO para sistemas padrão OU quando tem módulo dedicado
+			if (isStandardModuleForm || isModuloDedicado) {
 				addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
 				addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
 				addText(`- Códigos de Conectores:`, 12, "bold", 0);
@@ -3040,38 +3042,36 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('DESENVOLVIMENTO:', 14, "bold", 0);
 			y += lineSpacing / 2;
 
-			// Se for Fusíveis, usa layout de Caixas
-            if (isCaixasForm) {
-                if (sistema.caixas && sistema.caixas.length > 0) {
-                    for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
-                        addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
-                        y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
-                        y += lineHeight * 2;
-                    }
-                } else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
-            } 
-
-            else if (isPaginasForm || (!isModuloDedicado && !standardSystems.includes(sistema.sistema))) {
-                if (sistema.paginas && sistema.paginas.length > 0) {
-                    for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
-                        addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
-                        y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
-                        y += lineHeight * 2;
-                    }
-                } else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
-            } 
-            // Caso contrário, layout padrão Loc/Con/Diag
-            else {
-                addText(`- Página de Localização:`, 12, "bold", 0);
-                y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
-                y += lineHeight * 2;
-                addText(`- Página de Conectores:`, 12, "bold", 0);
-                y = await addRichContent(sistema.pagcon, y, 4, rootPrincipal, sistema, idx);
-                y += lineHeight * 2;
-                addText(`- Página de Diagramas:`, 12, "bold", 0);
-                y = await addRichContent(sistema.pagdiag, y, 4, rootPrincipal, sistema, idx);
-                y += lineHeight * 2;
-            }
+			// RENDERIZA O DESENVOLVIMENTO baseado no tipo
+			if (isCaixasForm) {
+				if (sistema.caixas && sistema.caixas.length > 0) {
+					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
+						addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
+						y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
+						y += lineHeight * 2;
+					}
+				} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
+			} 
+			else if (isPaginasForm || (!isModuloDedicado && !isStandardModuleForm)) {
+				if (sistema.paginas && sistema.paginas.length > 0) {
+					for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
+						addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
+						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+						y += lineHeight * 2;
+					}
+				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
+			} 
+			else {
+				addText(`- Página de Localização:`, 12, "bold", 0);
+				y = await addRichContent(sistema.pagloc, y, 4, rootPrincipal, sistema, idx);
+				y += lineHeight * 2;
+				addText(`- Página de Conectores:`, 12, "bold", 0);
+				y = await addRichContent(sistema.pagcon, y, 4, rootPrincipal, sistema, idx);
+				y += lineHeight * 2;
+				addText(`- Página de Diagramas:`, 12, "bold", 0);
+				y = await addRichContent(sistema.pagdiag, y, 4, rootPrincipal, sistema, idx);
+				y += lineHeight * 2;
+			}
 		}
 	} else { addText("Nenhum sistema adicionado (nesta parte).", 12, "italic", 4); y += lineHeight; }
 	y += lineHeight;
