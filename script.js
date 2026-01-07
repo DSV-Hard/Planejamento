@@ -1082,12 +1082,12 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
 				<div class="checkbox-blockk"></div>
 
-				<label>APLICAÇÃO / CHASSI</label>
+				<label>ASSOCIAÇÃO / CHASSI</label>
 				<div class="checkbox-inline" style="margin-bottom: 10px;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="mesma" ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'checked' : ''}> Mesma aplicação</label>
-					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar aplicação</label>
+					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="mesma" ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'checked' : ''}> Mesma associação</label>
+					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar associação</label>
 				</div>
-				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a aplicação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
+				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
 				<div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: left;">
 					<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
@@ -2228,7 +2228,7 @@ function carregarDeJSON(input) {
 		  checarCampo('iddiagramas', 'ID DIAGRAMAS');
 		  checarCampo('idfusiveis', 'ID FUSÍVEIS');
 		  checarCampo('pasta', 'Pasta do Veículo');
-		  checarRadio('aplicacao_chassi', 'Aplicação / Chassi');
+		  checarRadio('aplicacao_chassi', 'Associação / Chassi');
 
 		  checarAlgumCheckbox('atmt', 'Transmissão');
 		  checarAlgumCheckbox('chave', 'Comutador de Ignição');
@@ -2239,17 +2239,42 @@ function carregarDeJSON(input) {
 		  checarCampo('justificativa', 'Justificativa (Principal)');
 
            sistemasData.forEach((sistema, idx) => {
-			const capLabel = `(Capítulo Principal ${idx + 1})`;
-             if (!sistema.transferencia) {
-                 erros.push(`Opção de Transferência ${capLabel}`);
-             } else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
-                 erros.push(`ID de Transferência ${capLabel}`);
-             } else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
-                 erros.push(`Nº páginas prevista ${capLabel}`);
-				const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
-				if (el) el.classList.add('campo-invalido');
-			}
-           });
+				const capLabel = `(Capítulo Principal ${idx + 1})`;
+				if (!sistema.transferencia) {
+					erros.push(`Opção de Transferência ${capLabel}`);
+				} else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
+					erros.push(`ID de Transferência ${capLabel}`);
+				} else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
+					erros.push(`Nº páginas prevista ${capLabel}`);
+					const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
+					if (el) el.classList.add('campo-invalido');
+				}
+				
+				// VALIDAÇÃO DOS CAMPOS MÓDULO, NOME NO MATERIAL E CÓDIGO DE PEÇA
+				const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+				const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
+				const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+				const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+				
+				// Valida apenas se for sistema padrão OU se tiver módulo dedicado
+				if ((!isCaixasForm && !isPaginasForm && standardSystems.includes(sistema.sistema)) || isModuloDedicado) {
+					if (!sistema.modulo || sistema.modulo.trim() === '') {
+						erros.push(`Módulo principal ${capLabel}`);
+						const el = document.querySelector(`input[name="modulo_${idx}"]`);
+						if (el) el.classList.add('campo-invalido');
+					}
+					if (!sistema.nomematerial || sistema.nomematerial.trim() === '') {
+						erros.push(`Nome no material ${capLabel}`);
+						const el = document.querySelector(`input[name="nomematerial_${idx}"]`);
+						if (el) el.classList.add('campo-invalido');
+					}
+					if (!sistema.codmodulo || sistema.codmodulo.trim() === '' || sistema.codmodulo.trim() === '<br>') {
+						erros.push(`Código de Peça / Link ${capLabel}`);
+						const el = document.getElementById(`codmodulo_${idx}`);
+						if (el) el.classList.add('campo-invalido');
+					}
+				}
+			});
 
 		  if (veiculosAplicaveisData.length > 0) {
 			salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
@@ -2261,7 +2286,7 @@ function carregarDeJSON(input) {
 			  if (!veiculo.dadosGerais.iddiagramas) erros.push(`ID DIAGRAMAS ${sfx}`);
 			  if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
                if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
-			  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Aplicação / Chassi ${sfx}`);
+			  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
 			  
 			  if (veiculo.dadosGerais.precisaPreencherItensSerie) {
 				if (!Array.isArray(veiculo.itensSerie.atmt) || veiculo.itensSerie.atmt.length === 0) erros.push(`Transmissão ${sfx}`);
@@ -2922,7 +2947,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		
 		y += 14;
 		
-		addLabeledValue('APLICAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
+		addLabeledValue('ASSOCIAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
 		if (dataPrincipal.aplicacao_chassi_texto) {
 			addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 		}
@@ -3104,7 +3129,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			y += lineHeight;
 			y += lineHeight / 2;
 			
-			addLabeledValue('APLICAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma aplicação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar aplicação' : 'N/A'));
+			addLabeledValue('ASSOCIAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
 			if (veiculo.dadosGerais.aplicacao_chassi_texto) {
 				addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
