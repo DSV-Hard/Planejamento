@@ -1090,7 +1090,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
 				<div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: left;">
-					<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
+					<button type="button" class="orange-button" onclick="window.open('http://srvdados01.local:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
 				</div>
 
 				<div class="checkbox-blockk"></div>
