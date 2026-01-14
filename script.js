@@ -1090,7 +1090,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
 				<div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: left;">
-					<button type="button" class="orange-button" onclick="window.open('http://srvdados01.local:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
+					<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
 				</div>
 
 				<div class="checkbox-blockk"></div>
@@ -2004,8 +2004,11 @@ function coletarDadosFormulario() {
 		tracao: getCheckedCheckboxValues("tracao"),
 		outros_serie: document.getElementById("outros_serie").value,
 		outros_opcional: document.getElementById("outros_opcional").value,
+		qtd_partes: document.querySelector('input[name="qtd_partes"]:checked')?.value || 'uma',
 		dificuldade: document.getElementById("dificuldade").value,
 		justificativa: document.getElementById("justificativa").value,
+		dificuldade_parte2: document.getElementById("dificuldade_parte2")?.value || '',
+		justificativa_parte2: document.getElementById("justificativa_parte2")?.value || '',
 		dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
 		justificativa_aplicaveis: document.getElementById("justificativa_aplicaveis").value,
 		sistemas: sistemasData
@@ -2141,8 +2144,12 @@ function carregarDeJSON(input) {
 				setCheckedCheckboxes('tracao', dataPrincipal.tracao);
 				setData('outros_serie', dataPrincipal.outros_serie);
 				setData('outros_opcional', dataPrincipal.outros_opcional);
+				setChecked('qtd_partes', dataPrincipal.qtd_partes || 'uma');
+				toggleParte2Principal();
 				setData('dificuldade', dataPrincipal.dificuldade);
 				setData('justificativa', dataPrincipal.justificativa);
+				setData('dificuldade_parte2', dataPrincipal.dificuldade_parte2);
+				setData('justificativa_parte2', dataPrincipal.justificativa_parte2);
 				sistemasData = dataPrincipal.sistemas || [];
 				if (sistemasData.length > 0) {
 					paginaAtual = 0;
@@ -2235,8 +2242,15 @@ function carregarDeJSON(input) {
 		  checarRadio('startstop', 'Função Start/Stop');
 		  checarAlgumCheckbox('ac', 'Ar-Condicionado');
 
-		  checarCampo('dificuldade', 'Dificuldade (Principal)');
-		  checarCampo('justificativa', 'Justificativa (Principal)');
+		checarCampo('dificuldade', 'Dificuldade');
+		checarCampo('justificativa', 'Justificativa');
+
+		// Valida Parte 2 se estiver habilitada
+		const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
+		if (qtdPartes === 'duas') {
+			checarCampo('dificuldade_parte2', 'Dificuldade (PARTE 2)');
+			checarCampo('justificativa_parte2', 'Justificativa (PARTE 2)');
+		}
 
            sistemasData.forEach((sistema, idx) => {
 				const capLabel = `(Capítulo Principal ${idx + 1})`;
@@ -3080,8 +3094,17 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 
 	addColoredText("DADOS DO CARD", 18, 'bold', 0, titleColor);
 	y += lineHeight;
-	addLabeledValue('Dificuldade', dataPrincipal.dificuldade);
-	addLabeledValue('Justificativa', dataPrincipal.justificativa);
+
+	// Se for PARTE 2 e houver dados específicos, usa eles; senão usa os da Parte 1
+	const dificuldadeExibir = (prefixo === "PARTE 2 - " && dataPrincipal.dificuldade_parte2) 
+		? dataPrincipal.dificuldade_parte2 
+		: dataPrincipal.dificuldade;
+	const justificativaExibir = (prefixo === "PARTE 2 - " && dataPrincipal.justificativa_parte2) 
+		? dataPrincipal.justificativa_parte2 
+		: dataPrincipal.justificativa;
+
+	addLabeledValue('Dificuldade', dificuldadeExibir);
+	addLabeledValue('Justificativa', justificativaExibir);
 	
 
 	let somaTotal = dataPrincipal.ppp_calculado || 0;
@@ -3427,6 +3450,24 @@ function abrirModalSelecaoCapitulos() {
 
 function fecharModalSelecaoCapitulos() {
 	document.getElementById('chapterSelectionModal').style.display = 'none';
+}
+
+function toggleParte2Principal() {
+    const radio = document.querySelector('input[name="qtd_partes"]:checked');
+    const containerSimples = document.getElementById('card-parte1-container');
+    const containerParte2 = document.getElementById('card-parte2-container');
+
+    if (!radio) return;
+
+    if (radio.value === 'uma') {
+        // Se marcado UMA: Mostra o bloco simples e esconde o bloco de duas partes
+        if (containerSimples) containerSimples.style.display = 'block';
+        if (containerParte2) containerParte2.style.display = 'none';
+    } else if (radio.value === 'duas') {
+        // Se marcado DUAS: Esconde o bloco simples e mostra o bloco de duas partes
+        if (containerSimples) containerSimples.style.display = 'none';
+        if (containerParte2) containerParte2.style.display = 'block';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', (event) => {
