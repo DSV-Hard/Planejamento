@@ -2627,51 +2627,30 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 
 			if (fragment.type === 'text' || fragment.type === 'link') {
             if (fragment.style && fragment.style.isPath) {
-                const pathFontSize = fragment.style.fontSize || 12;
-                applyStyle({ ...fragment.style, fontSize: pathFontSize });
+               const pathFontSize = fragment.style.fontSize || 12;
+					const availableWidth = maxWidth - currentX;
 
-                const rawLines = fragment.text.split('\n');
+					applyStyle({ ...fragment.style, fontSize: pathFontSize });
 
-                for (let k = 0; k < rawLines.length; k++) {
-                    let pathText = rawLines[k];
+					let pathText = fragment.text;
+					while (pathText.length > 0) {
+						let fitLength = pathText.length;
+						let part = pathText;
 
-                    if (pathText.length === 0) {
-                        currentY += lineHeight;
-                        currentX = x;
-                        if (currentY > pageBottom) { doc.addPage(); currentY = margin; }
-                        continue;
-                    }
-					
-                    while (pathText.length > 0) {
-                        if (currentY > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
-                        
-                        let fitLength = pathText.length;
-                        let part = pathText;
-                        let currentMaxWidth = (currentX === x) ? maxWidth : (maxWidth - (currentX - x));
+						while (doc.getTextWidth(part) > availableWidth && fitLength > 1) {
+							fitLength--;
+							part = pathText.substring(0, fitLength);
+						}
 
-                        while (doc.getTextWidth(part) > currentMaxWidth && fitLength > 1) {
-                            fitLength--;
-                            part = pathText.substring(0, fitLength);
-                        }
+						let needsHyphen = fitLength < pathText.length;
+						if (needsHyphen) part += '-';
 
-                        let needsHyphen = fitLength < pathText.length && part.length > 0;
-                        if (needsHyphen) {
-                            let breakPoint = part.lastIndexOf('\\');
-                            if (breakPoint > 10) {
-                                part = pathText.substring(0, breakPoint + 1);
-                                fitLength = breakPoint + 1;
-                                needsHyphen = false;
-                            } else if (part.length > 0) {
-                                part = part.slice(0, -1) + '-';
-                            }
-                        }
+						doc.text(part, currentX, currentY);
 
-                        doc.text(part, currentX, currentY);
-                        pathText = pathText.substring(fitLength);
-                        currentY += lineHeight;
-                        currentX = x;
-                    }
-                }
+						currentY += lineHeight;
+						currentX = x;
+						pathText = pathText.substring(fitLength);
+					}
                 continue;
             }
 				
