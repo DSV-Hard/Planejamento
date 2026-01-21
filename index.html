@@ -166,52 +166,18 @@
 			<div class="checkbox-block">
 				<label class="checkbox-title">QUANTAS PARTES TERÁ O PLANEJAMENTO?</label>
 				<div class="checkbox-inline" onchange="toggleParte2Principal()">
-					<label><input type="radio" name="qtd_partes" value="uma" > UMA</label>
+					<label><input type="radio" name="qtd_partes" value="uma" checked> UMA</label>
 					<label><input type="radio" name="qtd_partes" value="duas"> DUAS</label>
 				</div>
 			</div>
 			
 			<div class="checkbox-blockk"></div>
 			
-			<div id="card-parte1-container" style="display: none;">
-			<div class="card-details-block">
-				<label>Dificuldade:</label>
-				<select id="dificuldade">
-					<option value="">Selecione a dificuldade</option>
-					<option value="Fácil">FÁCIL</option>
-					<option value="Médio">MÉDIO</option>
-					<option value="Difícil">DIFÍCIL</option>
-					<option value="Carroceria Fácil">CARROCERIA F</option>
-					<option value="Carroceria Médio">CARROCERIA M</option>
-					<option value="Carroceria Difícil">CARROCERIA D</option>
-				</select>
-				<label>Justificativa:</label>
-				<input type="text" id="justificativa" placeholder="Descreva o motivo da dificuldade selecionada...">
-			</div>
-			</div>
-			
-			<div id="card-parte2-container" style="display: none;">
-
-				<h3 style="text-align: left; color: #4472c4; margin-top: 20px;">PARTE 1</h3>
+			<!-- Bloco para quando seleciona UMA parte -->
+			<div id="card-parte-unica-container">
 				<div class="card-details-block">
 					<label>Dificuldade:</label>
-					<select id="dificuldade">
-					<option value="">Selecione a dificuldade</option>
-					<option value="Fácil">FÁCIL</option>
-					<option value="Médio">MÉDIO</option>
-					<option value="Difícil">DIFÍCIL</option>
-					<option value="Carroceria Fácil">CARROCERIA F</option>
-					<option value="Carroceria Médio">CARROCERIA M</option>
-					<option value="Carroceria Difícil">CARROCERIA D</option>
-				</select>
-				<label>Justificativa:</label>
-				<input type="text" id="justificativa" placeholder="Descreva o motivo da dificuldade selecionada...">
-				</div>
-				<div class="checkbox-blockk"></div>
-				<h3 style="text-align: left; color: #4472c4; margin-top: 20px;">PARTE 2</h3>
-				<div class="card-details-block">
-					<label>Dificuldade:</label>
-					<select id="dificuldade_parte2">
+					<select id="dificuldade_unica">
 						<option value="">Selecione a dificuldade</option>
 						<option value="Fácil">FÁCIL</option>
 						<option value="Médio">MÉDIO</option>
@@ -221,6 +187,36 @@
 						<option value="Carroceria Difícil">CARROCERIA D</option>
 					</select>
 					<label>Justificativa:</label>
+					<input type="text" id="justificativa_unica" placeholder="Descreva o motivo da dificuldade selecionada...">
+				</div>
+			</div>
+			
+			<!-- Bloco para quando seleciona DUAS partes -->
+			<div id="card-duas-partes-container" style="display: none;">
+				<h3 style="text-align: center; color: #4472c4;">PARTE 1</h3>
+				<div class="card-details-block">
+					<label>Dificuldade (Parte 1):</label>
+					<select id="dificuldade_parte1">
+						<option value="">Selecione a dificuldade</option>
+						<option value="Carroceria Fácil">CARROCERIA F</option>
+						<option value="Carroceria Médio">CARROCERIA M</option>
+						<option value="Carroceria Difícil">CARROCERIA D</option>
+					</select>
+					<label>Justificativa (Parte 1):</label>
+					<input type="text" id="justificativa_parte1" placeholder="Descreva o motivo da dificuldade selecionada...">
+				</div>
+				
+				<div class="checkbox-blockk"></div>
+				<h3 style="text-align: center; color: #4472c4; margin-top: 20px;">PARTE 2</h3>
+				<div class="card-details-block">
+					<label>Dificuldade (Parte 2):</label>
+					<select id="dificuldade_parte2">
+						<option value="">Selecione a dificuldade</option>
+						<option value="Carroceria Fácil">CARROCERIA F</option>
+						<option value="Carroceria Médio">CARROCERIA M</option>
+						<option value="Carroceria Difícil">CARROCERIA D</option>
+					</select>
+					<label>Justificativa (Parte 2):</label>
 					<input type="text" id="justificativa_parte2" placeholder="Descreva o motivo da dificuldade selecionada...">
 				</div>
 			</div>
