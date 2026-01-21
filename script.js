@@ -2005,8 +2005,20 @@ function coletarDadosFormulario() {
 		outros_serie: document.getElementById("outros_serie").value,
 		outros_opcional: document.getElementById("outros_opcional").value,
 		qtd_partes: document.querySelector('input[name="qtd_partes"]:checked')?.value || 'uma',
-		dificuldade: document.getElementById("dificuldade").value,
-		justificativa: document.getElementById("justificativa").value,
+		dificuldade: (function() {
+			const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
+			if (qtdPartes === 'duas') {
+				return document.getElementById("dificuldade_parte1")?.value || '';
+			}
+			return document.getElementById("dificuldade_unica")?.value || '';
+		})(),
+		justificativa: (function() {
+			const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
+			if (qtdPartes === 'duas') {
+				return document.getElementById("justificativa_parte1")?.value || '';
+			}
+			return document.getElementById("justificativa_unica")?.value || '';
+		})(),
 		dificuldade_parte2: document.getElementById("dificuldade_parte2")?.value || '',
 		justificativa_parte2: document.getElementById("justificativa_parte2")?.value || '',
 		dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
@@ -2146,10 +2158,17 @@ function carregarDeJSON(input) {
 				setData('outros_opcional', dataPrincipal.outros_opcional);
 				setChecked('qtd_partes', dataPrincipal.qtd_partes || 'uma');
 				toggleParte2Principal();
-				setData('dificuldade', dataPrincipal.dificuldade);
-				setData('justificativa', dataPrincipal.justificativa);
-				setData('dificuldade_parte2', dataPrincipal.dificuldade_parte2);
-				setData('justificativa_parte2', dataPrincipal.justificativa_parte2);
+
+				// Carrega nos campos corretos baseado em qtd_partes
+				if (dataPrincipal.qtd_partes === 'duas') {
+					setData('dificuldade_parte1', dataPrincipal.dificuldade);
+					setData('justificativa_parte1', dataPrincipal.justificativa);
+					setData('dificuldade_parte2', dataPrincipal.dificuldade_parte2);
+					setData('justificativa_parte2', dataPrincipal.justificativa_parte2);
+				} else {
+					setData('dificuldade_unica', dataPrincipal.dificuldade);
+					setData('justificativa_unica', dataPrincipal.justificativa);
+}
 				sistemasData = dataPrincipal.sistemas || [];
 				if (sistemasData.length > 0) {
 					paginaAtual = 0;
@@ -2242,15 +2261,16 @@ function carregarDeJSON(input) {
 		  checarRadio('startstop', 'Função Start/Stop');
 		  checarAlgumCheckbox('ac', 'Ar-Condicionado');
 
-		checarCampo('dificuldade', 'Dificuldade');
-		checarCampo('justificativa', 'Justificativa');
-
-		// Valida Parte 2 se estiver habilitada
 		const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
-		if (qtdPartes === 'duas') {
-			checarCampo('dificuldade_parte2', 'Dificuldade (PARTE 2)');
-			checarCampo('justificativa_parte2', 'Justificativa (PARTE 2)');
-		}
+			if (qtdPartes === 'duas') {
+				checarCampo('dificuldade_parte1', 'Dificuldade (Parte 1)');
+				checarCampo('justificativa_parte1', 'Justificativa (Parte 1)');
+				checarCampo('dificuldade_parte2', 'Dificuldade (Parte 2)');
+				checarCampo('justificativa_parte2', 'Justificativa (Parte 2)');
+			} else {
+				checarCampo('dificuldade_unica', 'Dificuldade');
+				checarCampo('justificativa_unica', 'Justificativa');
+			}
 
            sistemasData.forEach((sistema, idx) => {
 				const capLabel = `(Capítulo Principal ${idx + 1})`;
@@ -3433,19 +3453,17 @@ function fecharModalSelecaoCapitulos() {
 
 function toggleParte2Principal() {
     const radio = document.querySelector('input[name="qtd_partes"]:checked');
-    const containerSimples = document.getElementById('card-parte1-container');
-    const containerParte2 = document.getElementById('card-parte2-container');
+    const containerUnica = document.getElementById('card-parte-unica-container');
+    const containerDuasPartes = document.getElementById('card-duas-partes-container');
 
     if (!radio) return;
 
     if (radio.value === 'uma') {
-        // Se marcado UMA: Mostra o bloco simples e esconde o bloco de duas partes
-        if (containerSimples) containerSimples.style.display = 'block';
-        if (containerParte2) containerParte2.style.display = 'none';
+        if (containerUnica) containerUnica.style.display = 'block';
+        if (containerDuasPartes) containerDuasPartes.style.display = 'none';
     } else if (radio.value === 'duas') {
-        // Se marcado DUAS: Esconde o bloco simples e mostra o bloco de duas partes
-        if (containerSimples) containerSimples.style.display = 'none';
-        if (containerParte2) containerParte2.style.display = 'block';
+        if (containerUnica) containerUnica.style.display = 'none';
+        if (containerDuasPartes) containerDuasPartes.style.display = 'block';
     }
 }
 
