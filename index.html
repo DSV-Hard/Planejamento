@@ -186,8 +186,18 @@
 						<option value="Carroceria Médio">CARROCERIA M</option>
 						<option value="Carroceria Difícil">CARROCERIA D</option>
 					</select>
-					<label>Justificativa:</label>
-					<input type="text" id="justificativa_unica" placeholder="Descreva o motivo da dificuldade selecionada...">
+					
+					<!-- LEGENDA DAS DIFICULDADES -->
+					<div class="checkbox-blockk"></div>
+					<fieldset>
+					<legend style="text-align: center; color: #4472c4;">TABELA DE DIFICULDADES:</legend>
+					<label>FÁCIL: </label>ETAPA 1 com transferências fáceis.
+					<label>MÉDIO: </label>ETAPA 1 padrão.
+					<label>DIFÍCIL: </label>ETAPA 1 com material faltando/divergindo/difícil de interpretar.
+					<label>CARROCERIA FÁCIL: </label>Carrocerias mais simples ou adição de sistemas que não enbglobam carroceria (Exemplo: Airbag, ABS, Multimídia, etc...).
+					<label>CARROCERIA MÉDIO: </label>Carroceria completa padrão.
+					<label>CARROCERIA DIFÍCIL: </label>(Ainda não foi utilizado) Em caso de dificuldade extrema, conversar com Head para discutir a melhor opção.
+					</fieldset>
 				</div>
 			</div>
 			
@@ -202,8 +212,6 @@
 						<option value="Carroceria Médio">CARROCERIA M</option>
 						<option value="Carroceria Difícil">CARROCERIA D</option>
 					</select>
-					<label>Justificativa (Parte 1):</label>
-					<input type="text" id="justificativa_parte1" placeholder="Descreva o motivo da dificuldade selecionada...">
 				</div>
 				
 				<div class="checkbox-blockk"></div>
@@ -216,9 +224,15 @@
 						<option value="Carroceria Médio">CARROCERIA M</option>
 						<option value="Carroceria Difícil">CARROCERIA D</option>
 					</select>
-					<label>Justificativa (Parte 2):</label>
-					<input type="text" id="justificativa_parte2" placeholder="Descreva o motivo da dificuldade selecionada...">
 				</div>
+				<!-- LEGENDA DAS DIFICULDADES -->
+					<div class="checkbox-blockk"></div>
+					<fieldset>
+					<legend style="text-align: center; color: #4472c4;">TABELA DE DIFICULDADES:</legend>
+					<label>CARROCERIA FÁCIL: </label>Carrocerias mais simples ou adição de sistemas que não enbglobam carroceria (Exemplo: Airbag, ABS, Multimídia, etc...).
+					<label>CARROCERIA MÉDIO: </label>Carroceria completa padrão.
+					<label>CARROCERIA DIFÍCIL: </label>Ainda não foi utilizado. Caso encontre algo surreal de difícil, conversar com Head para tomar a melhor decisão.
+					</fieldset>
 			</div>
 		</fieldset>
 	</div>
@@ -235,13 +249,13 @@
 		<fieldset>
 		<legend>DADOS DO CARD</legend>
 		<label>Dificuldade (Aplicáveis):</label>
-		<select id="dificuldade_aplicaveis">
-			<option value="">Selecione a dificuldade</option>
-			<option value="Fácil">FÁCIL</option>
-			<option value="Médio">MÉDIO</option>
-			<option value="Difícil">DIFÍCIL</option>
-		</select>
-		<label>Justificativa:</label><input type="text" id="justificativa_aplicaveis" placeholder="Descreva o motivo da dificuldade selecionada...">
+			<select id="dificuldade_aplicaveis">
+				<option value="">Selecione a dificuldade</option>
+				<option value="Fácil">FÁCIL</option>
+				<option value="Moderado">MODERADO</option>
+				<option value="Médio">MÉDIO</option>
+				<option value="Difícil">DIFÍCIL</option>
+			</select>
 			</fieldset>
 		</div>
 		</div>
