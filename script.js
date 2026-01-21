@@ -2012,17 +2012,8 @@ function coletarDadosFormulario() {
 			}
 			return document.getElementById("dificuldade_unica")?.value || '';
 		})(),
-		justificativa: (function() {
-			const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
-			if (qtdPartes === 'duas') {
-				return document.getElementById("justificativa_parte1")?.value || '';
-			}
-			return document.getElementById("justificativa_unica")?.value || '';
-		})(),
 		dificuldade_parte2: document.getElementById("dificuldade_parte2")?.value || '',
-		justificativa_parte2: document.getElementById("justificativa_parte2")?.value || '',
 		dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
-		justificativa_aplicaveis: document.getElementById("justificativa_aplicaveis").value,
 		sistemas: sistemasData
 	};
 
@@ -2162,12 +2153,9 @@ function carregarDeJSON(input) {
 				// Carrega nos campos corretos baseado em qtd_partes
 				if (dataPrincipal.qtd_partes === 'duas') {
 					setData('dificuldade_parte1', dataPrincipal.dificuldade);
-					setData('justificativa_parte1', dataPrincipal.justificativa);
 					setData('dificuldade_parte2', dataPrincipal.dificuldade_parte2);
-					setData('justificativa_parte2', dataPrincipal.justificativa_parte2);
 				} else {
 					setData('dificuldade_unica', dataPrincipal.dificuldade);
-					setData('justificativa_unica', dataPrincipal.justificativa);
 }
 				sistemasData = dataPrincipal.sistemas || [];
 				if (sistemasData.length > 0) {
@@ -2189,7 +2177,6 @@ function carregarDeJSON(input) {
 					renderizarPaginacaoVeiculosAplicaveis();
 				}
 				setData('dificuldade_aplicaveis', dataPrincipal.dificuldade_aplicaveis);
-				setData('justificativa_aplicaveis', dataPrincipal.justificativa_aplicaveis);
 				atualizarVisibilidadeDadosCardAplicaveis();
 
 				alert("Arquivo JSON carregado com sucesso!");
@@ -2264,12 +2251,9 @@ function carregarDeJSON(input) {
 		const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
 			if (qtdPartes === 'duas') {
 				checarCampo('dificuldade_parte1', 'Dificuldade (Parte 1)');
-				checarCampo('justificativa_parte1', 'Justificativa (Parte 1)');
 				checarCampo('dificuldade_parte2', 'Dificuldade (Parte 2)');
-				checarCampo('justificativa_parte2', 'Justificativa (Parte 2)');
 			} else {
 				checarCampo('dificuldade_unica', 'Dificuldade');
-				checarCampo('justificativa_unica', 'Justificativa');
 			}
 
            sistemasData.forEach((sistema, idx) => {
@@ -2344,7 +2328,6 @@ function carregarDeJSON(input) {
 			});
 
 			checarCampo('dificuldade_aplicaveis', 'Dificuldade (Aplicáveis)');
-			checarCampo('justificativa_aplicaveis', 'Justificativa (Aplicáveis)');
 		  }
 
 		  return [...new Set(erros)];
@@ -3098,12 +3081,9 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const dificuldadeExibir = (prefixo === "PARTE 2 - " && dataPrincipal.dificuldade_parte2) 
 		? dataPrincipal.dificuldade_parte2 
 		: dataPrincipal.dificuldade;
-	const justificativaExibir = (prefixo === "PARTE 2 - " && dataPrincipal.justificativa_parte2) 
-		? dataPrincipal.justificativa_parte2 
-		: dataPrincipal.justificativa;
-
-	addLabeledValue('Dificuldade', dificuldadeExibir);
-	addLabeledValue('Justificativa', justificativaExibir);
+	
+	addText(`DIFICULDADE:`, 14, "bold", 0);
+	addText(`- ${dificuldadeExibir}`, 12, 'normal', 4);
 	
 
 	let somaTotal = dataPrincipal.ppp_calculado || 0;
@@ -3115,7 +3095,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	});
 	y += lineSpacing;
 	addText(`PPP:`, 14, "bold", 0);
-	addText(`- Total (esta parte): ${somaTotal}\n- Páginas Criadas do zero: ${somaCriadas}\n- Páginas Transferidas: ${somaTransferidas}`, 12, "normal", 0);
+	addText(`- Total (esta parte): ${somaTotal}\n- Páginas Criadas do zero: ${somaCriadas}\n- Páginas Transferidas: ${somaTransferidas}`, 12, "normal", 4);
 
 	//VEÍCULOS APLICÁVEIS
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
@@ -3304,8 +3284,9 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		y += lineHeight;
 		addColoredText("DADOS DO CARD (APLICÁVEIS)", 18, 'bold', 0, titleColor);
 		y += lineHeight;
-		addLabeledValue('Dificuldade', dataPrincipal.dificuldade_aplicaveis);
-		addLabeledValue('Justificativa', dataPrincipal.justificativa_aplicaveis);
+		addText(`DIFICULDADE:`, 14, "bold", 0);
+		addText(`- ${dataPrincipal.dificuldade_aplicaveis}`, 12, 'normal', 4);
+		//addLabeledValue('Dificuldade', dataPrincipal.dificuldade_aplicaveis);
 		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0, somaCriadasAplicaveis = 0;
 		dataAplicaveis.forEach(v => {
 			if (v.sistemas && v.sistemas.length > 0) {
