@@ -332,21 +332,23 @@
     </div>
 	
 	<!-- Modal de Cópia de Capítulo -->
-    <div id="copy-chapter-modal" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <h3 style="color: #f0ad4e;">Copiar Capítulo de Outro Veículo</h3>
-            <label for="select-veiculo-copia">De qual veículo?</label>
-            <select id="select-veiculo-copia" onchange="popularCapitulosParaCopia()" style="width: 100%; margin-top: 5px; margin-bottom: 15px;"></select>
-            
-            <label for="select-capitulo-copia">Qual capítulo?</label>
-            <select id="select-capitulo-copia" style="width: 100%; margin-top: 5px;"></select>
-
-            <div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
-                <button class="orange-button" onclick="executarCopiaCapitulo()">Copiar</button>
-                <button class="orange-button" onclick="document.getElementById('copy-chapter-modal').style.display='none'">Cancelar</button>
-            </div>
-        </div>
-    </div>
+	<div id="copy-chapter-modal" class="modal-overlay" style="display: none;">
+		<div class="modal-content">
+			<h3 style="color: #f0ad4e;">Copiar Capítulo(s) de Outro Veículo</h3>
+			<label for="select-veiculo-copia">De qual veículo?</label>
+			<select id="select-veiculo-copia" onchange="popularCapitulosParaCopia()" style="width: 100%; margin-top: 5px; margin-bottom: 15px;"></select>
+			
+			<label>Quais capítulos?</label>
+			<div id="capitulos-checkboxes-copia" style="max-height: 250px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; margin-top: 5px; text-align: left;">
+				<p style="text-align: center; color: #999;">Selecione um veículo...</p>
+			</div>
+			
+			<div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
+				<button class="orange-button" onclick="executarCopiaCapitulo()">Copiar</button>
+				<button class="orange-button" onclick="document.getElementById('copy-chapter-modal').style.display='none'">Cancelar</button>
+			</div>
+		</div>
+	</div>
 	
 	<div id="text-editor-toolbar" style="display: none; position: absolute; background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 5px; padding: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 9999;">
 		<button type="button" onmousedown="event.preventDefault();" onclick="formatText('bold')" title="Negrito" style="font-weight: bold;">N</button>
