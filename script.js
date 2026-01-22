@@ -1496,10 +1496,10 @@ function abrirModalCopia(veiculoIndex) {
 
 function popularCapitulosParaCopia() {
 	const selectVeiculo = document.getElementById('select-veiculo-copia');
-	const selectCapitulo = document.getElementById('select-capitulo-copia');
+	const checkboxesContainer = document.getElementById('capitulos-checkboxes-copia');
 	const selectedVeiculoValue = selectVeiculo.value;
 
-	selectCapitulo.innerHTML = ''; // Limpa opções anteriores
+	checkboxesContainer.innerHTML = ''; // Limpa conteúdo anterior
 
 	let sourceSistemas = [];
 
@@ -1514,28 +1514,53 @@ function popularCapitulosParaCopia() {
 
 	if (sourceSistemas && sourceSistemas.length > 0) {
 		sourceSistemas.forEach((sistema, idx) => {
-			const optCapitulo = document.createElement('option');
-			optCapitulo.value = idx;
-			optCapitulo.textContent = `Capítulo ${idx + 1}: ${sistema.sistema || 'Sem título'}`;
-			selectCapitulo.appendChild(optCapitulo);
+			const label = document.createElement('label');
+			label.style.display = 'block';
+			label.style.marginBottom = '8px';
+			label.style.cursor = 'pointer';
+			label.style.padding = '5px';
+			label.style.borderRadius = '4px';
+			
+			const checkbox = document.createElement('input');
+			checkbox.type = 'checkbox';
+			checkbox.value = idx;
+			checkbox.style.marginRight = '10px';
+			checkbox.style.transform = 'scale(1.2)';
+			
+			const tituloCapitulo = sistema.sistema || 'Sem título';
+			label.appendChild(checkbox);
+			label.appendChild(document.createTextNode(`Capítulo ${idx + 1}: ${tituloCapitulo}`));
+			
+			label.addEventListener('mouseenter', () => {
+				label.style.backgroundColor = '#f0f0f0';
+			});
+			label.addEventListener('mouseleave', () => {
+				label.style.backgroundColor = 'transparent';
+			});
+			
+			checkboxesContainer.appendChild(label);
 		});
 	} else {
-		const optEmpty = document.createElement('option');
-		optEmpty.textContent = 'Nenhum capítulo encontrado';
-		optEmpty.disabled = true;
-		selectCapitulo.appendChild(optEmpty);
+		checkboxesContainer.innerHTML = '<p style="text-align: center; color: #999;">Nenhum capítulo encontrado</p>';
 	}
 }
 
 function executarCopiaCapitulo() {
 	const selectVeiculo = document.getElementById('select-veiculo-copia');
-	const selectCapitulo = document.getElementById('select-capitulo-copia');
+	const checkboxesContainer = document.getElementById('capitulos-checkboxes-copia');
 
 	const selectedVeiculoValue = selectVeiculo.value;
-	const selectedCapituloIndex = parseInt(selectCapitulo.value, 10);
-
-	if (targetVeiculoIndexParaCopia === null || isNaN(selectedCapituloIndex)) {
-		alert('Erro: Veículo de destino ou capítulo de origem inválido.');
+	
+	// Coleta todos os checkboxes marcados
+	const checkboxesMarcados = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
+	
+	if (targetVeiculoIndexParaCopia === null) {
+		alert('Erro: Veículo de destino inválido.');
+		return;
+	}
+	
+	if (checkboxesMarcados.length === 0) {
+		alert('Selecione pelo menos um capítulo para copiar.');
 		return;
 	}
 
@@ -1547,21 +1572,32 @@ function executarCopiaCapitulo() {
 		sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
 	}
 
-	const capituloParaCopiar = sourceSistemas[selectedCapituloIndex];
-
-	if (capituloParaCopiar) {
-		const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
-		
-		const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
-		veiculoDestino.sistemas.push(copiaCapitulo);
-
-		veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
-		renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
-		renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
-	}
+	const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
 	
+	// Copia todos os capítulos selecionados
+	checkboxesMarcados.forEach(checkbox => {
+		const capituloIndex = parseInt(checkbox.value, 10);
+		const capituloParaCopiar = sourceSistemas[capituloIndex];
+		
+		if (capituloParaCopiar) {
+			// Cria uma cópia profunda do capítulo
+			const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
+			veiculoDestino.sistemas.push(copiaCapitulo);
+		}
+	});
+
+	// Atualiza a paginação e renderiza o último capítulo copiado
+	veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
+	renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
+	renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+	
+	// Fecha o modal e reseta o alvo
 	document.getElementById('copy-chapter-modal').style.display = 'none';
-	targetVeiculoIndexParaCopia = null; // Reseta o alvo
+	targetVeiculoIndexParaCopia = null;
+	
+	// Mensagem de sucesso
+	const qtdCopiados = checkboxesMarcados.length;
+	alert(`${qtdCopiados} capítulo(s) copiado(s) com sucesso!`);
 }
 
 
