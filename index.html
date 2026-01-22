@@ -66,7 +66,7 @@
 			<label><input type="radio" name="aplicacao_chassi" value="ajustar"> Ajustar associação</label>
 		</div>
 		</div>
-		<textarea id="aplicacao_chassi_texto" rows="3" placeholder="Insira aqui a aplicação e/ou chassis do veículo." style="min-height: auto;"></textarea>
+		<textarea id="aplicacao_chassi_texto" rows="5" placeholder="Insira aqui a aplicação e/ou chassis do veículo." style="min-height: auto;"></textarea>
 		<div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: left;">
 			<button type="button" class="orange-button" onclick="window.open('http://192.168.201.220:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
 		</div>
@@ -74,7 +74,7 @@
 		<div class="checkbox-blockk"></div>
 		
 		<label>PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM</label>
-		<textarea id="ilustracao_texto" rows="3" style="min-height: auto;" placeholder="P:\Desenvolvimento\+ DIAGRAMAS\0. (2026-X)\Mazda\RX-7>1.3 256cv (13B - Wankel) (1994)\Fotos e Ilustrações\Pedidos..."></textarea>
+		<textarea id="ilustracao_texto" rows="5" style="min-height: auto;" placeholder="P:\Desenvolvimento\+ DIAGRAMAS\0. (2026-X)\Mazda\RX-7>1.3 256cv (13B - Wankel) (1994)\Fotos e Ilustrações\Pedidos..."></textarea>
 	</fieldset>
 			<fieldset>
 			<legend>ITENS DE SÉRIE / OPCIONAIS</legend>
@@ -137,12 +137,12 @@
 			<div class="checkbox-blockk"></div>
 			
 			<label>OUTROS (DE SÉRIE):</label>
-			<textarea id="outros_serie" rows="3" placeholder="Itens de série não listados acima..."></textarea>
+			<textarea id="outros_serie" rows="5" placeholder="Itens de série não listados acima..."></textarea>
 			
 			<div class="checkbox-blockk"></div>
 			
 			<label>OUTROS (OPCIONAIS):</label>
-			<textarea id="outros_opcional" rows="3" placeholder="Itens opcionais não listados acima..."></textarea>
+			<textarea id="outros_opcional" rows="5" placeholder="Itens opcionais não listados acima..."></textarea>
 		
 		</fieldset>
 
@@ -171,12 +171,24 @@
 				</div>
 			</div>
 			
-			<div class="checkbox-blockk"></div>
+			<!-- LEGENDA DAS DIFICULDADES 
+					<fieldset style="background-color: #F8F8F8">
+					<legend style="text-align: center; font-size: 20px; color: #4472c4;">LEGENDA:</legend>
+					<label>OPÇÃO "UMA":</label>• Para cards de ETAPA 1 e/ou que serão concluídos em apenas uma sprint.
+					<label>OPÇÃO "DUAS":</label>• Para cards que serão concluídos em duas sprints, com muitos capítulos e aplicações.
+					<div class="checkbox-blockk"></div>
+			<label style="color: red; text-align: center; font-size: 20px">ATENÇÃO:</label>
+			<label style="color: red; text-align: center;">O preenchimento de "Dificuldade" nas opções "UMA" e "DUAS" resultará em erro no PDF! Selecione apenas uma das opções para preenchimento.</label>
+					</fieldset>
+			
+			
+			<div class="checkbox-blockk"></div> -->
 			
 			<!-- Bloco para quando seleciona UMA parte -->
 			<div id="card-parte-unica-container">
 				<div class="card-details-block">
-					<label>Dificuldade:</label>
+				
+					<label style="text-align: center; font-size: 20px; margin-top: 50px;">DIFICULDADE:</label>
 					<select id="dificuldade_unica">
 						<option value="">Selecione a dificuldade</option>
 						<option value="Fácil">FÁCIL</option>
@@ -189,23 +201,34 @@
 					
 					<!-- LEGENDA DAS DIFICULDADES -->
 					<div class="checkbox-blockk"></div>
-					<fieldset>
-					<legend style="text-align: center; color: #4472c4;">TABELA DE DIFICULDADES:</legend>
-					<label>FÁCIL: </label>ETAPA 1 com transferências fáceis.
-					<label>MÉDIO: </label>ETAPA 1 padrão.
-					<label>DIFÍCIL: </label>ETAPA 1 com material faltando/divergindo/difícil de interpretar.
-					<label>CARROCERIA FÁCIL: </label>Carrocerias mais simples ou adição de sistemas que não enbglobam carroceria (Exemplo: Airbag, ABS, Multimídia, etc...).
-					<label>CARROCERIA MÉDIO: </label>Carroceria completa padrão.
-					<label>CARROCERIA DIFÍCIL: </label>(Ainda não foi utilizado) Em caso de dificuldade extrema, conversar com Head para discutir a melhor opção.
+					<fieldset style="background-color: #F8F8F8">
+					<legend style="text-align: center; font-size: 25px; color: #4472c4;">LEGENDAS:</legend>
+					
+					<label style="font-size: 20px; margin-top: 10px;">PARTES:</label>
+					<label>UMA:</label>• Para cards de ETAPA 1 ou com poucos capítulos, que serão concluídos em apenas uma sprint.
+					<label>DUAS:</label>• Para cards que serão concluídos em duas sprints, com muitos capítulos e aplicações.
+					
+					<fieldset style="background-color: white">
+					<label style="color: red; text-align: center; font-size: 25px;">ATENÇÃO:</label>
+					<label style="color: red; text-align: center; margin-bottom: 15px;">O preenchimento de "Dificuldade" nas opções "UMA" e "DUAS" resultará em erro no PDF! Selecione apenas uma das opções para preenchimento.</label>
+					</fieldset>
+					
+					<div class="checkbox-blockk"></div>
+					<label style="font-size: 20px; margin-top: 30px;">DIFICULDADE:</label>
+					<label>FÁCIL: </label>• ETAPA 1 com transferências fáceis.
+					<label>MÉDIO: </label>• ETAPA 1 padrão.
+					<label>DIFÍCIL: </label>• ETAPA 1 com material faltando/divergindo/difícil de interpretar.
+					<label>CARROCERIA FÁCIL: </label>• Carrocerias mais simples ou adição de sistemas que não englobam carroceria (Exemplo: Airbag, ABS, etc...).
+					<label>CARROCERIA MÉDIO: </label>• Carroceria completa padrão.
+					<label>CARROCERIA DIFÍCIL: </label>• (Ainda não foi utilizado) Em caso de dificuldade extrema, conversar com Head para discutir a melhor opção.
 					</fieldset>
 				</div>
 			</div>
 			
 			<!-- Bloco para quando seleciona DUAS partes -->
 			<div id="card-duas-partes-container" style="display: none;">
-				<h3 style="text-align: center; color: #4472c4;">PARTE 1</h3>
+				<label style="text-align: center; font-size: 20px; margin-top: 50px;">DIFICULDADE (PARTE 1):</label>
 				<div class="card-details-block">
-					<label>Dificuldade (Parte 1):</label>
 					<select id="dificuldade_parte1">
 						<option value="">Selecione a dificuldade</option>
 						<option value="Carroceria Fácil">CARROCERIA F</option>
@@ -213,11 +236,8 @@
 						<option value="Carroceria Difícil">CARROCERIA D</option>
 					</select>
 				</div>
-				
-				<div class="checkbox-blockk"></div>
-				<h3 style="text-align: center; color: #4472c4; margin-top: 20px;">PARTE 2</h3>
+				<label style="text-align: center; font-size: 20px; margin-top: 40px;">DIFICULDADE (PARTE 2):</label>
 				<div class="card-details-block">
-					<label>Dificuldade (Parte 2):</label>
 					<select id="dificuldade_parte2">
 						<option value="">Selecione a dificuldade</option>
 						<option value="Carroceria Fácil">CARROCERIA F</option>
@@ -227,11 +247,25 @@
 				</div>
 				<!-- LEGENDA DAS DIFICULDADES -->
 					<div class="checkbox-blockk"></div>
-					<fieldset>
-					<legend style="text-align: center; color: #4472c4;">TABELA DE DIFICULDADES:</legend>
-					<label>CARROCERIA FÁCIL: </label>Carrocerias mais simples ou adição de sistemas que não enbglobam carroceria (Exemplo: Airbag, ABS, Multimídia, etc...).
-					<label>CARROCERIA MÉDIO: </label>Carroceria completa padrão.
-					<label>CARROCERIA DIFÍCIL: </label>Ainda não foi utilizado. Caso encontre algo surreal de difícil, conversar com Head para tomar a melhor decisão.
+					<fieldset style="background-color: #F8F8F8">
+					<legend style="text-align: center; font-size: 25px; color: #4472c4;">LEGENDAS:</legend>
+					<label style="font-size: 20px; margin-top: 10px;">PARTES:</label>
+					<label>UMA:</label>• Para cards de ETAPA 1 ou com poucos capítulos, que serão concluídos em apenas uma sprint.
+					<label>DUAS:</label>• Para cards que serão concluídos em duas sprints, com muitos capítulos e aplicações.
+					
+					<fieldset style="background-color: white">
+					<label style="color: red; text-align: center; font-size: 25px;">ATENÇÃO:</label>
+					<label style="color: red; text-align: center; margin-bottom: 15px;">O preenchimento de "Dificuldade" nas opções "UMA" e "DUAS" resultará em erro no PDF! Selecione apenas uma das opções para preenchimento.</label>
+					</fieldset>
+					
+					<div class="checkbox-blockk"></div>
+					<label style="font-size: 20px; margin-top: 30px;">DIFICULDADE:</label>
+					<label style="font-size: 15px;">FÁCIL: </label>• ETAPA 1 com transferências fáceis.
+					<label>MÉDIO: </label>• ETAPA 1 padrão.
+					<label>DIFÍCIL: </label>• ETAPA 1 com material faltando/divergindo/difícil de interpretar.
+					<label>CARROCERIA FÁCIL: </label>• Carrocerias mais simples ou adição de sistemas que não englobam carroceria (Exemplo: Airbag, ABS, etc...).
+					<label>CARROCERIA MÉDIO: </label>• Carroceria completa padrão.
+					<label>CARROCERIA DIFÍCIL: </label>• (Ainda não foi utilizado) Em caso de dificuldade extrema, conversar com Head para discutir a melhor opção.
 					</fieldset>
 			</div>
 		</fieldset>
@@ -256,6 +290,15 @@
 				<option value="Médio">MÉDIO</option>
 				<option value="Difícil">DIFÍCIL</option>
 			</select>
+			<!-- LEGENDA DAS DIFICULDADES -->
+					<div class="checkbox-blockk"></div>
+					<fieldset style="background-color: #F8F8F8">
+					<legend style="text-align: center; font-size: 25px; color: #4472c4;">LEGENDAS:</legend>
+					<label>FÁCIL: </label>• Apenas cópia do veículo principal, com pouquíssimas alterações.
+					<label>MODERADO: </label>• Entre fácil e médio... Em caso de dúvida, falar com Head para decisão.
+					<label>MÉDIO: </label>• Algumas modificações (Exemplo: Modificar fusíveis e componentes).
+					<label>DIFÍCIL: </label>• (Ainda não utilizado) Muitas alterações e material de difícil manuseio/interpretação.
+					</fieldset>
 			</fieldset>
 		</div>
 		</div>
