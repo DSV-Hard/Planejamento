@@ -2665,33 +2665,70 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 
 			if (fragment.type === 'text' || fragment.type === 'link') {
-            if (fragment.style && fragment.style.isPath) {
-               const pathFontSize = fragment.style.fontSize || 12;
-					const availableWidth = maxWidth - currentX;
-
-					applyStyle({ ...fragment.style, fontSize: pathFontSize });
-
-					let pathText = fragment.text;
-					while (pathText.length > 0) {
-						let fitLength = pathText.length;
-						let part = pathText;
-
-						while (doc.getTextWidth(part) > availableWidth && fitLength > 1) {
+			if (fragment.style && fragment.style.isPath) {
+				let pathFontSize = fragment.style.fontSize || 12;
+				const pathText = fragment.text;
+				
+				// Tenta renderizar com o tamanho original
+				applyStyle({ ...fragment.style, fontSize: pathFontSize });
+				let textWidth = doc.getTextWidth(pathText);
+				
+				// Se não cabe, reduz a fonte até caber OU até o mínimo de 6pt
+				while (textWidth > maxWidth && pathFontSize > 6) {
+					pathFontSize -= 0.5;
+					doc.setFontSize(pathFontSize);
+					textWidth = doc.getTextWidth(pathText);
+				}
+				
+				// Se AINDA não cabe mesmo com fonte 6pt, quebra em múltiplas linhas SEM espaços/hífens
+				if (textWidth > maxWidth) {
+					// Quebra o caminho em partes que cabem, mas mantém como string contínua
+					let remainingText = pathText;
+					const lines = [];
+					
+					while (remainingText.length > 0) {
+						let fitLength = remainingText.length;
+						let part = remainingText;
+						
+						while (doc.getTextWidth(part) > maxWidth && fitLength > 1) {
 							fitLength--;
-							part = pathText.substring(0, fitLength);
+							part = remainingText.substring(0, fitLength);
 						}
-
-						let needsHyphen = fitLength < pathText.length;
-						if (needsHyphen) part += '-';
-
-						doc.text(part, currentX, currentY);
-
-						currentY += lineHeight;
-						currentX = x;
-						pathText = pathText.substring(fitLength);
+						
+						// Tenta quebrar em \ para melhor legibilidade
+						if (fitLength < remainingText.length) {
+							const lastBackslash = part.lastIndexOf('\\');
+							if (lastBackslash > Math.floor(fitLength * 0.5)) {
+								fitLength = lastBackslash + 1;
+							}
+						}
+						
+						lines.push(remainingText.substring(0, fitLength));
+						remainingText = remainingText.substring(fitLength);
 					}
-                continue;
-            }
+					
+					// Renderiza cada linha
+					for (const line of lines) {
+						if (currentY > pageBottom) {
+							doc.addPage();
+							currentY = margin;
+						}
+						doc.text(line, x, currentY);
+						currentY += lineHeight;
+					}
+				} else {
+					// Cabe em uma linha!
+					if (currentY > pageBottom) {
+						doc.addPage();
+						currentY = margin;
+					}
+					doc.text(pathText, x, currentY);
+					currentY += lineHeight;
+				}
+				
+				currentX = x;
+				continue;
+			}
 				
 				if (fragment.type === 'link' || (fragment.style && fragment.style.isLink)) {
 					applyStyle(fragment.style);
