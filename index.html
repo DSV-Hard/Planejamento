@@ -16,7 +16,13 @@
 		<h1>PLANEJAMENTO</h1>
     </div>
     <div id="main-frame">
-    <div style="text-align: center; margin-bottom: 20px;">
+	<div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+        <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
+        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
+        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
+        <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/ZIP/JSON</button>
+    </div>
+    <div style="font-size: 20px; text-align: center; margin-bottom: 20px; margin-top: 20px;">
         <button id="btn-principal" class="active principal" onclick="alternarAbas('principal')">VEÍCULO PRINCIPAL</button>
         <button id="btn-aplicaveis" class="aplicaveis" onclick="alternarAbas('aplicaveis')">VEÍCULOS APLICÁVEIS</button>
     </div>
@@ -305,9 +311,9 @@
 
     <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
         <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
-        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar Planejamento</button>
-        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar Planejamento</button>
-        <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/ZIP</button>
+        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
+        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
+        <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/ZIP/JSON</button>
     </div>
 
     <div id="validation-modal" class="modal-overlay" style="display: none;">
