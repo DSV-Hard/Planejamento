@@ -1565,11 +1565,15 @@ function executarCopiaCapitulo() {
 	}
 
 	let sourceSistemas = [];
+	let isCopiandoDoPrincipal = false;
+	
 	if (selectedVeiculoValue === 'principal') {
 		sourceSistemas = sistemasData;
+		isCopiandoDoPrincipal = true;
 	} else if (selectedVeiculoValue.startsWith('aplicavel_')) {
 		const veiculoIndex = parseInt(selectedVeiculoValue.split('_')[1], 10);
 		sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
+		isCopiandoDoPrincipal = false;
 	}
 
 	const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
@@ -1582,6 +1586,20 @@ function executarCopiaCapitulo() {
 		if (capituloParaCopiar) {
 			// Cria uma cópia profunda do capítulo
 			const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
+			
+			// CORREÇÃO: Ajusta o campo 'transferencia' se estiver copiando do principal
+			if (isCopiandoDoPrincipal) {
+				// Converte os valores do principal para os valores dos aplicáveis
+				if (copiaCapitulo.transferencia === 'transferencia') {
+					copiaCapitulo.transferencia = 'transferencia_principal';
+				} else if (copiaCapitulo.transferencia === 'zero') {
+					// Define como transferência do principal por padrão
+					copiaCapitulo.transferencia = 'transferencia_principal';
+				}
+				// 'modificar' permanece igual
+			}
+			// Se estiver copiando de outro aplicável, os valores já estão corretos
+			
 			veiculoDestino.sistemas.push(copiaCapitulo);
 		}
 	});
