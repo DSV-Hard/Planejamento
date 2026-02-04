@@ -901,45 +901,47 @@ function renderizarPaginacao() {
 }
 
 function salvarDadosSistema(index) {
-if (index < 0 || index >= sistemasData.length) return;
+    if (index < 0 || index >= sistemasData.length) return;
 
-const systemDiv = document.querySelector(`#sistemas-container .system-block`);
-if (!systemDiv) return;
+    const systemDiv = document.querySelector(`#sistemas-container .system-block`);
+    if (!systemDiv) return;
 
-const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
-if (!selectElement) return;
+    const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
+    if (!selectElement) return;
 
-	const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
-	const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
-	const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
+    const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
+    const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
+    const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
 
-	const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
-	const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
-	const getRadio = (name) => systemDiv.querySelector(`input[name="${name}"]:checked`)?.value || '';
-	
-	const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
-	const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
+    const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
+    const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
+    
+    // CORREÇÃO: Usa document em vez de systemDiv para garantir que pega o rádio correto
+    const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+    
+    const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
+    const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
 
-	sistemasData[index] = {
-		caixas: caixasExistentes,
-		paginas: paginasExistentes,
-		sistema: sistemaValor,
-		transferencia: transferenciaValue,
-		idtransf: getVal(`#idtransf_${index}`),
-		paginasprev: getVal(`input[name="paginasprev_${index}"]`),
-		tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
-		modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
+    sistemasData[index] = {
+        caixas: caixasExistentes,
+        paginas: paginasExistentes,
+        sistema: sistemaValor,
+        transferencia: transferenciaValue,
+        idtransf: getVal(`#idtransf_${index}`),
+        paginasprev: getVal(`input[name="paginasprev_${index}"]`),
+        tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
+        modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
         tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
-		modulo: getVal(`input[name="modulo_${index}"]`),
-		nomematerial: getVal(`input[name="nomematerial_${index}"]`),
-		codmodulo: getHtml(`#codmodulo_${index}`),
-		codconectores: getVal(`textarea[name="codconectores_${index}"]`),
-		pagloc: getHtml(`#pagloc_${index}`),
-		pagcon: getHtml(`#pagcon_${index}`),
-		pagdiag: getHtml(`#pagdiag_${index}`)
-	};
-	
-	renderizarPaginacao();
+        modulo: getVal(`input[name="modulo_${index}"]`),
+        nomematerial: getVal(`input[name="nomematerial_${index}"]`),
+        codmodulo: getHtml(`#codmodulo_${index}`),
+        codconectores: getVal(`textarea[name="codconectores_${index}"]`),
+        pagloc: getHtml(`#pagloc_${index}`),
+        pagcon: getHtml(`#pagcon_${index}`),
+        pagdiag: getHtml(`#pagdiag_${index}`)
+    };
+    
+    renderizarPaginacao();
 }
 
 
@@ -2413,39 +2415,40 @@ async function gerarPDF(sistemasParte2 = null) {
 	let partsToGenerate = [];
 
 	if (isSplit) {
-		const todosSistemas = dataPrincipalOriginal.sistemas;
-		const sistemasParte1 = todosSistemas.filter(sistema => 
-			!sistemasParte2.some(s2 => s2.sistema === sistema.sistema)
-		);
-		
-		const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-		
-		const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-		partsToGenerate.push({
-			prefixo: "PARTE 1 - ",
-			sufixoTitulo: " (PARTE 1)",
-			dataPrincipal: {
-				...dataPrincipalOriginal,
-				sistemas: sistemasParte1,
-				ppp_calculado: pppParte1
-			},
-			dataAplicaveis: [],
-			incluirInfoGerais: true,
-			incluirItensSerie: true
-		});
+    const todosSistemas = dataPrincipalOriginal.sistemas;
+    const sistemasParte1 = todosSistemas.filter(sistema => 
+        !sistemasParte2.some(s2 => s2.sistema === sistema.sistema)
+    );
+    
+    const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+    const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+    
+    // CORREÇÃO: Criar cópias profundas independentes para cada parte
+    partsToGenerate.push({
+        prefixo: "PARTE 1 - ",
+        sufixoTitulo: " (PARTE 1)",
+        dataPrincipal: {
+            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)), // Cópia profunda
+            sistemas: JSON.parse(JSON.stringify(sistemasParte1)),  // Cópia profunda dos sistemas
+            ppp_calculado: pppParte1
+        },
+        dataAplicaveis: [],
+        incluirInfoGerais: true,
+        incluirItensSerie: true
+    });
 
-		partsToGenerate.push({
-			prefixo: "PARTE 2 - ",
-			sufixoTitulo: " (PARTE 2)",
-			dataPrincipal: {
-				...dataPrincipalOriginal,
-				sistemas: sistemasParte2,
-				ppp_calculado: pppParte2
-			},
-			dataAplicaveis: dataAplicaveisOriginal, // Parte 2 TEM aplicáveis
-			incluirInfoGerais: true, // Repete Info Gerais
-			incluirItensSerie: true  // Repete Itens de Série
-		});
+    partsToGenerate.push({
+        prefixo: "PARTE 2 - ",
+        sufixoTitulo: " (PARTE 2)",
+        dataPrincipal: {
+            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)), // Cópia profunda
+            sistemas: JSON.parse(JSON.stringify(sistemasParte2)),  // Cópia profunda dos sistemas
+            ppp_calculado: pppParte2
+        },
+        dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)), // Cópia profunda
+        incluirInfoGerais: true,
+        incluirItensSerie: true
+    });
 
 	} else {
 		const pppTotal = dataPrincipalOriginal.sistemas.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
@@ -3411,66 +3414,10 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const nomeArquivoPDF = `${prefixo}${nomeBase}.pdf`;
 	doc.save(nomeArquivoPDF);
 
+
 	if (isLastPart) {
-		
-		const zipCompleto = new JSZip();
-		const zipRootPrincipal = zipCompleto.folder('Veículo Principal');
-		const zipRootAplicaveis = zipCompleto.folder('Veículos Aplicáveis');
-		
-		const dadosZipPrincipal = dadosCompletosJSON.principal;
-		const dadosZipAplicaveis = dadosCompletosJSON.aplicaveis;
-
-		await addRichContent(dadosZipPrincipal.pasta, 0, 0, zipRootPrincipal, null, -1);
-		await addRichContent(dadosZipPrincipal.comentarios, 0, 0, zipRootPrincipal, null, -1);
-		await addRichContent(dadosZipPrincipal.ilustracao_texto, 0, 0, zipRootPrincipal, null, -1);
-		if (dadosZipPrincipal.pesquisa === 'sim' && dadosZipPrincipal.pesquisa_texto) {
-			await addRichContent(dadosZipPrincipal.pesquisa_texto, 0, 0, zipRootPrincipal, null, -1);
-		}
-		for (const [idx, sistema] of dadosZipPrincipal.sistemas.entries()) {
-			const isCaixas = sistema.sistema === "Fusíveis e Relés";
-			const isPaginas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
-			const isModulo = sistema.modulo_dedicado === 'sim';
-			
-			if (isCaixas && sistema.caixas) {
-				for (const caixa of sistema.caixas) await addRichContent(caixa.descricoes, 0, 0, zipRootPrincipal, sistema, idx);
-			} else if (isPaginas || (!isModulo && (sistema.sistema === 'Iluminação' || sistema.sistema === 'Outro'))) {
-				if(sistema.paginas) for (const pagina of sistema.paginas) await addRichContent(pagina.conteudo, 0, 0, zipRootPrincipal, sistema, idx);
-			} else {
-				await addRichContent(sistema.codmodulo, 0, 0, zipRootPrincipal, sistema, idx);
-				await addRichContent(sistema.pagloc, 0, 0, zipRootPrincipal, sistema, idx);
-				await addRichContent(sistema.pagcon, 0, 0, zipRootPrincipal, sistema, idx);
-				await addRichContent(sistema.pagdiag, 0, 0, zipRootPrincipal, sistema, idx);
-			}
-		}
-
-		if (dadosZipAplicaveis) {
-			for (const [vIdx, veiculo] of dadosZipAplicaveis.entries()) {
-				await addRichContent(veiculo.dadosGerais.pasta, 0, 0, zipRootAplicaveis, null, -1, true, veiculo, vIdx);
-				await addRichContent(veiculo.dadosGerais.comentarios, 0, 0, zipRootAplicaveis, null, -1, true, veiculo, vIdx);
-				await addRichContent(veiculo.dadosGerais.ilustracao_texto, 0, 0, zipRootAplicaveis, null, -1, true, veiculo, vIdx);
-				if (veiculo.dadosGerais.pesquisa === 'sim' && veiculo.dadosGerais.pesquisa_texto) {
-					await addRichContent(veiculo.dadosGerais.pesquisa_texto, 0, 0, zipRootAplicaveis, null, -1, true, veiculo, vIdx);
-				}
-				
-				for (const [sIdx, sistema] of veiculo.sistemas.entries()) {
-					const isCaixas = sistema.sistema === "Fusíveis e Relés";
-					const isPaginas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
-					const isModulo = sistema.modulo_dedicado === 'sim';
-					
-					if (isCaixas && sistema.caixas) {
-						for (const caixa of sistema.caixas) await addRichContent(caixa.descricoes, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-					} else if (isPaginas || (!isModulo && (sistema.sistema === 'Iluminação' || sistema.sistema === 'Outro'))) {
-						if(sistema.paginas) for (const pagina of sistema.paginas) await addRichContent(pagina.conteudo, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-					} else {
-						await addRichContent(sistema.codmodulo, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-						await addRichContent(sistema.pagloc, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-						await addRichContent(sistema.pagcon, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-						await addRichContent(sistema.pagdiag, 0, 0, zipRootAplicaveis, sistema, sIdx, true, veiculo, vIdx);
-					}
-				}
-			}
-		}
-		const zipContent = await zipCompleto.generateAsync({ type: 'blob' });
+		// Usa o ZIP que já foi populado durante a renderização do PDF
+		const zipContent = await zip.generateAsync({ type: 'blob' });
 		
 		if (zipContent && zipContent.size > 22) { // Garante que o ZIP não está vazio
 			const nomeZip = `${nomeBase}.zip`;
