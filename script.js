@@ -668,6 +668,7 @@ function renderizarSistema(index) {
 				<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
 				<option value="Conectores de Peito" ${dados.sistema === 'Conectores de Peito' ? 'selected' : ''}>Conectores de Peito</option>
 				<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
+				<option value="Freio EBS" ${dados.sistema === 'Freio EBS' ? 'selected' : ''}>Freio EBS</option>
 				<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
 				<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
 				<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
@@ -681,7 +682,7 @@ function renderizarSistema(index) {
 				<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
 				<option value="Outro" ${dados.sistema && ![
 				'Airbag','Alimentação Positiva','Ar-condicionado','Central de Carroceria','Central Multimídia',
-				'Conectores de Peito','Freio ABS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
+				'Conectores de Peito','Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
 				'Iluminação','Injeção Eletrônica','Sistema de Carga e Partida','Injeção Eletrônica e Transmissão',
 				'Painel de Instrumentos','Rádio','Redes de Comunicação','Tração 4x4','Transmissão Automática'
 				].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
@@ -692,7 +693,7 @@ function renderizarSistema(index) {
 					'Fusíveis e Relés','Alimentação Positiva','Conectores de Peito','Central de Carroceria','Injeção Eletrônica',
 					'Sistema de Carga e Partida','Injeção Eletrônica e Transmissão','Transmissão Automática',
 					'Tração 4x4','Redes de Comunicação','Painel de Instrumentos','Airbag','Ar-condicionado',
-					'Freio ABS','Freio de Estacionamento Eletrônico','Rádio','Central Multimídia','Iluminação'
+					'Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Rádio','Central Multimídia','Iluminação'
 				].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistema(${idx})">
 			</div>
 			<div id="formulario-capitulo_${idx}"></div>
@@ -1643,6 +1644,7 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 			<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
 			<option value="Conectores de Peito" ${dados.sistema === 'Conectores de Peito' ? 'selected' : ''}>Conectores de Peito</option>
 			<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
+			<option value="Freio EBS" ${dados.sistema === 'Freio EBS' ? 'selected' : ''}>Freio EBS</option>
 			<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
 			<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
 			<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
@@ -1656,14 +1658,14 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 			<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
 			<option value="Outro" ${dados.sistema && ![
 			'Airbag','Alimentação Positiva','Ar-condicionado','Central de Carroceria','Central Multimídia',
-			'Conectores de Peito','Freio ABS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
+			'Conectores de Peito','Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
 			'Iluminação','Injeção Eletrônica','Sistema de Carga e Partida','Injeção Eletrônica e Transmissão',
 			'Painel de Instrumentos','Rádio','Redes de Comunicação','Tração 4x4','Transmissão Automática'
 			].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
 		</select>
 		<div id="outrocampo_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display:none; margin-top: 5px;">
 			<label>Especifique o título:</label>
-			<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Conectores de Peito', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+			<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Conectores de Peito', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 		</div>
 		<div id="formulario-capitulo-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
 	`;
@@ -2325,7 +2327,7 @@ function carregarDeJSON(input) {
 				}
 				
 				// VALIDAÇÃO DOS CAMPOS MÓDULO, NOME NO MATERIAL E CÓDIGO DE PEÇA
-				const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+				const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 				const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
 				const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
 				const isModuloDedicado = sistema.modulo_dedicado === 'sim';
@@ -2481,7 +2483,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 
 	const { jsPDF } = window.jspdf;
 	const doc = new jsPDF();
-	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 	let y = 10;
 	const margin = 10;
 	const lineHeight = 7;
@@ -3107,7 +3109,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			
 			addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
 			
-			const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+			const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 			const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
 			const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
 			const isModuloDedicado = sistema.modulo_dedicado === 'sim';
@@ -3299,7 +3301,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					// Determina se o sistema é do tipo "Manual/Outro" (Iluminação ou qualquer coisa que não seja as fixas/padrão)
 					const sistemasPadrao = [
 						"Airbag", "Ar-condicionado", "Central de Carroceria", "Central Multimídia", 
-						"Freio ABS", "Freio de Estacionamento Eletrônico", "Injeção Eletrônica", 
+						"Freio ABS", "Freio EBS", "Freio de Estacionamento Eletrônico", "Injeção Eletrônica", 
 						"Injeção Eletrônica e Transmissão", "Painel de Instrumentos", "Rádio", 
 						"Redes de Comunicação", "Tração 4x4", "Transmissão Automática"
 					];
