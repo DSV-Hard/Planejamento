@@ -406,12 +406,26 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						
 						try {
 							const imgProps = doc.getImageProperties(fragment.src);
-							// Define largura igual à largura útil da página (maxWidth)
-							let imgW = maxWidth;
-							// Calcula altura proporcional
-							let imgH = (imgProps.height * imgW) / imgProps.width;
+							
+							// Converte o tamanho original da imagem de pixels para milímetros (usando ~96 DPI como base)
+							const pxToMm = 0.264583;
+							let imgW = imgProps.width * pxToMm;
+							let imgH = imgProps.height * pxToMm;
 
-							// Verifica se cabe na página atual, senão cria nova
+							// 1. Limita a largura para não sair da página (extrapolar à direita)
+							if (imgW > maxWidth) {
+								imgW = maxWidth;
+								imgH = (imgProps.height * imgW) / imgProps.width; // Reduz altura proporcionalmente
+							}
+
+							// 2. Limita a altura máxima para o tamanho total útil de uma página
+							const maxPageHeight = pageBottom - margin;
+							if (imgH > maxPageHeight) {
+								imgH = maxPageHeight;
+								imgW = (imgProps.width * imgH) / imgProps.height; // Reduz largura proporcionalmente
+							}
+
+							// 3. Se a imagem não couber no espaço restante da página ATUAL, joga pra próxima
 							if (currentY + imgH > pageBottom) {
 								doc.addPage();
 								currentY = margin;
