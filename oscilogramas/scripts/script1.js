@@ -416,7 +416,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 					</div>
 				</div>
 				<label>PASTA DO VEÍCULO</label>
-				<div contenteditable="true" class="editable-content" id="pasta_aplicaveis_${veiculoIndex}" data-field="pasta_aplicaveis" oninput="salvarDadosVeiculoAplicavel(${veiculoIndex})" data-placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS...">${veiculo.dadosGerais.pasta || ''}</div>
+				<input type="text" id="pasta_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.pasta || ''}" placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 
 				<div class="checkbox-blockk"></div>
 
