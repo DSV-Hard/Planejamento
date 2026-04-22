@@ -6,7 +6,7 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 		veiculo: document.getElementById(`veiculo_aplicaveis_${veiculoIndex}`)?.value || '',
 		iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`)?.value || '',
 		idfusiveis: document.getElementById(`idfusiveis_aplicaveis_${veiculoIndex}`)?.value || '',
-		pasta: document.getElementById(`pasta_aplicaveis_${veiculoIndex}`)?.innerHTML || '',
+		pasta: document.getElementById(`pasta_aplicaveis_${veiculoIndex}`)?.value || '',
 		aplicacao_chassi: document.querySelector(`input[name="aplicacao_chassi_aplicaveis_${veiculoIndex}"]:checked`)?.value,
 		aplicacao_chassi_texto: document.getElementById(`aplicacao_chassi_texto_aplicaveis_${veiculoIndex}`)?.value || '',
 	};
