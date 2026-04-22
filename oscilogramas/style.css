@@ -1,0 +1,517 @@
+    body { font-family: Arial, sans-serif; margin: 40px; }
+    h1 { font-size: 2em; text-align: center; margin-bottom: 30px; }
+    #main-frame {
+        background-color: #ffffff; /* Fundo branco para o quadro */
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1); /* Sombra sutil para destacar o quadro */
+        margin-top: 20px;
+        max-width: 800px;
+        margin: 20px auto;
+    }
+	
+		#cabecalho {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        #cabecalho img {
+            height: 50px;
+            margin-right: 20px;
+        }
+
+        #cabecalho h1 {
+            font-size: 2em;
+            margin: 0;
+        }
+	
+    label { margin-top: 12px; font-weight: bold; display: block; }
+    input[type="text"], input[type="number"], select {
+        width: 100%;
+		padding: 8px;
+		margin-top: 1px;
+		margin-bottom: 10px;
+		box-sizing: border-box;
+        border: 1px solid #ccc;
+		border-radius: 4px;
+		font-size: 1em;
+		font-family: Arial, sans-serif;
+		resize: none;
+    }
+
+	textarea {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+    font-family: Arial, sans-serif;
+    resize: vertical;
+	}
+/* o px que tem em #comentarios depende do que tem na linha aqui em cima */
+    #comentarios { height: 150px; resize: none; } 
+	#comentarios_aplicaveis { height: 150px; resize: none }
+	
+    .editable-content {
+        width: 100%; padding: 8px; margin-top: 5px; box-sizing: border-box;
+        border: 1px solid #ccc; border-radius: 4px; font-size: 1em;
+        min-height: 120px; background-color: #fff; position: relative;
+        overflow: auto; /* Changed from hidden to auto */
+        word-wrap: break-word;
+		white-space: pre-wrap;
+		word-break: break-all;
+		overflow-wrap: break-word;
+    }
+    .editable-content.short {
+        min-height: 40px;
+    }
+    .editable-content img {
+        max-width: 100%; display: block; margin-top: 5px;
+    }
+    
+    /* Estilo para container dos campos de desenvolvimento */
+    .development-field-container {
+        position: relative;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    .development-field-container .editable-content {
+        flex: 1;
+        margin-top: 0;
+    }
+    
+    .btn-anexar {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+        margin-top: 5px;
+        min-width: 80px;
+    }
+    
+    .btn-anexar:hover {
+        background-color: #0056b3;
+    }
+    
+    /* Input file oculto */
+    .file-input-hidden {
+        display: none;
+    }
+    
+    /* Estilo para drag over */
+    .editable-content.drag-over {
+        border: 2px dashed #007bff;
+        background-color: #f8f9fa;
+    }
+	
+    .checkbox-group { margin-top: 5px; }
+    .checkbox-group label { font-weight: normal; margin-right: 15px; }
+    
+    button {
+        margin-top: 10px;
+        padding: 10px 20px;
+        font-size: 1em;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+        color: black;
+    }
+    .orange-button {
+        background-color: orange;
+    }
+    .orange-button:hover {
+        background-color: darkorange;
+    }
+    button.principal {
+        background-color: #d4ffd6;
+    }
+    button.principal:hover {
+        filter: brightness(90%);
+    }
+    button.principal.active {
+        background-color: #33d439;
+        color: black;
+    }
+    button.aplicaveis {
+        background-color: #faf5be;
+    }
+    button.aplicaveis:hover {
+        filter: brightness(90%);
+    }
+    button.aplicaveis.active {
+        background-color: #fae743;
+        color: black;
+    }
+    fieldset { border: 1px solid #ccc; padding: 20px; margin-top: 20px; border-radius: 8px; }
+    legend { font-weight: bold; padding: 0 10px; }
+    .system-block {
+        border: 1px dashed #aaa; padding: 15px; margin-top: 15px;
+        background-color: #f7f7f7; border-radius: 6px;
+    }
+    .system-block fieldset {
+        background-color: #ffffff; border-radius: 6px;
+    }
+    .checkbox-block {
+        display: flex; align-items: center; padding-bottom: 2px; margin-bottom: 2px;
+    }
+	.checkbox-blockk {
+        display: flex; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 2px;
+    }
+	
+    .checkbox-inline {
+        display: flex; flex-wrap: wrap; gap: 10px; margin-top: 1px;
+    }
+    .checkbox-inline label { font-weight: normal; }
+    .checkbox-title { text-transform: uppercase; font-weight: bold; }
+    .checkbox-block .checkbox-title { margin-right: 5px; }
+    input::placeholder { font-style: italic; }
+    input::-webkit-input-placeholder { font-style: italic; }
+    input:-moz-placeholder { font-style: italic; }
+    input:-ms-input-placeholder { font-style: italic; }
+    
+    textarea::placeholder { font-style: italic; }
+    textarea::-webkit-input-placeholder { font-style: italic; }
+    textarea:-moz-placeholder { font-style: italic; }
+    textarea:-ms-input-placeholder { font-style: italic; }
+    
+    .editable-content[data-placeholder].empty:before {
+        content: attr(data-placeholder);
+        color: #999;
+        font-style: italic;
+        pointer-events: none;
+        position: absolute;
+        top: 8px;
+        left: 8px;
+    }
+    
+    .editable-content[data-placeholder].empty:focus:before {
+        display: none;
+    }
+	
+	
+	
+	/* Container para campos ID DIAGRAMAS e ID FUSÍVEIS lado a lado */
+	.id-fields-container {
+		display: flex;
+		gap: 20px;
+		align-items: flex-end;
+	}
+	
+	.id-fields-container .field-group {
+		flex: 1;
+	}
+	
+	.id-fields-container label {
+		margin-bottom: 5px;
+	}
+	
+	.id-fields-container input {
+		width: 100%;
+	}
+	
+	 .btn-paginacao {
+            background-color: #ddd;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-paginacao.active {
+            background-color: orange; /* Cor laranja para o botão selecionado */
+            color: white;
+        }
+
+        .btn-paginacao:hover {
+            background-color: #ccc;
+        }
+	
+		.btn-adicionar {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+
+        .btn-adicionar:hover {
+            background-color: #45a049;
+        }
+
+        .btn-remover {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn-remover:hover {
+            background-color: #da190b;
+        }
+		
+		.button-group-centered {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+		
+		.veiculo-aplicavel-block {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+		
+		.paginas-navegacao {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .paginas-navegacao .btn-paginacao {
+            background-color: #ddd;
+            color: #333;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .paginas-navegacao .btn-paginacao.active {
+            background-color: orange;
+            color: white;
+        }
+		
+		.veiculo-aplicavel-block {
+			background-color: white;
+		}
+
+    /* Estilos para o Modal de Validação */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background-color: white;
+        padding: 20px 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        text-align: left;
+        max-width: 500px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    .modal-content h3 {
+        margin-top: 0;
+        color: #d9534f;
+    }
+    .modal-content ul {
+        padding-left: 20px;
+    }
+    .modal-close-btn {
+        display: block;
+        margin: 20px auto 0;
+        padding: 10px 25px;
+        border: none;
+        background-color: #f0ad4e;
+        color: white;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+	
+	
+
+    .campo-invalido {
+        border: 2px solid red !important;
+    }
+    .radio-invalido {
+        outline: 2px solid red;
+        outline-offset: 2px;
+        border-radius: 5px;
+    }
+	
+	#text-editor-toolbar {
+		flex-direction: column; /* Organiza os botões verticalmente */
+		width: 45px; /* Define uma largura fixa */
+		align-items: center; /* Centraliza os itens */
+	}
+
+	#text-editor-toolbar button, #text-editor-toolbar select, #text-editor-toolbar input[type="color"] {
+    padding: 5px 8px;
+    margin: 2px 0; /* Ajusta a margem para o layout vertical */
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    background-color: #fff;
+    cursor: pointer;
+    font-size: 0.9em;
+	width: 100%; /* Faz os elementos preencherem a largura da barra */
+    box-sizing: border-box;
+	}
+
+	/* Ajuste específico para o seletor de cor */
+	#text-editor-toolbar input[type="color"] {
+		height: 30px; 
+		padding: 2px;
+	}
+
+	#text-editor-toolbar button:hover, #text-editor-toolbar select:hover {
+		background-color: #e9e9e9;
+	}
+
+    /* ==========================================================================
+       INÍCIO: ESTILOS PARA A NOVA FUNCIONALIDADE "CAIXAS"
+       ========================================================================== */
+    .caixa-item {
+        border: 1px solid #e0e0e0;
+        background-color: #fdfdfd;
+        padding: 15px;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+    .caixa-actions-column {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        margin-top: 5px;
+    }
+    .btn-remover-caixa {
+        background-color: #f44336;
+        color: white;
+        padding: 8px 12px;
+        width: 100%;
+		font-size: 12px;
+        min-width: 80px;
+        border: none;
+        cursor: pointer;
+    }
+    .btn-remover-caixa:hover {
+        background-color: #c82333;
+    }
+    .mover-buttons {
+        display: flex;
+        gap: 5px;
+        width: 100%;
+    }
+    .btn-mover-caixa {
+        background-color: #f0f0f0;
+        color: #333;
+        border: 1px solid #ccc;
+        padding: 4px;
+        font-size: 1.2em;
+        line-height: 1;
+        flex: 1;
+        cursor: pointer;
+    }
+    .btn-mover-caixa:hover {
+        background-color: #e0e0e0;
+    }
+    .btn-adicionar-caixa {
+        background-color: #4CAF50;
+        color: white;
+        width: 100%;
+    }
+    .btn-adicionar-caixa:hover {
+        background-color: #45a049;
+    }
+	
+	.caminho-pasta {
+	  color: green;
+	  text-decoration: underline;
+	  cursor: pointer;
+	}
+
+	/* INÍCIO: Adição de Estilos do Popup de Divisão */
+	.modal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background-color: rgba(0,0,0,0.7); /* Fundo escurecido */
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		z-index: 1000; /* Garante que o modal fique por cima de tudo */
+		backdrop-filter: blur(2px); /* Efeito de desfoque sutil */
+	}
+	.modal-content {
+		background-color: #fff;
+		padding: 30px;
+		border-radius: 12px;
+		box-shadow: 0 8px 25px rgba(0,0,0,0.4);
+		text-align: center;
+		min-width: 350px;
+		max-height: 80vh; /* Altura máxima para permitir scroll */
+		overflow-y: auto; /* Adiciona scroll se necessário */
+	}
+	.modal-content h3 {
+		margin-top: 0;
+		margin-bottom: 25px;
+		font-size: 1.3em;
+		color: #333;
+	}
+	.modal-buttons {
+		display: flex;
+		justify-content: center;
+		gap: 15px; /* Espaço entre os botões */
+		margin-top: 20px;
+	}
+	/* Estilos para a lista de capítulos (checkboxes) */
+	#capitulos-checkboxes {
+		text-align: left;
+		max-height: 250px;
+		overflow-y: auto;
+		padding: 10px;
+		border: 1px solid #eee;
+		border-radius: 6px;
+	}
+	#capitulos-checkboxes label {
+		display: block;
+		margin-bottom: 8px;
+		cursor: pointer;
+		padding: 5px;
+		border-radius: 4px;
+	}
+	#capitulos-checkboxes label:hover {
+		background-color: #f0f0f0;
+	}
+	#capitulos-checkboxes input[type="checkbox"] {
+		margin-right: 10px;
+		transform: scale(1.2);
+	}
+	/* FIM: Adição de Estilos do Popup de Divisão */
