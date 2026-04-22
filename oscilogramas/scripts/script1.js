@@ -184,12 +184,12 @@ function renderizarSistema(index) {
 	const idx = index;
 
 	div.innerHTML = `
-		<label for="titulo_capitulo_${idx}">Título do capítulo</label>
-		<input type="text" id="titulo_capitulo_${idx}" value="${dados.sistema || ''}" placeholder="Ex: Oscilograma do Sensor Rotação" onchange="salvarDadosSistema(${idx})">
+		<label for="titulo_capitulo_${idx}">Título:</label>
+		<input type="text" id="titulo_capitulo_${idx}" value="${dados.sistema || ''}" placeholder="Ex: Sincronismo do Motor" onchange="salvarDadosSistema(${idx})">
 		
-		<label style="margin-top: 15px;">Descrição geral</label>
+		<label style="margin-top: 15px;">Descrição geral:</label>
 		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="descricao_capitulo_${idx}" data-field="descricao" oninput="salvarDadosSistema(${idx})" data-placeholder="Insira a descrição, imagens, links ou anexos aqui...">${dados.descricao || ''}</div>
+			<div contenteditable="true" class="editable-content" id="descricao_capitulo_${idx}" data-field="descricao" oninput="salvarDadosSistema(${idx})" data-placeholder="Insira sua análise, pesquisas e conclusões utilizando texto, imagens e links aqui...">${dados.descricao || ''}</div>
 			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('descricao_capitulo_${idx}')">Anexar</button>
 			<input type="file" id="file_descricao_capitulo_${idx}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('descricao_capitulo_${idx}', this.files)">
 		</div>
@@ -433,7 +433,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 			</fieldset>
 
 			<fieldset>
-				<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
+				<legend>CAPÍTULOS (Veículo ${veiculoIndex + 1})</legend>
 				<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 				<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
 				<div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
@@ -471,8 +471,8 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 	div.className = "system-block";
 
 	div.innerHTML = `
-		<label for="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}">Título do capítulo</label>
-		<input type="text" id="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema || ''}" placeholder="Ex: Oscilograma do Sensor Rotação" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<label for="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}">Título:</label>
+		<input type="text" id="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema || ''}" placeholder="Ex: Sincronismo do Motor" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 		
 		<label style="margin-top: 15px;">Descrição geral</label>
 		<div class="development-field-container">
