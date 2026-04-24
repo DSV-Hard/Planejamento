@@ -150,11 +150,11 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 
 	div.innerHTML = `
 		<label for="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}">Título:</label>
-		<input type="text" id="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema || ''}" placeholder="Ex: Sincronismo do Motor" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<input type="text" id="titulo_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema || ''}" placeholder="Exemplos: Requisição, Análise, Pesquisas, Sincronismo do Motor..." onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 		
 		<label style="margin-top: 15px;">Descrição geral:</label>
 		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="descricao_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="descricao" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})" data-placeholder="Insira sua análise, pesquisas e conclusões utilizando texto, imagens e links aqui...">${dados.descricao || ''}</div>
+			<div contenteditable="true" class="editable-content" id="descricao_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="descricao" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})" data-placeholder="Descreva o título utilizando texto, imagens e links aqui...">${dados.descricao || ''}</div>
 			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('descricao_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
 			<input type="file" id="file_descricao_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('descricao_capitulo_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
 		</div>
