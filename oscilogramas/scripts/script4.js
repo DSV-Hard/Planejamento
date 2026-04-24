@@ -515,7 +515,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 	
 	y += lineHeight;
 	
-	addLabeledValue('ASSOCIAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
+	addLabeledValue('ASSOCIAÇÃO DO LIVRO', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
 	if (dataPrincipal.aplicacao_chassi_texto) {
 		addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 	}
