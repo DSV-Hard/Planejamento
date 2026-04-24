@@ -572,7 +572,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 			
 			y += lineHeight;
 			
-			addLabeledValue('ASSOCIAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
+			addLabeledValue('ASSOCIAÇÃO DO LIVRO', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
 			if (veiculo.dadosGerais.aplicacao_chassi_texto) {
 				addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
