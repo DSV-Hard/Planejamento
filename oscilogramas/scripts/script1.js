@@ -185,11 +185,11 @@ function renderizarSistema(index) {
 
 	div.innerHTML = `
 		<label for="titulo_capitulo_${idx}">Título:</label>
-		<input type="text" id="titulo_capitulo_${idx}" value="${dados.sistema || ''}" placeholder="Ex: Sincronismo do Motor" onchange="salvarDadosSistema(${idx})">
+		<input type="text" id="titulo_capitulo_${idx}" value="${dados.sistema || ''}" placeholder="Exemplos: Requisição, Análise, Pesquisas, Sincronismo do Motor..." onchange="salvarDadosSistema(${idx})">
 		
 		<label style="margin-top: 15px;">Descrição geral:</label>
 		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="descricao_capitulo_${idx}" data-field="descricao" oninput="salvarDadosSistema(${idx})" data-placeholder="Insira sua análise, pesquisas e conclusões utilizando texto, imagens e links aqui...">${dados.descricao || ''}</div>
+			<div contenteditable="true" class="editable-content" id="descricao_capitulo_${idx}" data-field="descricao" oninput="salvarDadosSistema(${idx})" data-placeholder="Descreva o título utilizando texto, imagens e links aqui...">${dados.descricao || ''}</div>
 			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('descricao_capitulo_${idx}')">Anexar</button>
 			<input type="file" id="file_descricao_capitulo_${idx}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('descricao_capitulo_${idx}', this.files)">
 		</div>
