@@ -231,7 +231,7 @@ function removerUltimoSistema() {
 	const confirmYesBtn = document.getElementById('confirm-modal-yes');
 	const confirmNoBtn = document.getElementById('confirm-modal-no');
 
-	confirmMessage.innerHTML = `Deseja excluir o capítulo Nº ${sistemaIndex + 1} (${tituloCapitulo})?`;
+	confirmMessage.innerHTML = `Deseja excluir o título Nº ${sistemaIndex + 1} (${tituloCapitulo})?`;
 	confirmModal.style.display = 'flex'; 
 
 	confirmYesBtn.onclick = null;
@@ -407,23 +407,19 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				<input type="text" id="veiculo_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.veiculo || ''}" placeholder="Car>1994>Mazda>RX-7>1.3 256cv (13B - Wankel)" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 				<div class="id-fields-container">
 					<div class="field-group">
-						<label for="iddiagramas_aplicaveis_${veiculoIndex}">ID DIAGRAMAS</label>
-						<input type="text" id="iddiagramas_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.iddiagramas || ''}" placeholder="'Criar' ou 'ID do livro'" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-					</div>
-					<div class="field-group">
-						<label for="idfusiveis_aplicaveis_${veiculoIndex}">ID FUSÍVEIS</label>
-						<input type="text" id="idfusiveis_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idfusiveis || ''}" placeholder="'Criar' ou 'ID do livro'" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+						<label for="idoscilogramas_aplicaveis_${veiculoIndex}">ID OSCILOGRAMA</label>
+						<input type="text" id="idoscilogramas_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.idoscilogramas || ''}" placeholder="'Criar' ou 'ID do livro'" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 					</div>
 				</div>
 				<label>PASTA DO VEÍCULO</label>
-				<input type="text" id="pasta_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.pasta || ''}" placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+				<input type="text" id="pasta_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.pasta || ''}" placeholder="P:\\Desenvolvimento\\+ OSCILOGRAMAS..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 
 				<div class="checkbox-blockk"></div>
 
 				<label>ASSOCIAÇÃO / CHASSI</label>
 				<div class="checkbox-inline" style="margin-bottom: 10px;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="mesma" ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'checked' : ''}> Mesma associação</label>
-					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar associação</label>
+					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar associação (Adicionar/Remover)</label>
 				</div>
 				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
@@ -433,16 +429,16 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 			</fieldset>
 
 			<fieldset>
-				<legend>CAPÍTULOS (Veículo ${veiculoIndex + 1})</legend>
+				<legend>PÁGINAS (Veículo ${veiculoIndex + 1})</legend>
 				<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 				<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
 				<div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
-					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, -1)" title="Mover capítulo para a esquerda">←</button>
-					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, 1)" title="Mover capítulo para a direita">→</button>
+					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, -1)" title="Mover para a esquerda">←</button>
+					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, 1)" title="Mover para a direita">→</button>
 				</div>
 				<div class="button-group-centered">
-					<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕ Adicionar Capítulo</button>
-					<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖ Remover Capítulo Selecionado</button>
+					<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕ Adicionar</button>
+					<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖ Remover Selecionado</button>
 					<button type="button" class="orange-button" onclick="abrirModalCopia(${veiculoIndex})">Copiar Capítulo</button>
 				</div>
 			</fieldset>
