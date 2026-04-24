@@ -444,7 +444,7 @@ function validarFormularioGlobal() {
 	checarCampo('veiculo', 'Veículo Referência');
 	checarCampo('idoscilogramas', 'ID OSCILOGRAMA');
 	checarCampo('pasta', 'Pasta do Veículo');
-	checarRadio('aplicacao_chassi', 'Associação / Chassi');
+	checarRadio('aplicacao_chassi', 'Associação do Livro');
 
 	sistemasData.forEach((sistema, idx) => {
 		const capLabel = `(Capítulo Principal ${idx + 1})`;
@@ -464,7 +464,7 @@ function validarFormularioGlobal() {
 			if (!veiculo.dadosGerais.veiculo) erros.push(`Veículo Referência ${sfx}`);
 			if (!veiculo.dadosGerais.idoscilogramas) erros.push(`ID OSCILOGRAMA ${sfx}`);
 			if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
-			if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
+			if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação do Livro ${sfx}`);
 			
 			if (veiculo.sistemas) {
 				veiculo.sistemas.forEach((sistema, sIdx) => {
