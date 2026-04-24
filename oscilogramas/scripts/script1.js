@@ -414,12 +414,12 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				<label>PASTA DO VEÍCULO</label>
 				<input type="text" id="pasta_aplicaveis_${veiculoIndex}" value="${veiculo.dadosGerais.pasta || ''}" placeholder="P:\\Desenvolvimento\\+ OSCILOGRAMAS..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 
-				<div class="checkbox-blockk"></div>
-
+				<div class="checkbox-block">
 				<label>ASSOCIAÇÃO / CHASSI</label>
-				<div class="checkbox-inline" style="margin-bottom: 10px;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
+				<div class="checkbox-inline" style="margin-bottom: 2px;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
 					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="mesma" ${veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'checked' : ''}> Mesma associação</label>
-					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar associação (Adicionar/Remover)</label>
+					<label><input type="radio" name="aplicacao_chassi_aplicaveis_${veiculoIndex}" value="ajustar" ${veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'checked' : ''}> Ajustar (Adicionar/Remover)</label>
+				</div>
 				</div>
 				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
