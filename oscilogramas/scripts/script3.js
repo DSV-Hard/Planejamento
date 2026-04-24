@@ -4,8 +4,7 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 
 	veiculo.dadosGerais = {
 		veiculo: document.getElementById(`veiculo_aplicaveis_${veiculoIndex}`)?.value || '',
-		iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`)?.value || '',
-		idfusiveis: document.getElementById(`idfusiveis_aplicaveis_${veiculoIndex}`)?.value || '',
+		idoscilogramas: document.getElementById(`idoscilogramas_aplicaveis_${veiculoIndex}`)?.value || '',
 		pasta: document.getElementById(`pasta_aplicaveis_${veiculoIndex}`)?.value || '',
 		aplicacao_chassi: document.querySelector(`input[name="aplicacao_chassi_aplicaveis_${veiculoIndex}"]:checked`)?.value,
 		aplicacao_chassi_texto: document.getElementById(`aplicacao_chassi_texto_aplicaveis_${veiculoIndex}`)?.value || '',
@@ -70,7 +69,7 @@ function popularCapitulosParaCopia() {
 			
 			const tituloCapitulo = sistema.sistema || 'Sem título';
 			label.appendChild(checkbox);
-			label.appendChild(document.createTextNode(`Capítulo ${idx + 1}: ${tituloCapitulo}`));
+			label.appendChild(document.createTextNode(`Título ${idx + 1}: ${tituloCapitulo}`));
 			
 			label.addEventListener('mouseenter', () => {
 				label.style.backgroundColor = '#f0f0f0';
@@ -82,7 +81,7 @@ function popularCapitulosParaCopia() {
 			checkboxesContainer.appendChild(label);
 		});
 	} else {
-		checkboxesContainer.innerHTML = '<p style="text-align: center; color: #999;">Nenhum capítulo encontrado</p>';
+		checkboxesContainer.innerHTML = '<p style="text-align: center; color: #999;">Nenhum título encontrado</p>';
 	}
 }
 
@@ -203,14 +202,14 @@ function removerUltimoSistemaAplicaveis(veiculoIndex) {
 
 	const sistemaIndex = veiculo.paginaAtual; 
 	const sistemaRemover = veiculo.sistemas[sistemaIndex];
-	const tituloCapitulo = sistemaRemover.sistema || `Capítulo ${sistemaIndex + 1}`;
+	const tituloCapitulo = sistemaRemover.sistema || `Título ${sistemaIndex + 1}`;
 
 	const confirmModal = document.getElementById('confirm-modal');
 	const confirmMessage = document.getElementById('confirm-modal-message');
 	const confirmYesBtn = document.getElementById('confirm-modal-yes');
 	const confirmNoBtn = document.getElementById('confirm-modal-no');
 
-	confirmMessage.innerHTML = `Deseja excluir o capítulo Nº ${sistemaIndex + 1} (${tituloCapitulo}) do Veículo Aplicável ${veiculoIndex + 1}?`;
+	confirmMessage.innerHTML = `Deseja excluir o Título Nº ${sistemaIndex + 1} (${tituloCapitulo}) do Veículo Aplicável ${veiculoIndex + 1}?`;
 	confirmModal.style.display = 'flex'; 
 
 	confirmYesBtn.onclick = null;
@@ -308,8 +307,7 @@ function coletarDadosFormulario() {
 		planejado_por: document.getElementById("planejado_por")?.value || '',
 		veiculo: document.getElementById("veiculo")?.value || '',
 		clickup: document.getElementById("clickup")?.value || '',
-		iddiagramas: document.getElementById("iddiagramas")?.value || '',
-		idfusiveis: document.getElementById("idfusiveis")?.value || '',
+		idoscilogramas: document.getElementById("idoscilogramas")?.value || '',
 		pasta: document.getElementById("pasta")?.value || '',
 		aplicacao_chassi: document.querySelector('input[name="aplicacao_chassi"]:checked')?.value,
 		aplicacao_chassi_texto: document.getElementById("aplicacao_chassi_texto")?.value || '',
@@ -370,8 +368,7 @@ function carregarDeJSON(input) {
 				setData('planejado_por', dataPrincipal.planejado_por);
 				setData('veiculo', dataPrincipal.veiculo);
 				setData('clickup', dataPrincipal.clickup);
-				setData('iddiagramas', dataPrincipal.iddiagramas);
-				setData('idfusiveis', dataPrincipal.idfusiveis);
+				setData('idoscilogramas', dataPrincipal.idoscilogramas);
 				setData('pasta', dataPrincipal.pasta);
 				setData('aplicacao_chassi_texto', dataPrincipal.aplicacao_chassi_texto);
 				setChecked('aplicacao_chassi', dataPrincipal.aplicacao_chassi);
@@ -445,8 +442,7 @@ function validarFormularioGlobal() {
 	checarCampo('planejado_por', 'Desenvolvedor');
 	checarCampo('clickup', 'Link do Card (ClickUp)');
 	checarCampo('veiculo', 'Veículo Referência');
-	checarCampo('iddiagramas', 'ID DIAGRAMAS');
-	checarCampo('idfusiveis', 'ID FUSÍVEIS');
+	checarCampo('idoscilogramas', 'ID OSCILOGRAMA');
 	checarCampo('pasta', 'Pasta do Veículo');
 	checarRadio('aplicacao_chassi', 'Associação / Chassi');
 
@@ -466,8 +462,7 @@ function validarFormularioGlobal() {
 			const sfx = `(Aplicável ${idx + 1})`;
 
 			if (!veiculo.dadosGerais.veiculo) erros.push(`Veículo Referência ${sfx}`);
-			if (!veiculo.dadosGerais.iddiagramas) erros.push(`ID DIAGRAMAS ${sfx}`);
-			if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
+			if (!veiculo.dadosGerais.idoscilogramas) erros.push(`ID OSCILOGRAMA ${sfx}`);
 			if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
 			if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
 			
