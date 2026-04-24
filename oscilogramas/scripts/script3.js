@@ -439,22 +439,15 @@ function validarFormularioGlobal() {
 		}
 	};
 
+	// VALIDAÇÃO: ABA VEÍCULO PRINCIPAL
 	checarCampo('planejado_por', 'Desenvolvedor');
-	checarCampo('clickup', 'Link do Card (ClickUp)');
+	checarCampo('clickup', 'Link do Card');
 	checarCampo('veiculo', 'Veículo Referência');
-	checarCampo('idoscilogramas', 'ID OSCILOGRAMA');
+	checarCampo('idoscilogramas', 'ID OSCILOGRAMAS');
 	checarCampo('pasta', 'Pasta do Veículo');
 	checarRadio('aplicacao_chassi', 'Associação do Livro');
 
-	sistemasData.forEach((sistema, idx) => {
-		const capLabel = `(Capítulo Principal ${idx + 1})`;
-		if (!sistema.sistema || sistema.sistema.trim() === '') {
-			erros.push(`Título do Capítulo ${capLabel}`);
-			const el = document.getElementById(`titulo_capitulo_${idx}`);
-			if (el) el.classList.add('campo-invalido');
-		}
-	});
-
+	// VALIDAÇÃO: ABA VEÍCULOS APLICÁVEIS
 	if (veiculosAplicaveisData.length > 0) {
 		salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
 
@@ -465,17 +458,6 @@ function validarFormularioGlobal() {
 			if (!veiculo.dadosGerais.idoscilogramas) erros.push(`ID OSCILOGRAMA ${sfx}`);
 			if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
 			if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação do Livro ${sfx}`);
-			
-			if (veiculo.sistemas) {
-				veiculo.sistemas.forEach((sistema, sIdx) => {
-					const capLabel = `(Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`;
-					if (!sistema.sistema || sistema.sistema.trim() === '') {
-						erros.push(`Título do Capítulo ${capLabel}`);
-						const el = document.getElementById(`titulo_capitulo_aplicaveis_${idx}_${sIdx}`);
-						if (el) el.classList.add('campo-invalido');
-					}
-				});
-			}
 		});
 	}
 
