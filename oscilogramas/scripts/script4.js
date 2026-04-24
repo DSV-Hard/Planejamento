@@ -506,8 +506,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 	addText('- VEÍCULO REFERÊNCIA:', 12, "bold", 0);
 	addText(dataPrincipal.veiculo, 10, "italic", 4);
 	y += lineHeight;
-	addLabeledValue('ID DIAGRAMAS', dataPrincipal.iddiagramas);
-	addLabeledValue('ID FUSÍVEIS', dataPrincipal.idfusiveis);
+	addLabeledValue('ID OSCILOGRAMA', dataPrincipal.idoscilogramas);
 	
 	y += lineHeight;
 	
@@ -523,7 +522,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 	
 	y += lineHeight * 2;
 	
-	addColoredText("CAPÍTULOS", 18, 'bold', 0, titleColor);
+	addColoredText("TÍTULOS", 18, 'bold', 0, titleColor);
 	y += lineSpacing;
 	
 	if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
@@ -531,7 +530,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 			if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 			y += lineSpacing / 2;
 
-			let tituloCapitulo = (sistema.sistema || `Capítulo ${idx + 1}`).toUpperCase();
+			let tituloCapitulo = (sistema.sistema || `Título ${idx + 1}`).toUpperCase();
 			addHighlightedText(`${tituloCapitulo}`, 14, 'bold', 0, 212, 255, 214);
 			
 			addText(`- DESCRIÇÃO GERAL:`, 12, "bold", 0);
@@ -541,7 +540,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 		
 		y += lineHeight * 2;
 		
-	} else { addText("Nenhum capítulo adicionado.", 12, "italic", 4); y += lineHeight; }
+	} else { addText("Nenhum título adicionado.", 12, "italic", 4); y += lineHeight; }
 	y += lineHeight;
 	addSeparatorLine();
 	y += lineHeight;
@@ -564,8 +563,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 			
 			y += lineSpacing;
 			
-			addLabeledValue('ID DIAGRAMAS', veiculo.dadosGerais.iddiagramas);
-			addLabeledValue('ID FUSÍVEIS', veiculo.dadosGerais.idfusiveis);
+			addLabeledValue('ID OSCILOGRAMA', veiculo.dadosGerais.idoscilogramas);
 			
 			y += lineSpacing;
 			
@@ -580,13 +578,13 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 			}
 			y += lineHeight * 2;
 			
-			addColoredText("CAPÍTULOS", 18, 'bold', 0, titleColor);
+			addColoredText("TÍTULOS", 18, 'bold', 0, titleColor);
 			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
 				for (const [idx, sistema] of veiculo.sistemas.entries()) {
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineHeight;
 
-					let tituloCapitulo = (sistema.sistema || `Capítulo ${idx + 1}`).toUpperCase();
+					let tituloCapitulo = (sistema.sistema || `Título ${idx + 1}`).toUpperCase();
 					addHighlightedText(`${tituloCapitulo}`, 14, 'bold', 0, 250, 231, 67);
 					
 					addText(`- DESCRIÇÃO GERAL:`, 12, "bold", 0);
@@ -595,7 +593,7 @@ async function gerarPDFDocumento(dataPrincipal, dataAplicaveis, dadosCompletosJS
 				}
 				y += lineHeight * 2;
 			} else {
-				addText("Nenhum capítulo adicionado.", 12, "normal", 4); y += lineHeight;}
+				addText("Nenhum título adicionado.", 12, "normal", 4); y += lineHeight;}
 		
 			y += lineHeight;
 			addSeparatorLine();
