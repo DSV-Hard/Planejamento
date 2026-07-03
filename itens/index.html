@@ -72,7 +72,7 @@
                 <!-- Seletor de Formato do PDF Dinâmico adicionado ao lado do botão -->
                 <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
                     <button class="orange-button" onclick="gerarPDF_Formatado()">
-                        <i class="fa-solid fa-file-pdf"></i> GERAR PDF
+                        <i class="fa-solid fa-file-pdf"></i> GERAR PDF/JSON
                     </button>
                     <select id="pdf-format-select" class="form-control" style="width: auto; height: 41px; padding: 0 10px; margin-bottom: 0; font-weight: 600; color: var(--text-dark);">
                         <option value="continuous" selected>Página Única Adaptativa (Sem Cortes) ⭐</option>
@@ -80,10 +80,10 @@
                     </select>
                 </div>
                 <button class="orange-button secondary" onclick="salvarComoJSON()">
-                    <i class="fa-solid fa-floppy-disk"></i> SALVAR PROJETO
+                    <i class="fa-solid fa-floppy-disk"></i> SALVAR
                 </button>
                 <button class="orange-button secondary" onclick="document.getElementById('jsonFileInput').click()">
-                    <i class="fa-solid fa-folder-open"></i> CARREGAR PROJETO
+                    <i class="fa-solid fa-folder-open"></i> CARREGAR JSON
                 </button>
                 <input type="file" id="jsonFileInput" style="display: none;" accept=".json" onchange="carregarDeJSON(event)" />
             </div>
