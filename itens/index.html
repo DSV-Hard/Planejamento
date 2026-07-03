@@ -172,9 +172,12 @@
         <div id="tab-principal" class="tab-content">
             <div class="section-card">
                 <h3 class="section-title">Veículo Principal</h3>
-                <div class="form-group">
-                    <label for="nome-veiculo-principal">Modelo, Motor e Versão:</label>
-                    <input type="text" id="nome-veiculo-principal" class="form-control" placeholder="Ex: Corolla 2.0 XEi" oninput="atualizarResumoTab()">
+                <div style="display: flex; align-items: flex-end; gap: 12px;">
+                    <i class="fa-solid fa-car" style="font-size: 1.5em; color: var(--primary-green); margin-bottom: 6px;"></i>
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="nome-veiculo-principal" style="color: var(--primary-green); font-weight: 600; font-size: 0.95em; margin-bottom: 4px; display: block;">Modelo, Motor e Versão:</label>
+                        <input type="text" id="nome-veiculo-principal" class="form-control" placeholder="Ex: Corolla 2.0 XEi" oninput="atualizarResumoTab()">
+                    </div>
                 </div>
             </div>
 
@@ -417,7 +420,7 @@
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
             atualizarResumoTab();
-            showToast('Ordem do item updated!');
+            showToast('Ordem do item atualizada!');
         }
 
         function adicionarNovoItemMestre() {
@@ -666,16 +669,19 @@
             card.className = 'veiculo-card';
             card.id = `veiculo-card-${veiculo.id}`;
 
-            // Header com Input do Nome e Botão Excluir
+            // Header com Input do Nome e Botão Excluir, adicionado orientação visual
             const header = document.createElement('div');
             header.className = 'veiculo-card-header';
             header.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 70%;">
-                    <i class="fa-solid fa-car" style="color: var(--orange-main);"></i>
-                    <input type="text" class="form-control" style="font-weight: bold; background: transparent; border: none; border-bottom: 1px solid #ccc; padding: 4px;" 
-                           value="${veiculo.nome}" oninput="atualizarNomeVeiculoAplicavel(${vIndex}, this.value)" placeholder="Nome do Veículo Aplicável">
+                <div style="display: flex; align-items: flex-end; gap: 12px; flex: 1; max-width: 70%;">
+                    <i class="fa-solid fa-car" style="font-size: 1.5em; color: var(--orange-main); margin-bottom: 6px;"></i>
+                    <div style="display: flex; flex-direction: column; flex: 1;">
+                        <label style="font-size: 0.8em; font-weight: 600; color: var(--orange-hover); margin-bottom: 2px; text-transform: uppercase;">Modelo, Motor e Versão:</label>
+                        <input type="text" class="form-control" style="font-weight: bold; background: transparent; border: none; border-bottom: 1px solid #ccc; padding: 4px;" 
+                               value="${veiculo.nome}" oninput="atualizarNomeVeiculoAplicavel(${vIndex}, this.value)" placeholder="Nome do Veículo Aplicável">
+                    </div>
                 </div>
-                <button class="red-button" style="padding: 6px 12px; font-size: 0.85em;" onclick="removerVeiculoAplicavel(${vIndex})">
+                <button class="red-button" style="padding: 6px 12px; font-size: 0.85em; align-self: flex-end; margin-bottom: 4px;" onclick="removerVeiculoAplicavel(${vIndex})">
                     <i class="fa-solid fa-trash-can"></i> Excluir Veículo
                 </button>
             `;
@@ -739,7 +745,8 @@
             // Atualizar tooltip do botão correspondente sem re-renderizar tudo
             const botoes = document.getElementById('veiculos-botoes-container')?.children;
             if (botoes && botoes[vIndex]) {
-                botoes[vIndex].title = novoNome;
+                const innerBtn = botoes[vIndex].querySelector('button');
+                if (innerBtn) innerBtn.title = novoNome;
             }
         }
 
@@ -1069,14 +1076,20 @@
         function salvarComoJSON() {
             // Atualizar os nomes para garantir gravação correta
             const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
+            let nomeVeiculo = "";
             if (inputNomePrincipal) {
-                appState.principal.nome = inputNomePrincipal.value.trim() || "Veículo Principal";
+                nomeVeiculo = inputNomePrincipal.value.trim();
+                appState.principal.nome = nomeVeiculo || "Veículo Principal";
             }
+
+            // Nome dinâmico condicional
+            const sufixo = nomeVeiculo ? ` - ${nomeVeiculo}` : "";
+            const nomeArquivo = `ITENS DE SÉRIE E OPCIONAIS${sufixo}`.replace(/[/\\?%*:|"<>]/g, '-');
 
             const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
             const downloadAnchor = document.createElement('a');
             downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", "ITENS_DE_SERIE_E_OPCIONAIS.json");
+            downloadAnchor.setAttribute("download", `${nomeArquivo}.json`);
             document.body.appendChild(downloadAnchor);
             downloadAnchor.click();
             downloadAnchor.remove();
@@ -1139,7 +1152,7 @@
         }
 
         /* ==========================================================================
-           11. EXPORTAÇÃO: GERAÇÃO DE PDF COMPARATIVO ADAPTATIVO E SALVAMENTO DUPLO
+           11. EXPORTAÇÃO: GERAÇÃO DE PDF COMPARATIVO ADAPTATIVO E SALVAMENTO DUPLO DINÂMICO
            ========================================================================== */
         async function gerarPDF_Formatado() {
             const formatoSelecionado = document.getElementById('pdf-format-select').value;
@@ -1217,9 +1230,13 @@
                 // Ocultar cabeçalho do PDF novamente na tela do HTML
                 if (pdfHeader) pdfHeader.style.display = 'none';
 
-                // Nome do arquivo de saída fixado a pedido
-                const nomeArquivo = "ITENS_DE_SERIE_E_OPCIONAIS.pdf";
-                pdf.save(nomeArquivo);
+                // Nome do arquivo de saída dinâmico condicional
+                const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
+                const nomeVeiculo = inputNomePrincipal ? inputNomePrincipal.value.trim() : "";
+                const sufixo = nomeVeiculo ? ` - ${nomeVeiculo}` : "";
+                const nomeArquivo = `ITENS DE SÉRIE E OPCIONAIS${sufixo}`.replace(/[/\\?%*:|"<>]/g, '-');
+
+                pdf.save(`${nomeArquivo}.pdf`);
                 
                 // Exibe aviso de conclusão integrada de arquivos
                 showToast('PDF e JSON gerados e baixados com sucesso!');
