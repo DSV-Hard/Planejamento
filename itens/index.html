@@ -177,7 +177,7 @@
                 </button>
 
                 <!-- Barra de botões numerada para selecionar qual veículo exibir/editar -->
-                <div id="veiculos-botoes-container" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                <div id="veiculos-botoes-container" style="display: flex; gap: 12px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
                     <!-- Números dos veículos entram aqui dinamicamente -->
                 </div>
             </div>
@@ -311,7 +311,7 @@
         }
 
         /* ==========================================================================
-           4. RENDERIZAÇÃO: ITENS MESTRE COM CAMPOS LADO A LADO (Aba 2)
+           4. RENDERIZAÇÃO: ITENS MESTRE COM CAMPOS LADO A LADO E SETAS VERTICAIS (Aba 2)
            ========================================================================== */
         function renderizarAbaItensMestre() {
             const containerFixos = document.getElementById('itens-fixos-container');
@@ -357,12 +357,40 @@
                         <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
                         <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
                     </div>
+                    
+                    <!-- Setas de Reordenação Verticais (Up / Down) -->
+                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 4px;">
+                        <button class="arrow-btn" onclick="moverItemCustom(${index}, -1)" title="Mover 1 posição acima">
+                            <i class="fa-solid fa-caret-up"></i>
+                        </button>
+                        <button class="arrow-btn" onclick="moverItemCustom(${index}, 1)" title="Mover 1 posição abaixo">
+                            <i class="fa-solid fa-caret-down"></i>
+                        </button>
+                    </div>
+
                     <button class="red-button" style="height: 41px; align-self: center;" onclick="removerItemMestre(${index})">
                         <i class="fa-solid fa-trash-can"></i> Remover
                     </button>
                 `;
                 containerCustom.appendChild(row);
             });
+        }
+
+        // Função de reordenação dos itens customizados (Mestre)
+        function moverItemCustom(index, direcao) {
+            const novoIndex = index + direcao;
+            if (novoIndex < 0 || novoIndex >= appState.itensCustom.length) return;
+            
+            // Troca de posição
+            const temp = appState.itensCustom[index];
+            appState.itensCustom[index] = appState.itensCustom[novoIndex];
+            appState.itensCustom[novoIndex] = temp;
+            
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+            showToast('Ordem do item atualizada!');
         }
 
         function adicionarNovoItemMestre() {
@@ -479,7 +507,7 @@
         }
 
         /* ==========================================================================
-           6. RENDERIZAÇÃO: VEÍCULOS APLICÁVEIS COM NAVEGAÇÃO NUMÉRICA (Aba 4)
+           6. RENDERIZAÇÃO: VEÍCULOS APLICÁVEIS COM REORDENAÇÃO HORIZONTAL (Aba 4)
            ========================================================================== */
         function renderizarBotoesNumerados() {
             const containerBotoes = document.getElementById('veiculos-botoes-container');
@@ -488,6 +516,14 @@
 
             appState.aplicaveis.forEach((veiculo, idx) => {
                 const isActive = idx === activeVeiculoIndex;
+                
+                // Wrapper de alinhamento vertical para o botão numérico + suas setas sob ele
+                const wrapper = document.createElement('div');
+                wrapper.style.display = 'inline-flex';
+                wrapper.style.flexDirection = 'column';
+                wrapper.style.alignItems = 'center';
+                wrapper.style.gap = '2px';
+
                 const btn = document.createElement('button');
                 btn.className = isActive ? 'orange-button' : 'orange-button secondary';
                 btn.style.borderRadius = '50%';
@@ -502,14 +538,70 @@
                 
                 // Tooltip mostrando o nome atualizado do veículo
                 btn.title = veiculo.nome; 
-
                 btn.innerText = idx + 1;
                 btn.onclick = function() {
                     activeVeiculoIndex = idx;
                     renderizarVeiculosAplicaveis();
                 };
-                containerBotoes.appendChild(btn);
+
+                wrapper.appendChild(btn);
+
+                // Se for o veículo ativo, injeta as setas horizontais de reordenação (Left / Right) sob ele
+                if (isActive) {
+                    const arrowsDiv = document.createElement('div');
+                    arrowsDiv.style.display = 'flex';
+                    arrowsDiv.style.justifyContent = 'center';
+                    arrowsDiv.style.width = '100%';
+
+                    // Seta para esquerda
+                    const leftBtn = document.createElement('button');
+                    leftBtn.className = 'arrow-btn-lr';
+                    leftBtn.innerHTML = '<i class="fa-solid fa-caret-left"></i>';
+                    leftBtn.title = "Mover para esquerda";
+                    leftBtn.disabled = idx === 0;
+                    if (leftBtn.disabled) leftBtn.style.opacity = '0.3';
+                    leftBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        moverVeiculo(idx, -1);
+                    };
+
+                    // Seta para direita
+                    const rightBtn = document.createElement('button');
+                    rightBtn.className = 'arrow-btn-lr';
+                    rightBtn.innerHTML = '<i class="fa-solid fa-caret-right"></i>';
+                    rightBtn.title = "Mover para direita";
+                    rightBtn.disabled = idx === appState.aplicaveis.length - 1;
+                    if (rightBtn.disabled) rightBtn.style.opacity = '0.3';
+                    rightBtn.onclick = function(e) {
+                        e.stopPropagation();
+                        moverVeiculo(idx, 1);
+                    };
+
+                    arrowsDiv.appendChild(leftBtn);
+                    arrowsDiv.appendChild(rightBtn);
+                    wrapper.appendChild(arrowsDiv);
+                }
+
+                containerBotoes.appendChild(wrapper);
             });
+        }
+
+        // Função de reordenação horizontal dos veículos aplicáveis (Tab 4)
+        function moverVeiculo(index, direcao) {
+            const novoIndex = index + direcao;
+            if (novoIndex < 0 || novoIndex >= appState.aplicaveis.length) return;
+
+            // Troca de posição no array
+            const temp = appState.aplicaveis[index];
+            appState.aplicaveis[index] = appState.aplicaveis[novoIndex];
+            appState.aplicaveis[novoIndex] = temp;
+
+            // Mantém o foco no veículo selecionado
+            activeVeiculoIndex = novoIndex;
+
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+            showToast('Ordem dos veículos atualizada!');
         }
 
         function renderizarVeiculosAplicaveis() {
