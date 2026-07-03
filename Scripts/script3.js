@@ -18,17 +18,6 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 		aplicacao_chassi: document.querySelector(`input[name="aplicacao_chassi_aplicaveis_${veiculoIndex}"]:checked`)?.value,
 		aplicacao_chassi_texto: document.getElementById(`aplicacao_chassi_texto_aplicaveis_${veiculoIndex}`).value,
 		ilustracao_texto: document.getElementById(`ilustracao_texto_aplicaveis_${veiculoIndex}`).innerHTML,
-		precisaPreencherItensSerie: document.getElementById(`toggle_itens_serie_${veiculoIndex}`).checked,
-	};
-
-	veiculo.itensSerie = {
-	  atmt: getCheckedCheckboxValues('atmt_aplicaveis_' + veiculoIndex),
-	  chave: getCheckedCheckboxValues('chave_aplicaveis_' + veiculoIndex),
-	  startstop: document.querySelector('input[name="startstop_aplicaveis_' + veiculoIndex + '"]:checked')?.value,
-	  ac: getCheckedCheckboxValues('ac_aplicaveis_' + veiculoIndex),
-	  tracao: getCheckedCheckboxValues('tracao_aplicaveis_' + veiculoIndex),
-	  outros_serie: document.getElementById('outros_serie_aplicaveis_' + veiculoIndex).value,
-	  outros_opcional: document.getElementById('outros_opcional_aplicaveis_' + veiculoIndex).value
 	};
 
 	renderizarPaginacaoVeiculosAplicaveis();
@@ -618,13 +607,6 @@ function coletarDadosFormulario() {
 		pesquisa: document.querySelector('input[name="pesquisa"]:checked')?.value,
 		aplicacao_chassi: document.querySelector('input[name="aplicacao_chassi"]:checked')?.value,
 		aplicacao_chassi_texto: document.getElementById("aplicacao_chassi_texto").value,
-		atmt: getCheckedCheckboxValues('atmt'),
-		chave: getCheckedCheckboxValues('chave'),
-		startstop: document.querySelector('input[name="startstop"]:checked')?.value,
-		ac: getCheckedCheckboxValues('ac'),
-		tracao: getCheckedCheckboxValues("tracao"),
-		outros_serie: document.getElementById("outros_serie").value,
-		outros_opcional: document.getElementById("outros_opcional").value,
 		qtd_partes: document.querySelector('input[name="qtd_partes"]:checked')?.value || 'uma',
 		dificuldade: (function() {
 			const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
@@ -761,13 +743,6 @@ function carregarDeJSON(input) {
 				setData('aplicacao_chassi_texto', dataPrincipal.aplicacao_chassi_texto);
 				setChecked('aplicacao_chassi', dataPrincipal.aplicacao_chassi);
 				setData('ilustracao_texto', dataPrincipal.ilustracao_texto);
-				setCheckedCheckboxes('atmt', dataPrincipal.atmt);
-				setCheckedCheckboxes('chave', dataPrincipal.chave);
-				setChecked('startstop', dataPrincipal.startstop);
-				setCheckedCheckboxes('ac', dataPrincipal.ac);
-				setCheckedCheckboxes('tracao', dataPrincipal.tracao);
-				setData('outros_serie', dataPrincipal.outros_serie);
-				setData('outros_opcional', dataPrincipal.outros_opcional);
 				setChecked('qtd_partes', dataPrincipal.qtd_partes || 'uma');
 				toggleParte2Principal();
 
@@ -864,11 +839,6 @@ function carregarDeJSON(input) {
 		  checarCampo('pasta', 'Pasta do Veículo');
 		  checarRadio('aplicacao_chassi', 'Associação / Chassi');
 
-		  checarAlgumCheckbox('atmt', 'Transmissão');
-		  checarAlgumCheckbox('chave', 'Comutador de Ignição');
-		  checarRadio('startstop', 'Função Start/Stop');
-		  checarAlgumCheckbox('ac', 'Ar-Condicionado');
-
 		const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
 			if (qtdPartes === 'duas') {
 				checarCampo('dificuldade_parte1', 'Dificuldade (Parte 1)');
@@ -926,13 +896,6 @@ function carregarDeJSON(input) {
 			  if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
                if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
 			  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
-			  
-			  if (veiculo.dadosGerais.precisaPreencherItensSerie) {
-				if (!Array.isArray(veiculo.itensSerie.atmt) || veiculo.itensSerie.atmt.length === 0) erros.push(`Transmissão ${sfx}`);
-				if (!Array.isArray(veiculo.itensSerie.chave) || veiculo.itensSerie.chave.length === 0) erros.push(`Comutador de Ignição ${sfx}`);
-				if (!veiculo.itensSerie.startstop) erros.push(`Função Start/Stop ${sfx}`);
-				if (!Array.isArray(veiculo.itensSerie.ac) || veiculo.itensSerie.ac.length === 0) erros.push(`Ar-Condicionado ${sfx}`);
-			  }
                
                veiculo.sistemas.forEach((sistema, sIdx) => {
 				const capLabel = `(Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`;
