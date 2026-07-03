@@ -1092,7 +1092,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				</div>
 				<textarea id="aplicacao_chassi_texto_aplicaveis_${veiculoIndex}" rows="3" placeholder="Insira aqui a associação e chassis do veículo." style="min-height: auto;" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.dadosGerais.aplicacao_chassi_texto || ''}</textarea>
 
-				<div style="margin-bottom: 10px; display: flex; flex-wrap: wrap; justify-content: left;">
+				<div style="margin-bottom: 10px; margin-top: 5px; display: flex; flex-wrap: wrap; justify-content: center;">
 					<button type="button" class="orange-button" onclick="window.open('http://192.168.200.8:4000/', '_blank')" style="margin-top: 5px;">Buscar chassi</button>
 				</div>
 
@@ -1102,97 +1102,16 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 				<div contenteditable="true" class="editable-content" id="ilustracao_texto_aplicaveis_${veiculoIndex}" data-field="ilustracao_texto_aplicaveis" oninput="salvarDadosVeiculoAplicavel(${veiculoIndex})" data-placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS\\0. (2026-X)\\Mazda\\RX-7>1.3 256cv (13B - Wankel) (1994)\\Fotos e Ilustrações\\Pedidos...">${veiculo.dadosGerais.ilustracao_texto || ''}</div>
 
 			<fieldset>
-				<legend>ITENS DE SÉRIE / OPCIONAIS (Veículo ${veiculoIndex + 1})</legend>
-				<div class="checkbox-block">
-					<label class="checkbox-title">
-						<input type="checkbox" id="toggle_itens_serie_${veiculoIndex}" 
-							   onchange="toggleItensSerie(${veiculoIndex}); salvarDadosVeiculoAplicavel(${veiculoIndex})"
-							   ${veiculo.dadosGerais.precisaPreencherItensSerie ? 'checked' : ''}>
-						PREENCHER?
-					</label>
-				</div>
-
-				<div class="checkbox-blockk"></div>
-				
-                 <div id="container_itens_serie_${veiculoIndex}" style="display: ${veiculo.dadosGerais.precisaPreencherItensSerie ? 'block' : 'none'};">
-                     <div class="checkbox-block">
-                       <label class="checkbox-title">TIPO DE CHAVE:</label>
-                       <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-                         <label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Comum" ${(veiculo.itensSerie.chave || []).includes('Comum') ? 'checked' : ''}> COMUM</label>
-                         <label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Presencial (Botão)" ${(veiculo.itensSerie.chave || []).includes('Presencial (Botão)') ? 'checked' : ''}> PRESENCIAL (BOTÃO)</label>
-                         <label><input type="checkbox" name="chave_aplicaveis_${veiculoIndex}" value="Encaixe Inteligente" ${(veiculo.itensSerie.chave || []).includes('Encaixe Inteligente') ? 'checked' : ''}> ENCAIXE INTELIGENTE</label>
-                       </div>
-                     </div>
-
-                     <div class="checkbox-blockk"></div>
-
-                     <div class="checkbox-block">
-                       <label class="checkbox-title">FUNÇÃO START/STOP:</label>
-                       <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-                         <label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="sim_serie" ${veiculo.itensSerie.startstop === 'sim_serie' ? 'checked' : ''}> SIM (DE SÉRIE)</label>
-                         <label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="sim_opcional" ${veiculo.itensSerie.startstop === 'sim_opcional' ? 'checked' : ''}> SIM (OPCIONAL)</label>
-                         <label><input type="radio" name="startstop_aplicaveis_${veiculoIndex}" value="nao" ${veiculo.itensSerie.startstop === 'nao' ? 'checked' : ''}> NÃO</label>
-                       </div>
-                     </div>
-
-                     <div class="checkbox-blockk"></div>
-
-                     <div class="checkbox-block">
-                       <label class="checkbox-title">AR-CONDICIONADO:</label>
-                       <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-                         <label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Manual" ${(veiculo.itensSerie.ac || []).includes('Manual') ? 'checked' : ''}> MANUAL</label>
-                         <label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Automático" ${(veiculo.itensSerie.ac || []).includes('Automático') ? 'checked' : ''}> AUTOMÁTICO</label>
-                         <label><input type="checkbox" name="ac_aplicaveis_${veiculoIndex}" value="Só Ar Quente" ${(veiculo.itensSerie.ac || []).includes('Só Ar Quente') ? 'checked' : ''}> SÓ AR QUENTE</label>
-                       </div>
-                     </div>
-
-                     <div class="checkbox-blockk"></div>
-
-                     <div class="checkbox-block">
-                       <label class="checkbox-title">TRANSMISSÃO:</label>
-                       <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-                         <label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="AT" ${(veiculo.itensSerie.atmt || []).includes('AT') ? 'checked' : ''}> AT</label>
-                         <label><input type="checkbox" name="atmt_aplicaveis_${veiculoIndex}" value="MT" ${(veiculo.itensSerie.atmt || []).includes('MT') ? 'checked' : ''}> MT</label>
-                       </div>
-                     </div>
-
-                     <div class="checkbox-blockk"></div>
-
-                     <div class="checkbox-block">
-                         <label class="checkbox-title">TRAÇÃO:</label>
-                         <div class="checkbox-inline" onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="4X2" ${(veiculo.itensSerie.tracao || []).includes('4X2') ? 'checked' : ''}> 4X2</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="4X4" ${(veiculo.itensSerie.tracao || []).includes('4X4') ? 'checked' : ''}> 4X4</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="6X2" ${(veiculo.itensSerie.tracao || []).includes('6X2') ? 'checked' : ''}> 6X2</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="6X4" ${(veiculo.itensSerie.tracao || []).includes('6X4') ? 'checked' : ''}> 6X4</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="8X2" ${(veiculo.itensSerie.tracao || []).includes('8X2') ? 'checked' : ''}> 8X2</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="8X4" ${(veiculo.itensSerie.tracao || []).includes('8X4') ? 'checked' : ''}> 8X4</label>
-                             <label><input type="checkbox" name="tracao_aplicaveis_${veiculoIndex}" value="8X8" ${(veiculo.itensSerie.tracao || []).includes('8X8') ? 'checked' : ''}> 8X8</label>
-                         </div>
-                     </div>
-                     
-                     <div class="checkbox-blockk"></div>
-                     
-                 <label for="outros_serie_aplicaveis_${veiculoIndex}">OUTROS (DE SÉRIE):</label>
-				<textarea id="outros_serie_aplicaveis_${veiculoIndex}" rows="3" placeholder="Itens de série não listados acima..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.itensSerie.outros_serie || ''}</textarea>
-
-                 <label for="outros_opcional_aplicaveis_${veiculoIndex}">OUTROS (OPCIONAIS):</label>
-                 <textarea id="outros_opcional_aplicaveis_${veiculoIndex}" rows="3" placeholder="Itens opcionais não listados acima..." onchange="salvarDadosVeiculoAplicavel(${veiculoIndex})">${veiculo.itensSerie.outros_opcional || ''}</textarea>
-             
-             </div>
-			</fieldset>
-
-			<fieldset>
 				<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
 				<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 				<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
-				<div style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
+				<div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
 					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, -1)" title="Mover capítulo para a esquerda">←</button>
 					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, 1)" title="Mover capítulo para a direita">→</button>
 				</div>
 				<div class="button-group-centered">
-					<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕ Adicionar Capítulo</button>
-					<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖ Remover Capítulo Selecionado</button>
+					<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕</button>
+					<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖</button>
 					<button type="button" class="orange-button" onclick="abrirModalCopia(${veiculoIndex})">Copiar Capítulo</button>
 				</div>
 			</fieldset>
