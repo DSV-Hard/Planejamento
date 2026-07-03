@@ -237,6 +237,21 @@
         let nextVeiculoId = 1;
         let activeVeiculoIndex = 0;
 
+		// ==========================================================================
+        // CONFIRMAÇÃO DE SAÍDA DA PÁGINA (Prevenção de perda de dados)
+        // ==========================================================================
+        window.addEventListener('beforeunload', function (e) {
+            // Cancela o evento padrão de fechamento imediato
+            e.preventDefault();
+            
+            // Define a propriedade de retorno (obrigatório para navegadores legados e alguns modernos)
+            const mensagem = "Ao sair da página, perderás os dados não salvos. DESEJA FECHAR?";
+            e.returnValue = mensagem;
+            
+            // Retorna a mensagem
+            return mensagem;
+        });
+
         /* ==========================================================================
            2. INICIALIZAÇÃO DA APLICAÇÃO
            ========================================================================== */
