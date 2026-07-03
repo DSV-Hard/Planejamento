@@ -10,6 +10,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Sobrescrita cirúrgica para tornar as setas verticais laranjas e apenas triângulos puros */
+        .arrow-btn {
+            color: var(--orange-main) !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            padding: 0 !important;
+            margin: 2px 0 !important;
+            font-size: 1.6em !important; /* Triângulos ligeiramente maiores para destaque */
+            cursor: pointer;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 40px !important; /* Largura estendida para zona de clique perfeita */
+            height: 22px !important;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .arrow-btn:hover {
+            color: var(--orange-hover) !important;
+            transform: scale(1.3);
+        }
+        .arrow-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
 </head>
 <body>
 
@@ -390,7 +417,7 @@
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
             atualizarResumoTab();
-            showToast('Ordem do item atualizada!');
+            showToast('Ordem do item updated!');
         }
 
         function adicionarNovoItemMestre() {
@@ -1112,7 +1139,7 @@
         }
 
         /* ==========================================================================
-           11. EXPORTAÇÃO: GERAÇÃO DE PDF COMPARATIVO ADAPTATIVO (A3 OU PÁGINA ÚNICA)
+           11. EXPORTAÇÃO: GERAÇÃO DE PDF COMPARATIVO ADAPTATIVO E SALVAMENTO DUPLO
            ========================================================================== */
         async function gerarPDF_Formatado() {
             const formatoSelecionado = document.getElementById('pdf-format-select').value;
@@ -1193,7 +1220,13 @@
                 // Nome do arquivo de saída fixado a pedido
                 const nomeArquivo = "ITENS_DE_SERIE_E_OPCIONAIS.pdf";
                 pdf.save(nomeArquivo);
-                showToast('PDF gerado e baixado com sucesso!');
+                
+                // Exibe aviso de conclusão integrada de arquivos
+                showToast('PDF e JSON gerados e baixados com sucesso!');
+
+                // Chamada simultânea e automatizada para exportar também o JSON do projeto!
+                salvarComoJSON();
+
             }).catch(err => {
                 console.error("Erro na geração do PDF: ", err);
                 showToast('Erro interno ao tentar gerar o PDF.');
