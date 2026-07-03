@@ -40,8 +40,7 @@ async function gerarPDF(sistemasParte2 = null) {
             ppp_calculado: pppParte1
         },
         dataAplicaveis: [],
-        incluirInfoGerais: true,
-        incluirItensSerie: true
+        incluirInfoGerais: true
     });
 
     partsToGenerate.push({
@@ -53,8 +52,7 @@ async function gerarPDF(sistemasParte2 = null) {
             ppp_calculado: pppParte2
         },
         dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)), // Cópia profunda
-        incluirInfoGerais: true,
-        incluirItensSerie: true
+        incluirInfoGerais: true
     });
 
 	} else {
@@ -68,8 +66,7 @@ async function gerarPDF(sistemasParte2 = null) {
 				ppp_calculado: pppTotal
 			},
 			dataAplicaveis: dataAplicaveisOriginal,
-			incluirInfoGerais: true,
-			incluirItensSerie: true
+			incluirInfoGerais: true
 		});
 	}
 
@@ -82,7 +79,7 @@ async function gerarPDF(sistemasParte2 = null) {
 
 async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	
-	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais, incluirItensSerie } = partData;
+	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais } = partData;
 
 	const { jsPDF } = window.jspdf;
     const doc = new jsPDF(); // Initialize the jsPDF instance
@@ -517,9 +514,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		doc.setTextColor(0, 0, 0);
 		return finalY;
 	}
-	
-	const formatArray = (arr) => Array.isArray(arr) && arr.length ? arr.join(', ') : '';
-	const mapStartStop = (v) => ({ sim_serie: 'Sim (De Série)', sim_opcional: 'Sim (Opcional)', nao: 'Não' }[v] || '');
 
 	const addCenteredText = (text, size, style = 'normal', color = [0, 0, 0]) => {
 		if (y > pageHeight - margin) { doc.addPage(); y = margin; }
@@ -574,6 +568,73 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const titleColor = [68, 114, 196];
 const rootPrincipal = dataPrincipal.rootPath || '';
 const rootAplicaveis = dataAplicaveis.rootPath || '';
+
+	// --- ÍNDICE INTERATIVO ---
+	
+		let indexLinks = [];
+	let targetPages = {};
+	
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		addText(`ÍNDICE RÁPIDO (P/ APLICÁVEIS):`, 14, "bold", 0);
+		// y += lineSpacing;
+		
+		for (const [index, veiculo] of dataAplicaveis.entries()) {
+			if (y > pageHeight - margin) { doc.addPage(); y = margin; }
+			
+			const prefixText = `Veículo Aplicável #${index + 1} - `;
+			const refText = veiculo.dadosGerais.veiculo || 'Sem referência';
+			
+			doc.setFontSize(10);
+			doc.setTextColor(0, 0, 255); // Azul para link
+			
+			// Negrito para o prefixo
+			doc.setFont('helvetica', 'bold');
+			const prefixWidth = doc.getTextWidth(prefixText);
+			doc.text(prefixText, margin, y);
+			
+			// Itálico para a referência
+			doc.setFont('helvetica', 'italic');
+			const remainingWidth = doc.internal.pageSize.width - margin * 2 - prefixWidth;
+			const refLines = doc.splitTextToSize(refText, remainingWidth);
+			
+			let currentLineY = y;
+			for(let i = 0; i < refLines.length; i++) {
+				if (currentLineY > pageHeight - margin) { doc.addPage(); currentLineY = margin; }
+				
+				const line = refLines[i];
+				const lineWidth = doc.getTextWidth(line);
+				const drawX = i === 0 ? margin + prefixWidth : margin;
+				doc.text(line, drawX, currentLineY);
+				
+				const clickableX = margin;
+				const clickableW = i === 0 ? prefixWidth + lineWidth : lineWidth;
+				
+				// Sublinhado interativo
+				doc.setDrawColor(0, 0, 255);
+				doc.setLineWidth(0.3);
+				doc.line(clickableX, currentLineY + 1, clickableX + clickableW, currentLineY + 1);
+				
+				indexLinks.push({
+					index: index,
+					page: doc.internal.getCurrentPageInfo().pageNumber,
+					x: clickableX,
+					y: currentLineY,
+					w: clickableW,
+					h: 12 * 0.3527
+				});
+				
+				if (i < refLines.length - 1) {
+					currentLineY += lineHeight;
+				}
+			}
+			y = currentLineY + lineHeight;
+		}
+		doc.setTextColor(0, 0, 0); // Reseta a cor
+		y += lineHeight;
+		addSeparatorLine();
+		y += lineHeight;
+	}
+	
 	// --- VEÍCULO PRINCIPAL ---
 	
 	addCenteredText(`PLANEJAMENTO - VEÍCULO PRINCIPAL${sufixoTitulo}`, 20, 'bold');
@@ -602,7 +663,7 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		
 		y += 14;
 		
-		addLabeledValue('ASSOCIAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
+		addLabeledValue('ASSOCIAÇÃO / CHASSI', dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A'));
 		if (dataPrincipal.aplicacao_chassi_texto) {
 			addText(dataPrincipal.aplicacao_chassi_texto, 12, 'normal', 4);
 		}
@@ -612,33 +673,17 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		addText('- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:', 12, 'bold', 0);
 		y = await addRichContent(dataPrincipal.ilustracao_texto || 'Nenhum pedido.', y, 4, rootPrincipal, null, -1);
 		
-		y += lineHeight;
+		y += lineHeight * 2;
 		
 		addLabeledValue('PESQUISA', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
 		if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
 		y = await addRichContent(dataPrincipal.pesquisa_texto, y, 4, rootPrincipal, null, -1);
 		}
 		
-		y += lineHeight;
+		y += lineHeight * 2;
 		
 	}
 
-	if (incluirItensSerie) {
-		addText('- ITENS DE SÉRIE / OPCIONAIS:', 12, "bold", 0);
-		addLabeledValue('Tipo de Chave', formatArray(dataPrincipal.chave));
-		addLabeledValue('Função Start/Stop', mapStartStop(dataPrincipal.startstop));
-		addLabeledValue('Ar-condicionado', formatArray(dataPrincipal.ac));
-		addLabeledValue('Transmissão', formatArray(dataPrincipal.atmt));
-		addLabeledValue('Tração', formatArray(dataPrincipal.tracao));
-		addText('- Outros (De Série):', 12, "bold", 0);
-		addText(dataPrincipal.outros_serie, 12, "normal", 4);
-		addText('- Outros (Opcionais):', 12, "bold", 0);
-		addText(dataPrincipal.outros_opcional, 12, "normal", 4);
-		
-		y += lineSpacing;
-		y += 6;
-	} // Fim do if (incluirItensSerie)
-	
 	addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
 	y += lineSpacing;
 	
@@ -763,8 +808,11 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		addCenteredText("PLANEJAMENTO - VEÍCULOS APLICÁVEIS", 20, 'bold');
 		for (const [index, veiculo] of dataAplicaveis.entries()) {
 			if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
+			
 			y += lineSpacing;
 			y += lineHeight;
+			
+			targetPages[index] = doc.internal.getCurrentPageInfo().pageNumber;
 			
 			addColoredText(`VEÍCULO APLICÁVEL #${index + 1}`, 18, "bold", 0, titleColor);
 			y += lineSpacing;
@@ -790,7 +838,7 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 			y += lineHeight;
 			y += lineHeight / 2;
 			
-			addLabeledValue('ASSOCIAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar associação' : 'N/A'));
+			addLabeledValue('ASSOCIAÇÃO / CHASSI', veiculo.dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (veiculo.dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A'));
 			if (veiculo.dadosGerais.aplicacao_chassi_texto) {
 				addText(veiculo.dadosGerais.aplicacao_chassi_texto, 12, 'normal', 4);
 			}
@@ -806,22 +854,8 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 				y = await addRichContent(veiculo.dadosGerais.pesquisa_texto, y, 4, rootAplicaveis, null, -1, true, veiculo, index);
 			}
 						
-			if (veiculo.dadosGerais.precisaPreencherItensSerie) {                    
-				addText('- ITENS DE SÉRIE/OPCIONAIS:', 12, "bold");
-				addLabeledValue('Tipo de Chave', formatArray(veiculo.itensSerie.chave));
-				addLabeledValue('Função Start/Stop', mapStartStop(veiculo.itensSerie.startstop));
-				addLabeledValue('Ar-condicionado', formatArray(veiculo.itensSerie.ac));
-				addLabeledValue('Transmissão', formatArray(veiculo.itensSerie.atmt));
-				addLabeledValue('Tração', formatArray(veiculo.itensSerie.tracao));
-				addText('- Outros (De Série):', 12, "bold", 0);
-				addText(veiculo.itensSerie.outros_serie, 12, "normal", 4);
-				addText('- Outros (Opcionais):', 12, "bold", 0);
-				addText(veiculo.itensSerie.outros_opcional, 12, "normal", 4);
-				y += lineHeight;
-				y += 6;
-			}
-			
 			y += lineHeight * 2;
+			
 			addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
 			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
 				for (const [idx, sistema] of veiculo.sistemas.entries()) {
@@ -974,6 +1008,14 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		}
 	} else if (dataPrincipal.veiculo) {
 		nomeBase = `Planejamento - ${dataPrincipal.veiculo}`;
+	}
+	
+	for (const linkInfo of indexLinks) {
+		const targetPage = targetPages[linkInfo.index];
+		if (targetPage) {
+			doc.setPage(linkInfo.page);
+			doc.link(linkInfo.x, linkInfo.y - linkInfo.h, linkInfo.w, linkInfo.h + 2, { pageNumber: targetPage });
+		}
 	}
 	
 	const nomeArquivoPDF = `${prefixo}${nomeBase}.pdf`;
