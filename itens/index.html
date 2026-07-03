@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DE SÉRIE/OPCIONAIS</title>
+    <!-- Bibliotecas externas para geração de PDF e ícones -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="cabecalho">
+        <!-- Ícone representativo ou logo da sua empresa -->
+        <i class="fa-solid fa-car-side" style="font-size: 2.5em; color: var(--orange-main); margin-right: 15px;"></i>
+        <div>
+            <h1>ITENS DE SÉRIE & OPCIONAIS</h1>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: -3px;">Ferramenta para geração de relatório</p>
+        </div>
+    </div>
+
+    <div id="main-frame">
+        <!-- Abas do Sistema -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('resumo')">
+                <i class="fa-solid fa-table-list"></i> RESUMO
+            </button>
+            <button class="tab-btn" onclick="switchTab('itens-mestre')">
+                <i class="fa-solid fa-sliders"></i> ITENS DE SÉRIE/OPCIONAIS
+            </button>
+            <button class="tab-btn" onclick="switchTab('principal')">
+                <i class="fa-solid fa-car-rear"></i> VEÍCULO PRINCIPAL
+            </button>
+            <button class="tab-btn" onclick="switchTab('aplicaveis')">
+                <i class="fa-solid fa-network-wired"></i> VEÍCULOS APLICÁVEIS
+            </button>
+        </div>
+
+        <!-- Conteúdo 1: RESUMO -->
+        <div id="tab-resumo" class="tab-content active">
+            <div class="summary-actions">
+                <!-- Seletor de Formato do PDF Dinâmico adicionado ao lado do botão -->
+                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <button class="orange-button" onclick="gerarPDF_Formatado()">
+                        <i class="fa-solid fa-file-pdf"></i> GERAR PDF
+                    </button>
+                    <select id="pdf-format-select" class="form-control" style="width: auto; height: 41px; padding: 0 10px; margin-bottom: 0; font-weight: 600; color: var(--text-dark);">
+                        <option value="continuous" selected>Página Única Adaptativa (Sem Cortes) ⭐</option>
+                        <option value="a3_portrait">A3 - Retrato (Ideal para Listas Longas)</option>
+                    </select>
+                </div>
+                <button class="orange-button secondary" onclick="salvarComoJSON()">
+                    <i class="fa-solid fa-floppy-disk"></i> SALVAR PROJETO
+                </button>
+                <button class="orange-button secondary" onclick="document.getElementById('jsonFileInput').click()">
+                    <i class="fa-solid fa-folder-open"></i> CARREGAR PROJETO
+                </button>
+                <input type="file" id="jsonFileInput" style="display: none;" accept=".json" onchange="carregarDeJSON(event)" />
+            </div>
+
+            <div class="section-card" style="padding: 10px; border: none; box-shadow: none;">
+                <h3 class="section-title">Visualização da tabela de Itens de Série & Opcionais</h3>
+                
+                <!-- Área da tabela capturada para o PDF -->
+                <div id="pdf-capture-area" style="background-color: #ffffff; padding: 15px; border-radius: 8px;">
+                    <!-- Informações do Cabeçalho do PDF que irão aparecer na exportação -->
+                    <div id="pdf-header-info" style="margin-bottom: 15px; display: none;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr>
+                                <td style="border: none; padding: 0;">
+                                    <h2 style="color: #2e7d32; margin: 0; font-size: 1.5em; font-weight: bold;">PLANEJAMENTO DE VEÍCULOS</h2>
+                                    <p style="color: #757575; margin: 2px 0 0 0; font-size: 0.85em;">Relatório Comparativo de Itens de Série e Opcionais da Sprint</p>
+                                </td>
+                                <td style="border: none; text-align: right; padding: 0; font-size: 0.85em; color: #555;">
+                                    <strong>Data de Geração:</strong> <span id="pdf-generation-date"></span>
+                                </td>
+                            </tr>
+                        </table>
+                        <hr style="border: 0; height: 2px; background: #f57c00; margin-bottom: 15px;">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="resumo-table" id="tabela-comparativa">
+                            <thead>
+                                <tr id="tabela-headers">
+                                    <th>ITENS</th>
+                                    <th>VEÍCULO PRINCIPAL</th>
+                                    <!-- Cabeçalhos dos veículos aplicáveis entram dinamicamente -->
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-body">
+                                <!-- Linhas de itens entram dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo 2: ITENS DE SÉRIE / OPCIONAIS -->
+        <div id="tab-itens-mestre" class="tab-content">
+            <div class="section-card">
+                <h3 class="section-title">
+                    <span>Lista Mestra de Itens Disponíveis</span>
+                    <span style="font-size: 0.75em; font-weight: normal; color: var(--text-muted);">
+                        Defina quais itens estarão disponíveis para preenchimento.
+                    </span>
+                </h3>
+
+                <p style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 20px;">
+                    Os itens abaixo são injetados automaticamente como opções para o Veículo Principal e para todos os Veículos Aplicáveis cadastrados.
+                </p>
+
+                <!-- Itens Fixos com Exceções (Sempre presentes, estrutura base idêntica) -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: var(--primary-green); margin-bottom: 10px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px;">
+                        Itens Fixos
+                    </h4>
+                    
+                    <div id="itens-fixos-container">
+                        <!-- Gerado automaticamente via JS -->
+                    </div>
+                </div>
+
+                <!-- Itens Customizados (Outros Itens) -->
+                <div>
+                    <h4 style="color: var(--primary-green); margin-bottom: 10px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px; display: flex; justify-content: space-between; align-items: center;">
+                        Outros Itens
+                        <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em;" onclick="adicionarNovoItemMestre()">
+                            <i class="fa-solid fa-plus"></i> Novo Item
+                        </button>
+                    </h4>
+
+                    <div id="itens-custom-container" style="margin-top: 10px;">
+                        <!-- Gerado de forma dinâmica com dois inputs por linha -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo 3: VEÍCULO PRINCIPAL -->
+        <div id="tab-principal" class="tab-content">
+            <div class="section-card">
+                <h3 class="section-title">Veículo Principal</h3>
+                <div class="form-group">
+                    <label for="nome-veiculo-principal">Modelo, Motor e Versão:</label>
+                    <input type="text" id="nome-veiculo-principal" class="form-control" placeholder="Ex: Corolla 2.0 XEi" oninput="atualizarResumoTab()">
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">Configuração de Série & Opcionais</h3>
+                <p style="font-size: 0.85em; color: var(--text-muted); margin-bottom: 15px;">
+                    <strong>LEGENDAS:</strong>
+					<br>
+					<strong>S</strong> = De Série
+					<br>
+					<strong>O</strong> = Opcional
+					<br>
+					<strong>-</strong> = Não Possui
+                </p>
+
+                <div id="principal-itens-container" class="items-grid-container">
+                    <!-- Gerado automaticamente baseado na aba 2 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo 4: VEÍCULOS APLICÁVEIS -->
+        <div id="tab-aplicaveis" class="tab-content">
+            <div class="summary-actions" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                <button class="orange-button" onclick="adicionarVeiculoAplicavel()">
+                    <i class="fa-solid fa-circle-plus"></i> Adicionar Veículo Aplicável
+                </button>
+
+                <!-- Barra de botões numerada para selecionar qual veículo exibir/editar -->
+                <div id="veiculos-botoes-container" style="display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <!-- Números dos veículos entram aqui dinamicamente -->
+                </div>
+            </div>
+
+            <div id="veiculos-aplicaveis-lista" class="veiculos-aplicaveis-container">
+                <!-- Gerados Dinamicamente igual à pegada do outro index -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens Rápidas (Toast) -->
+    <div id="toast" class="toast-msg"></div>
+
+    <script>
+        /* ==========================================================================
+           1. ESTADO GLOBAL DA APLICAÇÃO
+           ========================================================================== */
+        
+        // Itens Padrão de Exceção e suas Sub-opções Específicas atualizadas
+        const ITENS_FIXOS_DEFINICAO = [
+            {
+                id: "tipo_chave",
+                nome: "TIPO DE CHAVE",
+                opcoes: ["COMUM", "PRESENCIAL (BOTÃO)", "ENCAIXE INTELIGENTE"],
+                tipoInput: "checkbox"
+            },
+            {
+                id: "ar_condicionado",
+                nome: "AR-CONDICIONADO",
+                opcoes: ["MANUAL", "AUTOMÁTICO", "SÓ AR QUENTE"],
+                tipoInput: "checkbox"
+            },
+            {
+                id: "transmissao",
+                nome: "TRANSMISSÃO",
+                opcoes: ["AT", "MT"],
+                tipoInput: "checkbox"
+            },
+            {
+                id: "tracao",
+                nome: "TRAÇÃO",
+                opcoes: ["4X2", "4X4", "6X2", "6X4", "8X2", "8X4", "8X8"],
+                tipoInput: "checkbox"
+            }
+        ];
+
+        // Estado do formulário
+        let appState = {
+            itensCustom: [], // Lista de objetos contendo { nome, obs } para os itens customizados
+            principal: {
+                nome: "Veículo Principal",
+                valores: {} // chave: { status: 'S'|'O'|'-', detalhes: [] }
+            },
+            aplicaveis: [] // Array de { id, nome, valores: { ... } }
+        };
+
+        // Identificador sequencial para veículos aplicáveis e index do ativo
+        let nextVeiculoId = 1;
+        let activeVeiculoIndex = 0;
+
+        /* ==========================================================================
+           2. INICIALIZAÇÃO DA APLICAÇÃO
+           ========================================================================== */
+        window.onload = function() {
+            // Inicializar estados padrão se vazios
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                appState.principal.valores[item.id] = { status: "-", detalhes: [] };
+            });
+
+            // Adicionar itens customizados com os novos campos de observação isolados
+            appState.itensCustom = [
+                { nome: "FUNÇÃO START/STOP", obs: "" },
+                { nome: "ADAS: ", obs: "Câmera frontal, piloto automático adaptativo" },
+                { nome: "AIRBAGS: ", obs: "4 Airbags (2 frontais / 2 cortinas)" },
+                { nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "" },
+                { nome: "FARÓIS/NEBLINA/FUNÇÕES ESPECIAIS: ", obs: "Foco simples e duplo / LED e halógeno" },
+                { nome: "RETROVISORES (INT & EXT)/FUNÇÕES ESPECIAIS: ", obs: "Função tilt down, interno eletrocrômico" },
+                { nome: "TETO SOLAR", obs: "" },
+                { nome: "VIDROS ELÉTRICOS: ", obs: "Nas 4 portas, com one touch nas dianteiras" },
+                { nome: "SISTEMAS DE SOM: ", obs: "Multimídia 8 polegadas blasterplusinventei" }
+            ];
+
+            appState.itensCustom.forEach(item => {
+                appState.principal.valores[item.nome] = { status: "-", detalhes: [] };
+            });
+
+            // Renderizar as interfaces
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+        };
+
+        /* ==========================================================================
+           3. LÓGICA DE ABAS (TABS)
+           ========================================================================== */
+        function switchTab(tabId) {
+            // Atualizar classes dos botões das abas
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Ocultar todos os containers de conteúdo
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Mostrar aba correspondente
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            // Garantir atualização correta do resumo
+            if (tabId === 'resumo') {
+                atualizarResumoTab();
+            }
+        }
+
+        /* ==========================================================================
+           4. RENDERIZAÇÃO: ITENS MESTRE COM CAMPOS LADO A LADO (Aba 2)
+           ========================================================================== */
+        function renderizarAbaItensMestre() {
+            const containerFixos = document.getElementById('itens-fixos-container');
+            containerFixos.innerHTML = '';
+
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                const row = document.createElement('div');
+                row.className = 'item-row-card';
+                
+                let subOptionsHTML = item.opcoes.map(opt => `
+                    <span style="background: #e2ede2; padding: 2px 8px; border-radius: 4px; font-size: 0.9em; font-weight: 500; color: var(--primary-green);">
+                        ${opt}
+                    </span>
+                `).join(' ');
+
+                row.innerHTML = `
+                    <div class="item-info">
+                        <span class="item-title">${item.nome} ${item.tipoInput === 'radio' ? '<small style="color: var(--orange-main); font-weight:normal;">(Escolha única)</small>' : ''}</span>
+                        <div style="margin-top: 5px; display: flex; gap: 5px; flex-wrap: wrap;">
+                            ${subOptionsHTML}
+                        </div>
+                    </div>
+                    <span style="font-size: 0.8em; font-weight: bold; color: var(--text-muted); background: #eee; padding: 3px 10px; border-radius: 12px;">
+                        Item Fixo
+                    </span>
+                `;
+                containerFixos.appendChild(row);
+            });
+
+            const containerCustom = document.getElementById('itens-custom-container');
+            containerCustom.innerHTML = '';
+
+            if (appState.itensCustom.length === 0) {
+                containerCustom.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 0.9em; padding: 15px;">Nenhum item customizado adicionado ainda.</p>`;
+                return;
+            }
+
+            appState.itensCustom.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'master-item-row';
+                row.innerHTML = `
+                    <div style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
+                        <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
+                        <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
+                    </div>
+                    <button class="red-button" style="height: 41px; align-self: center;" onclick="removerItemMestre(${index})">
+                        <i class="fa-solid fa-trash-can"></i> Remover
+                    </button>
+                `;
+                containerCustom.appendChild(row);
+            });
+        }
+
+        function adicionarNovoItemMestre() {
+            const novoItemNome = `OUTRO ITEM ${appState.itensCustom.length + 1}`;
+            const novoItemObj = { nome: novoItemNome, obs: "" };
+            appState.itensCustom.push(novoItemObj);
+            
+            // Inicializar status padrão nos veículos usando o nome como chave
+            appState.principal.valores[novoItemNome] = { status: "-", detalhes: [] };
+            appState.aplicaveis.forEach(v => {
+                v.valores[novoItemNome] = { status: "-", detalhes: [] };
+            });
+
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            showToast('Novo item cadastrado com sucesso!');
+        }
+
+        function atualizarNomeItemCustom(index, novoValor) {
+            const itemObj = appState.itensCustom[index];
+            const valorAntigo = itemObj.nome;
+            novoValor = novoValor.toUpperCase().trim();
+
+            if (!novoValor) {
+                showToast('O nome do item não pode ser vazio!');
+                renderizarAbaItensMestre();
+                return;
+            }
+
+            const existeOutro = appState.itensCustom.some((item, i) => item.nome === novoValor && i !== index);
+            if (existeOutro) {
+                showToast('Este item já existe na lista!');
+                renderizarAbaItensMestre();
+                return;
+            }
+
+            // Atualizar no objeto de estado
+            itemObj.nome = novoValor;
+
+            // Migrar os dados preenchidos anteriormente de forma limpa
+            if (appState.principal.valores[valorAntigo]) {
+                appState.principal.valores[novoValor] = appState.principal.valores[valorAntigo];
+                delete appState.principal.valores[valorAntigo];
+            } else {
+                appState.principal.valores[novoValor] = { status: "-", detalhes: [] };
+            }
+
+            appState.aplicaveis.forEach(v => {
+                if (v.valores[valorAntigo]) {
+                    v.valores[novoValor] = v.valores[valorAntigo];
+                    delete v.valores[valorAntigo];
+                } else {
+                    v.valores[novoValor] = { status: "-", detalhes: [] };
+                }
+            });
+
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            showToast('Item atualizado com sucesso!');
+        }
+
+        function atualizarObsItemCustom(index, novaObs) {
+            appState.itensCustom[index].obs = novaObs.trim();
+            // Atualizar o resumo para refletir no ecrã e no PDF de forma instantânea
+            atualizarResumoTab();
+            showToast('Observação do item atualizada!');
+        }
+
+        function removerItemMestre(index) {
+            const itemObj = appState.itensCustom[index];
+            const itemNome = itemObj.nome;
+            appState.itensCustom.splice(index, 1);
+
+            // Remover dos registros dos veículos
+            delete appState.principal.valores[itemNome];
+            appState.aplicaveis.forEach(v => {
+                delete v.valores[itemNome];
+            });
+
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            showToast('Item removido com sucesso!');
+        }
+
+        /* ==========================================================================
+           5. RENDERIZAÇÃO: VEÍCULO PRINCIPAL (Aba 3)
+           ========================================================================== */
+        function renderizarPainelPrincipal() {
+            const container = document.getElementById('principal-itens-container');
+            container.innerHTML = '';
+
+            // 1. Renderizar os Itens Fixos Core
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                const itemEstado = appState.principal.valores[item.id] || { status: "-", detalhes: [] };
+                const card = criarCardPreenchimentoItem(item, itemEstado, 'principal', item.id);
+                container.appendChild(card);
+            });
+
+            // 2. Renderizar os Itens Customizados
+            appState.itensCustom.forEach(item => {
+                const itemEstado = appState.principal.valores[item.nome] || { status: "-", detalhes: [] };
+                
+                // Formata o rótulo para incluir a observação de forma elegante na tela de edição
+                const labelCompleto = item.obs 
+                    ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
+                    : item.nome;
+
+                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: [] };
+                const card = criarCardPreenchimentoItem(itemObj, itemEstado, 'principal', item.nome);
+                container.appendChild(card);
+            });
+        }
+
+        /* ==========================================================================
+           6. RENDERIZAÇÃO: VEÍCULOS APLICÁVEIS COM NAVEGAÇÃO NUMÉRICA (Aba 4)
+           ========================================================================== */
+        function renderizarBotoesNumerados() {
+            const containerBotoes = document.getElementById('veiculos-botoes-container');
+            if (!containerBotoes) return;
+            containerBotoes.innerHTML = '';
+
+            appState.aplicaveis.forEach((veiculo, idx) => {
+                const isActive = idx === activeVeiculoIndex;
+                const btn = document.createElement('button');
+                btn.className = isActive ? 'orange-button' : 'orange-button secondary';
+                btn.style.borderRadius = '50%';
+                btn.style.width = '38px';
+                btn.style.height = '38px';
+                btn.style.padding = '0';
+                btn.style.display = 'inline-flex';
+                btn.style.alignItems = 'center';
+                btn.style.justifyContent = 'center';
+                btn.style.fontWeight = 'bold';
+                btn.style.fontSize = '1em';
+                
+                // Tooltip mostrando o nome atualizado do veículo
+                btn.title = veiculo.nome; 
+
+                btn.innerText = idx + 1;
+                btn.onclick = function() {
+                    activeVeiculoIndex = idx;
+                    renderizarVeiculosAplicaveis();
+                };
+                containerBotoes.appendChild(btn);
+            });
+        }
+
+        function renderizarVeiculosAplicaveis() {
+            const container = document.getElementById('veiculos-aplicaveis-lista');
+            container.innerHTML = '';
+
+            // Atualiza os botões numerados no topo
+            renderizarBotoesNumerados();
+
+            if (appState.aplicaveis.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 40px; border: 2px dashed var(--gray-border); border-radius: 12px; background: #ffffff;">
+                        <i class="fa-solid fa-truck-ramp-box" style="font-size: 3em; color: var(--text-muted); margin-bottom: 15px;"></i>
+                        <p style="color: var(--text-muted); font-weight: 500;">Nenhum veículo aplicável cadastrado para esta Sprint.</p>
+                        <button class="orange-button" style="margin-top: 15px;" onclick="adicionarVeiculoAplicavel()">
+                            Adicionar Primeiro Veículo
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            // Garante que o index ativo esteja nos limites do array
+            if (activeVeiculoIndex >= appState.aplicaveis.length) {
+                activeVeiculoIndex = appState.aplicaveis.length - 1;
+            }
+            if (activeVeiculoIndex < 0) {
+                activeVeiculoIndex = 0;
+            }
+
+            const veiculo = appState.aplicaveis[activeVeiculoIndex];
+            const vIndex = activeVeiculoIndex;
+
+            const card = document.createElement('div');
+            card.className = 'veiculo-card';
+            card.id = `veiculo-card-${veiculo.id}`;
+
+            // Header com Input do Nome e Botão Excluir
+            const header = document.createElement('div');
+            header.className = 'veiculo-card-header';
+            header.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px; flex: 1; max-width: 70%;">
+                    <i class="fa-solid fa-car" style="color: var(--orange-main);"></i>
+                    <input type="text" class="form-control" style="font-weight: bold; background: transparent; border: none; border-bottom: 1px solid #ccc; padding: 4px;" 
+                           value="${veiculo.nome}" oninput="atualizarNomeVeiculoAplicavel(${vIndex}, this.value)" placeholder="Nome do Veículo Aplicável">
+                </div>
+                <button class="red-button" style="padding: 6px 12px; font-size: 0.85em;" onclick="removerVeiculoAplicavel(${vIndex})">
+                    <i class="fa-solid fa-trash-can"></i> Excluir Veículo
+                </button>
+            `;
+
+            const body = document.createElement('div');
+            body.className = 'veiculo-card-body';
+
+            const gridItens = document.createElement('div');
+            gridItens.className = 'items-grid-container';
+
+            // Injetar os Itens Fixos Core do Veículo Aplicável
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                const itemEstado = veiculo.valores[item.id] || { status: "-", detalhes: [] };
+                const itemCard = criarCardPreenchimentoItem(item, itemEstado, 'aplicavel', item.id, vIndex);
+                gridItens.appendChild(itemCard);
+            });
+
+            // Injetar os Itens Customizados do Veículo Aplicável com descrição elegante
+            appState.itensCustom.forEach(item => {
+                const itemEstado = veiculo.valores[item.nome] || { status: "-", detalhes: [] };
+                
+                const labelCompleto = item.obs 
+                    ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
+                    : item.nome;
+
+                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: [] };
+                const itemCard = criarCardPreenchimentoItem(itemObj, itemEstado, 'aplicavel', item.nome, vIndex);
+                gridItens.appendChild(itemCard);
+            });
+
+            body.appendChild(gridItens);
+            card.appendChild(header);
+            card.appendChild(body);
+            container.appendChild(card);
+        }
+
+        function adicionarVeiculoAplicavel() {
+            const id = nextVeiculoId++;
+            const novoVeiculo = {
+                id: id,
+                nome: `Veículo Aplicável #${appState.aplicaveis.length + 1}`,
+                valores: {}
+            };
+
+            // Inicializar estados padrões de série e opcionais
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                novoVeiculo.valores[item.id] = { status: "-", detalhes: [] };
+            });
+            appState.itensCustom.forEach(item => {
+                novoVeiculo.valores[item.nome] = { status: "-", detalhes: [] };
+            });
+
+            appState.aplicaveis.push(novoVeiculo);
+            activeVeiculoIndex = appState.aplicaveis.length - 1; // Focar no recém criado
+            renderizarVeiculosAplicaveis();
+            showToast('Veículo aplicável adicionado!');
+        }
+
+        function atualizarNomeVeiculoAplicavel(vIndex, novoNome) {
+            appState.aplicaveis[vIndex].nome = novoNome;
+            // Atualizar tooltip do botão correspondente sem re-renderizar tudo
+            const botoes = document.getElementById('veiculos-botoes-container')?.children;
+            if (botoes && botoes[vIndex]) {
+                botoes[vIndex].title = novoNome;
+            }
+        }
+
+        function removerVeiculoAplicavel(vIndex) {
+            appState.aplicaveis.splice(vIndex, 1);
+            if (activeVeiculoIndex >= appState.aplicaveis.length) {
+                activeVeiculoIndex = Math.max(0, appState.aplicaveis.length - 1);
+            }
+            renderizarVeiculosAplicaveis();
+            showToast('Veículo aplicável removido.');
+        }
+
+        /* ==========================================================================
+           7. ELEMENTO DINÂMICO: CARD DE PREENCHIMENTO DE ITEM
+           ========================================================================== */
+        function criarCardPreenchimentoItem(itemDef, itemEstado, contexto, itemChave, vIndex = null) {
+            const card = document.createElement('div');
+            card.className = 'item-row-card';
+
+            const ehItemFixo = ITENS_FIXOS_DEFINICAO.some(f => f.id === itemChave);
+
+            // Nome e Sub-opções se houverem
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'item-info';
+            infoDiv.innerHTML = `<span class="item-title">${itemDef.nome}</span>`;
+
+            // Caso o item tenha opções específicas
+            if (itemDef.opcoes && itemDef.opcoes.length > 0) {
+                const subSelContainer = document.createElement('div');
+                subSelContainer.className = 'item-details-selector';
+                
+                // Se for item fixo, as opções ficam sempre disponíveis (sem depender do tristate S/O/-)
+                const isDisabled = !ehItemFixo && itemEstado.status === '-';
+                const disabledAttr = isDisabled ? 'disabled' : '';
+                const styleOpacity = isDisabled ? 'opacity: 0.5; pointer-events: none;' : 'opacity: 1; pointer-events: auto;';
+                
+                subSelContainer.style = styleOpacity;
+                subSelContainer.className = `item-details-selector det-sec-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemDef.id}`;
+
+                const isRadio = itemDef.tipoInput === 'radio';
+
+                itemDef.opcoes.forEach(opt => {
+                    const isChecked = itemEstado.detalhes.includes(opt) ? 'checked' : '';
+                    const idCheck = `chk-${contexto}-${vIndex !== null ? vIndex : 'p'}-${itemDef.id}-${opt.replace(/\s+/g, '')}`;
+                    
+                    if (isRadio) {
+                        // Seletores Radiais para FUNÇÃO START/STOP (se aplicável)
+                        const radioGroupName = `rad-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemDef.id}`;
+                        subSelContainer.innerHTML += `
+                            <label for="${idCheck}">
+                                <input type="radio" id="${idCheck}" name="${radioGroupName}" value="${opt}" ${isChecked} ${disabledAttr} 
+                                       onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}')">
+                                ${opt}
+                            </label>
+                        `;
+                    } else {
+                        // Checkbox padrão para os outros itens
+                        subSelContainer.innerHTML += `
+                            <label for="${idCheck}">
+                                <input type="checkbox" id="${idCheck}" value="${opt}" ${isChecked} ${disabledAttr} 
+                                       onchange="atualizarCheckboxDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}', this.checked)">
+                                ${opt}
+                            </label>
+                        `;
+                    }
+                });
+                infoDiv.appendChild(subSelContainer);
+            }
+
+            card.appendChild(infoDiv);
+
+            // Os botões S / O / - NÃO se aplicam aos itens fixos/core (Apenas itens customizados e não-fixos)
+            if (!ehItemFixo) {
+                const tristateContainer = document.createElement('div');
+                tristateContainer.className = 'tristate-options';
+
+                const opcoesStatus = ['S', 'O', '-'];
+                opcoesStatus.forEach(opt => {
+                    const isActive = itemEstado.status === opt ? 'active' : '';
+                    const btn = document.createElement('button');
+                    btn.className = `tristate-btn ${isActive}`;
+                    btn.setAttribute('data-val', opt);
+                    btn.innerText = opt;
+                    btn.onclick = function() {
+                        // Remover active dos irmãos
+                        tristateContainer.querySelectorAll('.tristate-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+
+                        // Salvar o estado do status
+                        atualizarStatusItem(contexto, vIndex, itemChave, opt, itemDef.id);
+                    };
+                    tristateContainer.appendChild(btn);
+                });
+                card.appendChild(tristateContainer);
+            }
+
+            return card;
+        }
+
+        /* ==========================================================================
+           8. MANIPULADORES DE ESTADO (INPUTS E CHECKBOXES)
+           ========================================================================== */
+        function atualizarStatusItem(contexto, vIndex, itemChave, novoStatus, itemId = null) {
+            let target;
+            if (contexto === 'principal') {
+                target = appState.principal.valores;
+            } else {
+                target = appState.aplicaveis[vIndex].valores;
+            }
+
+            if (!target[itemChave]) {
+                target[itemChave] = { status: "-", detalhes: [] };
+            }
+
+            target[itemChave].status = novoStatus;
+
+            // Habilitar/Desabilitar visualmente os checkboxes correspondentes aos detalhes se possuir
+            if (itemId) {
+                const selectorClass = `.det-sec-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemId}`;
+                const containerEl = document.querySelector(selectorClass);
+                if (containerEl) {
+                    const checkboxes = containerEl.querySelectorAll('input[type="checkbox"], input[type="radio"]');
+                    if (novoStatus === '-') {
+                        containerEl.style.opacity = '0.5';
+                        containerEl.style.pointerEvents = 'none';
+                        checkboxes.forEach(cb => {
+                            cb.disabled = true;
+                            cb.checked = false;
+                        });
+                        // Limpa detalhes salvos
+                        target[itemChave].detalhes = [];
+                    } else {
+                        containerEl.style.opacity = '1';
+                        containerEl.style.pointerEvents = 'auto';
+                        checkboxes.forEach(cb => {
+                            cb.disabled = false;
+                        });
+                    }
+                }
+            }
+        }
+
+        function atualizarCheckboxDetalhe(contexto, vIndex, itemChave, opcao, checked) {
+            let target;
+            if (contexto === 'principal') {
+                target = appState.principal.valores;
+            } else {
+                target = appState.aplicaveis[vIndex].valores;
+            }
+
+            if (!target[itemChave]) {
+                target[itemChave] = { status: "-", detalhes: [] };
+            }
+
+            if (checked) {
+                if (!target[itemChave].detalhes.includes(opcao)) {
+                    target[itemChave].detalhes.push(opcao);
+                }
+            } else {
+                target[itemChave].detalhes = target[itemChave].detalhes.filter(item => item !== opcao);
+            }
+        }
+
+        function atualizarRadioDetalhe(contexto, vIndex, itemChave, opcao) {
+            let target;
+            if (contexto === 'principal') {
+                target = appState.principal.valores;
+            } else {
+                target = appState.aplicaveis[vIndex].valores;
+            }
+
+            if (!target[itemChave]) {
+                target[itemChave] = { status: "-", detalhes: [] };
+            }
+
+            // Como é um rádio, substitui a lista inteira de detalhes por essa única opção
+            target[itemChave].detalhes = [opcao];
+            target[itemChave].status = "-"; 
+        }
+
+        /* ==========================================================================
+           9. RENDERIZAÇÃO DA TABELA DE RESUMO COMPARATIVO (Aba 1)
+           ========================================================================== */
+        function atualizarResumoTab() {
+            const tableHeaders = document.getElementById('tabela-headers');
+            const tableBody = document.getElementById('tabela-body');
+
+            // 1. Atualizar Nome do Veículo Principal
+            const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
+            if (inputNomePrincipal && inputNomePrincipal.value.trim() !== "") {
+                appState.principal.nome = inputNomePrincipal.value.trim();
+            } else {
+                appState.principal.nome = "Veículo Principal";
+            }
+
+            // 2. Reconstruir Header da Tabela Comparativa (Paisagem)
+            tableHeaders.innerHTML = `
+                <th>ITENS</th>
+                <th style="background-color: #1b5e20; text-align: center;">${appState.principal.nome.toUpperCase()}</th>
+            `;
+
+            appState.aplicaveis.forEach(v => {
+                const headerTh = document.createElement('th');
+                headerTh.style.textAlign = 'center';
+                headerTh.style.backgroundColor = 'var(--orange-main)';
+                headerTh.innerText = v.nome.toUpperCase();
+                tableHeaders.appendChild(headerTh);
+            });
+
+            // 3. Gerar Linhas da Tabela
+            tableBody.innerHTML = '';
+
+            // 3.1. Adicionar os Itens Core Padrão (Fixos)
+            ITENS_FIXOS_DEFINICAO.forEach(item => {
+                const row = criarLinhaTabelaResumo(item.id, item.nome, "");
+                tableBody.appendChild(row);
+            });
+
+            // 3.2. Adicionar outros itens customizados criados (inclui FUNÇÃO START/STOP agora com tristate)
+            appState.itensCustom.forEach(item => {
+                const row = criarLinhaTabelaResumo(item.nome, item.nome, item.obs);
+                tableBody.appendChild(row);
+            });
+        }
+
+        function criarLinhaTabelaResumo(itemChave, itemNomeExibicao, itemObs = "") {
+            const row = document.createElement('tr');
+            
+            // Célula do nome do item com a observação formatada em uma segunda linha interna
+            const tdItem = document.createElement('td');
+            tdItem.style.verticalAlign = 'middle';
+            
+            if (itemObs && itemObs.trim() !== "") {
+                tdItem.innerHTML = `
+                    <div style="font-weight: 700; color: var(--primary-green); text-transform: uppercase; font-size: 0.95em;">
+                        ${itemNomeExibicao}
+                    </div>
+                    <div style="font-size: 0.85em; font-weight: 500; color: #555; margin-top: 3px; font-style: italic; line-height: 1.2;">
+                        ${itemObs}
+                    </div>
+                `;
+            } else {
+                tdItem.innerHTML = `
+                    <div style="font-weight: 700; color: var(--primary-green); text-transform: uppercase; font-size: 0.95em;">
+                        ${itemNomeExibicao}
+                    </div>
+                `;
+            }
+            row.appendChild(tdItem);
+
+            const ehItemFixo = ITENS_FIXOS_DEFINICAO.some(f => f.id === itemChave);
+
+            // Coluna do Veículo Principal
+            const dadosPrincipal = appState.principal.valores[itemChave] || { status: "-", detalhes: [] };
+            const tdPrincipal = document.createElement('td');
+            tdPrincipal.style.textAlign = 'center';
+            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, ehItemFixo));
+            row.appendChild(tdPrincipal);
+
+            // Colunas dos Veículos Aplicáveis
+            appState.aplicaveis.forEach(v => {
+                const dadosAplicavel = v.valores[itemChave] || { status: "-", detalhes: [] };
+                const tdAplicavel = document.createElement('td');
+                tdAplicavel.style.textAlign = 'center';
+                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo));
+                row.appendChild(tdAplicavel);
+            });
+
+            return row;
+        }
+
+        function obterBadgeStatusFormatado(estado, ehItemFixo = false) {
+            const wrapper = document.createElement('div');
+            wrapper.style.display = 'inline-flex';
+            wrapper.style.flexDirection = 'column';
+            wrapper.style.alignItems = 'center';
+
+            // Tratamento visual diferenciado para Itens Fixos sem status S / O / -
+            if (ehItemFixo) {
+                if (estado.detalhes && estado.detalhes.length > 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
+                    badge.innerText = estado.detalhes.join(' + ');
+                    wrapper.appendChild(badge);
+                } else {
+                    const badge = document.createElement('span');
+                    badge.className = 'status-badge n';
+                    badge.innerText = "NÃO POSSUI";
+                    wrapper.appendChild(badge);
+                }
+                return wrapper;
+            }
+
+            // Renderização padrão para os outros itens (S / O / -)
+            const badge = document.createElement('span');
+            let label = "Não Possui";
+            let classeCss = "n";
+
+            if (estado.status === 'S') {
+                label = "SÉRIE";
+                classeCss = "s";
+            } else if (estado.status === 'O') {
+                label = "OPCIONAL";
+                classeCss = "o";
+            }
+
+            badge.className = `status-badge ${classeCss}`;
+            badge.innerText = label;
+
+            wrapper.appendChild(badge);
+
+            // Detalhes extras se houverem
+            if (estado.status !== '-' && estado.detalhes && estado.detalhes.length > 0) {
+                const subDetails = document.createElement('span');
+                subDetails.className = 'badge-details';
+                subDetails.style.color = '#555';
+                subDetails.innerText = `(${estado.detalhes.join(', ')})`;
+                wrapper.appendChild(subDetails);
+            }
+
+            return wrapper;
+        }
+
+        /* ==========================================================================
+           10. SALVAR / CARREGAR PROJETO (JSON)
+           ========================================================================== */
+        function salvarComoJSON() {
+            // Atualizar os nomes para garantir gravação correta
+            const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
+            if (inputNomePrincipal) {
+                appState.principal.nome = inputNomePrincipal.value.trim() || "Veículo Principal";
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "ITENS_DE_SERIE_E_OPCIONAIS.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Projeto salvo em arquivo JSON com sucesso!');
+        }
+
+        function carregarDeJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const loadedState = JSON.parse(e.target.result);
+                    
+                    // Validação estrutural simples do JSON
+                    if (loadedState && loadedState.principal && Array.isArray(loadedState.itensCustom)) {
+                        
+                        // Migração de segurança: se o arquivo JSON antigo tiver strings, converte para o novo formato {nome, obs}
+                        loadedState.itensCustom = loadedState.itensCustom.map(item => {
+                            if (typeof item === 'string') {
+                                return { nome: item, obs: "" };
+                            }
+                            return item;
+                        });
+
+                        appState = loadedState;
+                        activeVeiculoIndex = 0; // Resetar index de edição
+                        
+                        // Recalcular ID sequencial para evitar conflitos
+                        if (appState.aplicaveis.length > 0) {
+                            nextVeiculoId = Math.max(...appState.aplicaveis.map(v => v.id)) + 1;
+                        } else {
+                            nextVeiculoId = 1;
+                        }
+
+                        // Atualizar nome do input
+                        const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
+                        if (inputNomePrincipal) {
+                            inputNomePrincipal.value = appState.principal.nome || "";
+                        }
+
+                        // Renderizar novamente toda a aplicação
+                        renderizarAbaItensMestre();
+                        renderizarPainelPrincipal();
+                        renderizarVeiculosAplicaveis();
+                        atualizarResumoTab();
+                        
+                        showToast('Projeto carregado com sucesso!');
+                    } else {
+                        showToast('Erro: Arquivo JSON de planejamento inválido.');
+                    }
+                } catch (err) {
+                    showToast('Erro ao ler ou processar o arquivo JSON.');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = ''; // Reset input file
+        }
+
+        /* ==========================================================================
+           11. EXPORTAÇÃO: GERAÇÃO DE PDF COMPARATIVO ADAPTATIVO (A3 OU PÁGINA ÚNICA)
+           ========================================================================== */
+        async function gerarPDF_Formatado() {
+            const formatoSelecionado = document.getElementById('pdf-format-select').value;
+            showToast('Processando a exportação do PDF selecionado...');
+            
+            const element = document.getElementById('pdf-capture-area');
+            const pdfHeader = document.getElementById('pdf-header-info');
+            const dataGeracao = document.getElementById('pdf-generation-date');
+
+            // 1. Mostrar o cabeçalho configurado para o PDF
+            if (pdfHeader) pdfHeader.style.display = 'block';
+            if (dataGeracao) {
+                const d = new Date();
+                dataGeracao.innerText = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()} às ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+            }
+
+            // Aguardar renderização das fontes e tabelas antes da captura
+            await new Promise(resolve => setTimeout(resolve, 350));
+
+            const options = {
+                scale: 2, // Melhor qualidade para impressão e zoom
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            };
+
+            html2canvas(element, options).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                let pdf;
+                let imgWidth;
+                let pageHeight;
+                let isContinuous = false;
+
+                // Definir dimensões baseadas no formato escolhido
+                if (formatoSelecionado === 'a3_portrait') {
+                    // A3 Retrato (297 x 420 mm)
+                    pdf = new jsPDF('p', 'mm', 'a3');
+                    imgWidth = 297;
+                    pageHeight = 420;
+                } else if (formatoSelecionado === 'continuous') {
+                    // Página Única Contínua Adaptativa
+                    isContinuous = true;
+                    imgWidth = 420; // Base de largura A3 para manter proporções excelentes
+                    pageHeight = (canvas.height * imgWidth) / canvas.width; // Altura calculada sob medida
+                    
+                    pdf = new jsPDF({
+                        orientation: imgWidth > pageHeight ? 'l' : 'p',
+                        unit: 'mm',
+                        format: [imgWidth, pageHeight]
+                    });
+                }
+
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                if (isContinuous) {
+                    // Aplica a imagem inteira sem quebras numa folha sob medida
+                    pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, pageHeight);
+                } else {
+                    // Renderização multi-página clássica para formatos padrão
+                    let heightLeft = imgHeight;
+                    let position = 0;
+
+                    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+
+                    while (heightLeft >= 0) {
+                        position = heightLeft - imgHeight;
+                        pdf.addPage();
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pageHeight;
+                    }
+                }
+
+                // Ocultar cabeçalho do PDF novamente na tela do HTML
+                if (pdfHeader) pdfHeader.style.display = 'none';
+
+                // Nome do arquivo de saída fixado a pedido
+                const nomeArquivo = "ITENS_DE_SERIE_E_OPCIONAIS.pdf";
+                pdf.save(nomeArquivo);
+                showToast('PDF gerado e baixado com sucesso!');
+            }).catch(err => {
+                console.error("Erro na geração do PDF: ", err);
+                showToast('Erro interno ao tentar gerar o PDF.');
+                if (pdfHeader) pdfHeader.style.display = 'none';
+            });
+        }
+
+        /* ==========================================================================
+           12. UTILITÁRIO: ALERTA TIPO TOAST
+           ========================================================================== */
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.innerText = message;
+            toast.style.display = 'block';
+            
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 3500);
+        }
+    </script>
+</body>
+</html>
