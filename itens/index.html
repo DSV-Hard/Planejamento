@@ -268,14 +268,20 @@
             // Adicionar itens customizados com os novos campos de observação isolados
             appState.itensCustom = [
                 { nome: "FUNÇÃO START/STOP", obs: "" },
-                { nome: "ADAS: ", obs: "Câmera frontal, piloto automático adaptativo" },
-                { nome: "AIRBAGS: ", obs: "4 Airbags (2 frontais / 2 cortinas)" },
-                { nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "" },
-                { nome: "FARÓIS/NEBLINA/FUNÇÕES ESPECIAIS: ", obs: "Foco simples e duplo / LED e halógeno" },
-                { nome: "RETROVISORES (INT & EXT)/FUNÇÕES ESPECIAIS: ", obs: "Função tilt down, interno eletrocrômico" },
+                { nome: "ADAS", obs: "Câmera frontal, piloto automático adaptativo" },
+                { nome: "AIRBAGS", obs: "2 Airbags (2 frontais)" },
+				{ nome: "AIRBAGS", obs: "6 Airbags (2 frontais / 2 cortinas / 2 laterais)" },
+                { nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "Só sensores traseiros" },
+				{ nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "Sensores dianteiros, traseiros e laterais" },
+                { nome: "FAROL", obs: "Foco simples halógeno / Foco duplo LED" },
+				{ nome: "FAROL DE NEBLINA", obs: "Somente Dianteiro" },
+                { nome: "RETROVISOR INTERNO ELETROCRÔMICO", obs: "" },
+				{ nome: "RETROVISOR EXTERNO", obs: "Com Função tilt down no direito" },
+				{ nome: "SISTEMAS DE SOM", obs: "Rádio" }
+				{ nome: "SISTEMAS DE SOM", obs: "Multimídia 8 polegadas BlasterPlusInventei" }
                 { nome: "TETO SOLAR", obs: "" },
-                { nome: "VIDROS ELÉTRICOS: ", obs: "Nas 4 portas, com one touch nas dianteiras" },
-                { nome: "SISTEMAS DE SOM: ", obs: "Multimídia 8 polegadas blasterplusinventei" }
+                { nome: "VIDROS ELÉTRICOS", obs: "Portas dianteiras" },
+				{ nome: "VIDROS ELÉTRICOS", obs: "Nas 4 portas" },
             ];
 
             appState.itensCustom.forEach(item => {
@@ -458,6 +464,9 @@
 
         function atualizarObsItemCustom(index, novaObs) {
             appState.itensCustom[index].obs = novaObs.trim();
+            // Re-renderiza os painéis das abas de preenchimento para sincronizar as descrições instantaneamente
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
             // Atualizar o resumo para refletir no ecrã e no PDF de forma instantânea
             atualizarResumoTab();
             showToast('Observação do item atualizada!');
