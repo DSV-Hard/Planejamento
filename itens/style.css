@@ -27,6 +27,32 @@
             padding: 20px;
         }
 
+        /* Sobrescrita cirúrgica para tornar as setas verticais laranjas e apenas triângulos puros */
+        .arrow-btn {
+            color: var(--orange-main) !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            outline: none !important;
+            padding: 0 !important;
+            margin: 2px 0 !important;
+            font-size: 1.6em !important; /* Triângulos ligeiramente maiores para destaque */
+            cursor: pointer;
+            display: inline-flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 40px !important; /* Largura estendida para zona de clique perfeita */
+            height: 22px !important;
+            transition: color 0.2s, transform 0.1s;
+        }
+        .arrow-btn:hover {
+            color: var(--orange-hover) !important;
+            transform: scale(1.3);
+        }
+        .arrow-btn:active {
+            transform: scale(0.95);
+        }
+
         /* Cabeçalho */
         #cabecalho {
             display: flex;
