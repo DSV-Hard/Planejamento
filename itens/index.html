@@ -394,7 +394,7 @@
                                     <div onclick="toggleExpandirItemMúltiplo(${index})" style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none; flex: 1;">
                                         <!-- Ícone dinâmico em triângulo para expandir/colapsar -->
                                         <i class="fa-solid ${isExpandido ? 'fa-caret-down' : 'fa-caret-right'}" style="color: var(--orange-main); font-size: 1.3em; transition: transform 0.2s;"></i>
-                                        <span style="letter-spacing: 0.3px;">LISTA DE OPÇÕES:</span>
+                                        <span style="letter-spacing: 0.3px;">LISTA DE OPÇÕES DISPONÍVEIS:</span>
                                     </div>
                                     ${isExpandido ? `
                                     <button class="orange-button" style="padding: 4px 10px; font-size: 0.85em; height: auto;" onclick="adicionarOpcaoItemMúltiplo(${index})">
@@ -1177,7 +1177,8 @@
                 const dadosAplicavel = v.valores[itemChave] || { status: "-", detalhes: [] };
                 const tdAplicavel = document.createElement('td');
                 tdAplicavel.style.textAlign = 'center';
-                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo)); // Sincroniza visual fixo se múltiplo
+                // BUG CORRIGIDO AQUI: ehItemFixo alterado cirurgicamente para renderEstiloFixo
+                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, renderEstiloFixo)); 
                 row.appendChild(tdAplicavel);
             });
 
