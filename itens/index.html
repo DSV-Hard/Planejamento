@@ -125,17 +125,22 @@
                     </div>
                 </div>
 
-                <!-- Itens Customizados (Outros Itens) -->
+                <!-- Itens Customizados (Outros Itens com dois botões distintos para Simples ou Múltiplo) -->
                 <div>
-                    <h4 style="color: var(--primary-green); margin-bottom: 10px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <h4 style="color: var(--primary-green); margin-bottom: 10px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                         Outros Itens
-                        <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em;" onclick="adicionarNovoItemMestre()">
-                            <i class="fa-solid fa-plus"></i> Novo Item
-                        </button>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em;" onclick="adicionarNovoItemMestre('simple')">
+                                <i class="fa-solid fa-plus"></i> + Item Simples
+                            </button>
+                            <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em; background-color: var(--primary-green);" onclick="adicionarNovoItemMestre('multiple')">
+                                <i class="fa-solid fa-square-check"></i> + Item Múltiplo
+                            </button>
+                        </div>
                     </h4>
 
                     <div id="itens-custom-container" style="margin-top: 10px;">
-                        <!-- Gerado de forma dinâmica com dois inputs por linha -->
+                        <!-- Gerado de forma dinâmica com o novo suporte a múltiplos checkboxes -->
                     </div>
                 </div>
             </div>
@@ -145,10 +150,12 @@
         <div id="tab-principal" class="tab-content">
             <div class="section-card">
                 <h3 class="section-title">Veículo Principal</h3>
-                <div style="display: flex; align-items: flex-end; gap: 12px;">
+                
+                <!-- Layout idêntico de orientação com o Carrinho Verde adicionado e perfeitamente alinhado -->
+                <div style="display: flex; gap: 15px; align-items: flex-end; width: 100%;">
                     <i class="fa-solid fa-car" style="font-size: 1.5em; color: var(--primary-green); margin-bottom: 6px;"></i>
                     <div class="form-group" style="flex: 1; margin-bottom: 0;">
-                        <label for="nome-veiculo-principal" style="color: var(--primary-green); font-weight: 600; font-size: 0.95em; margin-bottom: 4px; display: block;">Modelo, Motor e Versão:</label>
+                        <label for="nome-veiculo-principal" style="color: var(--primary-green); font-weight: bold; font-size: 0.85em;">MODELO, MOTOR E VERSÃO:</label>
                         <input type="text" id="nome-veiculo-principal" class="form-control" placeholder="Ex: Corolla 2.0 XEi" oninput="atualizarResumoTab()">
                     </div>
                 </div>
@@ -227,9 +234,9 @@
             }
         ];
 
-        // Estado do formulário
+        // Estado do formulário - Itens customizados agora aceitam tipos "simple" ou "multiple" e visibilidade
         let appState = {
-            itensCustom: [], // Lista de objetos contendo { nome, obs } para os itens customizados
+            itensCustom: [], // Lista de objetos contendo { tipo, nome, obs/opcoes, oculto, expandido } para os itens customizados
             principal: {
                 nome: "Veículo Principal",
                 valores: {} // chave: { status: 'S'|'O'|'-', detalhes: [] }
@@ -265,23 +272,18 @@
                 appState.principal.valores[item.id] = { status: "-", detalhes: [] };
             });
 
-            // Adicionar itens customizados com os novos campos de observação isolados
+            // Adicionar itens customizados padrões mapeados por tipo ("simple" ou "multiple") com a propriedade "oculto" e "expandido"
             appState.itensCustom = [
-                { nome: "FUNÇÃO START/STOP", obs: "" },
-                { nome: "ADAS", obs: "Câmera frontal, piloto automático adaptativo" },
-                { nome: "AIRBAGS", obs: "2 Airbags frontais" },
-				{ nome: "AIRBAGS", obs: "6 Airbags: 2 frontais / 2 cortinas / 2 laterais" },
-                { nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "Só sensores traseiros" },
-				{ nome: "ASSISTÊNCIA DE ESTACIONAMENTO", obs: "Sensores dianteiros, traseiros e laterais" },
-                { nome: "FAROL", obs: "Foco simples halógeno / Foco duplo LED" },
-				{ nome: "FAROL DE NEBLINA", obs: "Somente Dianteiro" },
-                { nome: "RETROVISOR INTERNO ELETROCRÔMICO", obs: "" },
-				{ nome: "RETROVISOR EXTERNO", obs: "Com Função tilt down no direito" },
-				{ nome: "SISTEMAS DE SOM", obs: "Rádio" },
-				{ nome: "SISTEMAS DE SOM", obs: "Multimídia 8 polegadas BlasterPlusInventei" },
-                { nome: "TETO SOLAR", obs: "" },
-                { nome: "VIDROS ELÉTRICOS", obs: "Portas dianteiras" },
-				{ nome: "VIDROS ELÉTRICOS", obs: "Nas 4 portas" },
+                { tipo: "simple", nome: "FUNÇÃO START/STOP", obs: "", oculto: false },
+                { tipo: "multiple", nome: "ADAS", opcoes: ["Câmera Frontal", "Radar Frontal", "Piloto Automático", "Piloto Automático Adaptativo", "Visão 360º"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "AIRBAGS", opcoes: ["2 FRONTAL", "2 LATERAL", "2 CORTINA", "DE JOELHO"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "ASSISTÊNCIA DE ESTACIONAMENTO", opcoes: ["Sensores Tras.", "Sensores Diant.", "Sensores Laterais", "Estacionamento Autônomo"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "FARÓIS", opcoes: ["Foco simples", "Foco duplo", "LED", "Halógeno"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "LANTERNAS", opcoes: ["LED", "Halógeno"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "RETROVISORES EXTERNOS", opcoes: ["Elétricos", "Mecânicos", "Função tilt down", "Aquecido"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "VIDROS ELÉTRICOS", opcoes: ["Portas Dianteiras", "Portas Traseiras", "Função One Touch (Dianteira)", "Função One Touch (4 portas)"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "SISTEMAS DE SOM", opcoes: ["Rádio", "Central Multimídia 6 polegadas", "Central Multimídia 24 polegadas"], oculto: false, expandido: false },
+                { tipo: "simple", nome: "TETO SOLAR", obs: "", oculto: false }
             ];
 
             appState.itensCustom.forEach(item => {
@@ -299,21 +301,21 @@
            3. LÓGICA DE ABAS (TABS)
            ========================================================================== */
         function switchTab(tabId) {
-            // Atualizar classes dos botões das abas
+            // Update tab button active status
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.currentTarget.classList.add('active');
 
-            // Ocultar todos os containers de conteúdo
+            // Hide all tab containers
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
 
-            // Mostrar aba correspondente
+            // Show current container
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
-            // Garantir atualização correta do resumo
+            // Sincronizar ao alternar
             if (tabId === 'resumo') {
                 atualizarResumoTab();
             }
@@ -361,28 +363,169 @@
             appState.itensCustom.forEach((item, index) => {
                 const row = document.createElement('div');
                 row.className = 'master-item-row';
-                row.innerHTML = `
-                    <div style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
-                        <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
-                        <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
-                    </div>
+                if (item.oculto) {
+                    row.style.opacity = "0.35"; // Mantida opacidade 0.35 para itens ocultados
+                    row.style.borderStyle = "dashed";
+                }
+                
+                if (item.tipo === 'multiple') {
+                    const isExpandido = item.expandido === true;
                     
-                    <!-- Setas de Reordenação Verticais (Up / Down) -->
-                    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 4px;">
-                        <button class="arrow-btn" onclick="moverItemCustom(${index}, -1)" title="Mover 1 posição acima">
-                            <i class="fa-solid fa-caret-up"></i>
-                        </button>
-                        <button class="arrow-btn" onclick="moverItemCustom(${index}, 1)" title="Mover 1 posição abaixo">
-                            <i class="fa-solid fa-caret-down"></i>
-                        </button>
-                    </div>
+                    const optionsHTML = (item.opcoes || []).map((opt, optIdx) => `
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px; width: 100%;">
+                            <span style="font-size: 0.9em; color: var(--text-muted); padding-left: 5px;"><i class="fa-regular fa-square"></i></span>
+                            <input type="text" class="form-control" style="font-size: 0.9em; height: 36px; padding: 4px 10px;" value="${opt}" onchange="atualizarOpcaoItemMúltiplo(${index}, ${optIdx}, this.value)" placeholder="Opção (Ex: FRONTAL)">
+                            <button class="arrow-btn" style="width: 32px; height: 32px; font-size: 1.1em !important;" onclick="removerOpcaoItemMúltiplo(${index}, ${optIdx})" title="Remover esta opção">
+                                <i class="fa-solid fa-xmark" style="color: #d32f2f;"></i>
+                            </button>
+                        </div>
+                    `).join('');
 
-                    <button class="red-button" style="height: 41px; align-self: center;" onclick="removerItemMestre(${index})">
-                        <i class="fa-solid fa-trash-can"></i> Remover
-                    </button>
-                `;
+                    row.innerHTML = `
+                        <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 250px; width: 100%;">
+                            <!-- Nome do Item Múltiplo (Removido o badge verde "MÚLTIPLO" para visual minimalista) -->
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="text" class="form-control" style="font-weight: 700; flex: 1;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item múltiplo (ex: AIRBAGS:)">
+                            </div>
+                            
+                            <!-- Container das Opções (Checkboxes editáveis com expansor colapsável) -->
+                            <div style="background-color: #ffffff; padding: 12px; border-radius: 8px; border: 1px dashed var(--gray-border); width: 100%;">
+                                <div style="font-size: 0.85em; font-weight: bold; color: var(--text-muted); margin-bottom: ${isExpandido ? '12px' : '0px'}; display: flex; justify-content: space-between; align-items: center; width: 100%;">
+                                    <div onclick="toggleExpandirItemMúltiplo(${index})" style="cursor: pointer; display: flex; align-items: center; gap: 8px; user-select: none; flex: 1;">
+                                        <!-- Ícone dinâmico em triângulo para expandir/colapsar -->
+                                        <i class="fa-solid ${isExpandido ? 'fa-caret-down' : 'fa-caret-right'}" style="color: var(--orange-main); font-size: 1.3em; transition: transform 0.2s;"></i>
+                                        <span style="letter-spacing: 0.3px;">LISTA DE OPÇÕES:</span>
+                                    </div>
+                                    ${isExpandido ? `
+                                    <button class="orange-button" style="padding: 4px 10px; font-size: 0.85em; height: auto;" onclick="adicionarOpcaoItemMúltiplo(${index})">
+                                        <i class="fa-solid fa-plus"></i> Opção
+                                    </button>
+                                    ` : ''}
+                                </div>
+                                <div id="opcoes-container-${index}" style="display: ${isExpandido ? 'block' : 'none'}; flex-direction: column; width: 100%;">
+                                    ${optionsHTML || `<p style="font-size: 0.85em; color: var(--text-muted); font-style: italic; padding: 5px;">Nenhuma opção adicionada ainda.</p>`}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Setas de Reordenação Verticais (Up / Down) -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 4px;">
+                            <button class="arrow-btn" onclick="moverItemCustom(${index}, -1)" title="Mover 1 posição acima">
+                                <i class="fa-solid fa-caret-up"></i>
+                            </button>
+                            <button class="arrow-btn" onclick="moverItemCustom(${index}, 1)" title="Mover 1 posição abaixo">
+                                <i class="fa-solid fa-caret-down"></i>
+                            </button>
+                        </div>
+
+                        <!-- Bloco de Controle Lateral com Módulo Ocultar -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; width: 110px; align-self: flex-start; margin-top: 10px;">
+                            <button class="red-button" style="height: 36px; padding: 4px 10px; font-size: 0.85em; justify-content: center; width: 100%;" onclick="removerItemMestre(${index})">
+                                <i class="fa-solid fa-trash-can"></i> Remover
+                            </button>
+                            <button class="orange-button secondary" style="height: 32px; padding: 4px 10px; font-size: 0.8em; justify-content: center; width: 100%; border-color: ${item.oculto ? '#d32f2f' : '#ccc'}; color: ${item.oculto ? '#d32f2f' : 'var(--text-muted)'}; background-color: ${item.oculto ? '#fff5f5' : '#ffffff'};" onclick="toggleOcultarItem(${index})">
+                                <i class="fa-solid ${item.oculto ? 'fa-eye-slash' : 'fa-eye'}"></i> ${item.oculto ? 'Oculto' : 'Exibido'}
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    row.innerHTML = `
+                        <div style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
+                            <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
+                            <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
+                        </div>
+                        
+                        <!-- Setas de Reordenação Verticais (Up / Down) -->
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 4px;">
+                            <button class="arrow-btn" onclick="moverItemCustom(${index}, -1)" title="Mover 1 posição acima">
+                                <i class="fa-solid fa-caret-up"></i>
+                            </button>
+                            <button class="arrow-btn" onclick="moverItemCustom(${index}, 1)" title="Mover 1 posição abaixo">
+                                <i class="fa-solid fa-caret-down"></i>
+                            </button>
+                        </div>
+
+                        <!-- Bloco de Controle Lateral com Módulo Ocultar -->
+                        <div style="display: flex; flex-direction: column; gap: 6px; width: 110px; align-self: center;">
+                            <button class="red-button" style="height: 36px; padding: 4px 10px; font-size: 0.85em; justify-content: center; width: 100%;" onclick="removerItemMestre(${index})">
+                                <i class="fa-solid fa-trash-can"></i> Remover
+                            </button>
+                            <button class="orange-button secondary" style="height: 32px; padding: 4px 10px; font-size: 0.8em; justify-content: center; width: 100%; border-color: ${item.oculto ? '#d32f2f' : '#ccc'}; color: ${item.oculto ? '#d32f2f' : 'var(--text-muted)'}; background-color: ${item.oculto ? '#fff5f5' : '#ffffff'};" onclick="toggleOcultarItem(${index})">
+                                <i class="fa-solid ${item.oculto ? 'fa-eye-slash' : 'fa-eye'}"></i> ${item.oculto ? 'Oculto' : 'Exibido'}
+                            </button>
+                        </div>
+                    `;
+                }
+                
                 containerCustom.appendChild(row);
             });
+        }
+
+        // Função para expandir ou colapsar dinamicamente a lista de opções do item múltiplo
+        function toggleExpandirItemMúltiplo(index) {
+            const item = appState.itensCustom[index];
+            item.expandido = !item.expandido;
+            renderizarAbaItensMestre();
+        }
+
+        // Função de ativação/desativação da visibilidade do item
+        function toggleOcultarItem(index) {
+            const item = appState.itensCustom[index];
+            item.oculto = !item.oculto;
+            
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+            
+            showToast(item.oculto ? `Item "${item.nome.trim()}" ocultado das outras abas!` : `Item "${item.nome.trim()}" agora está visível!`);
+        }
+
+        function atualizarOpcaoItemMúltiplo(itemIndex, optIndex, novoValor) {
+            appState.itensCustom[itemIndex].opcoes[optIndex] = novoValor.trim().toUpperCase();
+            
+            // Re-renderiza e sincroniza instantaneamente com os painéis e resumo
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+        }
+
+        function removerOpcaoItemMúltiplo(itemIndex, optIndex) {
+            const item = appState.itensCustom[itemIndex];
+            const optRemovida = item.opcoes[optIndex];
+            item.opcoes.splice(optIndex, 1);
+            
+            // Limpa o estado se algum veículo já possuía essa opção selecionada
+            if (appState.principal.valores[item.nome] && appState.principal.valores[item.nome].detalhes) {
+                appState.principal.valores[item.nome].detalhes = appState.principal.valores[item.nome].detalhes.filter(d => d !== optRemovida);
+            }
+            appState.aplicaveis.forEach(v => {
+                if (v.valores[item.nome] && v.valores[item.nome].detalhes) {
+                    v.valores[item.nome].detalhes = v.valores[item.nome].detalhes.filter(d => d !== optRemovida);
+                }
+            });
+
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+            showToast('Opção removida!');
+        }
+
+        function adicionarOpcaoItemMúltiplo(itemIndex) {
+            const item = appState.itensCustom[itemIndex];
+            if (!item.opcoes) item.opcoes = [];
+            const novaOpt = `OPÇÃO ${item.opcoes.length + 1}`;
+            item.opcoes.push(novaOpt);
+            
+            // Força a expansão automática ao adicionar uma opção para fornecer feedback visual instantâneo
+            item.expandido = true;
+
+            renderizarAbaItensMestre();
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+            showToast('Opção adicionada!');
         }
 
         // Função de reordenação dos itens customizados (Mestre)
@@ -402,21 +545,32 @@
             showToast('Ordem do item atualizada!');
         }
 
-        function adicionarNovoItemMestre() {
-            const novoItemNome = `OUTRO ITEM ${appState.itensCustom.length + 1}`;
-            const novoItemObj = { nome: novoItemNome, obs: "" };
+        function adicionarNovoItemMestre(tipo = 'simple') {
+            const index = appState.itensCustom.length + 1;
+            let novoItemObj;
+            
+            if (tipo === 'multiple') {
+                const novoItemNome = `ITEM MÚLTIPLO ${index}: `;
+                // O item múltiplo recém-criado já nasce expandido para facilitar o cadastro imediato de opções
+                novoItemObj = { tipo: "multiple", nome: novoItemNome, opcoes: ["OPÇÃO 1", "OPÇÃO 2"], oculto: false, expandido: true };
+            } else {
+                const novoItemNome = `OUTRO ITEM ${index}: `;
+                novoItemObj = { tipo: "simple", nome: novoItemNome, obs: "", oculto: false };
+            }
+            
             appState.itensCustom.push(novoItemObj);
             
             // Inicializar status padrão nos veículos usando o nome como chave
-            appState.principal.valores[novoItemNome] = { status: "-", detalhes: [] };
+            appState.principal.valores[novoItemObj.nome] = { status: "-", detalhes: [] };
             appState.aplicaveis.forEach(v => {
-                v.valores[novoItemNome] = { status: "-", detalhes: [] };
+                v.valores[novoItemObj.nome] = { status: "-", detalhes: [] };
             });
 
             renderizarAbaItensMestre();
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
-            showToast('Novo item cadastrado com sucesso!');
+            atualizarResumoTab();
+            showToast(`Item ${tipo === 'multiple' ? 'Múltiplo' : 'Simples'} cadastrado!`);
         }
 
         function atualizarNomeItemCustom(index, novoValor) {
@@ -459,15 +613,15 @@
 
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
-            showToast('Item atualizado com sucesso!');
+            atualizarResumoTab();
+            showToast('Item updated successfully!');
         }
 
         function atualizarObsItemCustom(index, novaObs) {
             appState.itensCustom[index].obs = novaObs.trim();
-            // Re-renderiza os painéis das abas de preenchimento para sincronizar as descrições instantaneamente
+            // Sincronizar painéis e re-renderizar abas instantaneamente ao sair do campo
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
-            // Atualizar o resumo para refletir no ecrã e no PDF de forma instantânea
             atualizarResumoTab();
             showToast('Observação do item atualizada!');
         }
@@ -486,11 +640,12 @@
             renderizarAbaItensMestre();
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
             showToast('Item removido com sucesso!');
         }
 
         /* ==========================================================================
-           5. RENDERIZAÇÃO: VEÍCULO PRINCIPAL (Aba 3)
+           5. RENDERIZAÇÃO: VEÍCULO PRINCIPAL COM FILTRAGEM (Aba 3)
            ========================================================================== */
         function renderizarPainelPrincipal() {
             const container = document.getElementById('principal-itens-container');
@@ -503,16 +658,25 @@
                 container.appendChild(card);
             });
 
-            // 2. Renderizar os Itens Customizados
+            // 2. Renderizar os Itens Customizados (Apenas os que NÃO estiverem ocultos)
             appState.itensCustom.forEach(item => {
+                if (item.oculto) return; // Ignora se estiver ocultado
+                
                 const itemEstado = appState.principal.valores[item.nome] || { status: "-", detalhes: [] };
                 
-                // Formata o rótulo para incluir a observação de forma elegante na tela de edição
-                const labelCompleto = item.obs 
-                    ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
-                    : item.nome;
+                let labelCompleto;
+                let opcoesPassadas = [];
+                
+                if (item.tipo === 'multiple') {
+                    labelCompleto = item.nome;
+                    opcoesPassadas = item.opcoes || [];
+                } else {
+                    labelCompleto = item.obs 
+                        ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
+                        : item.nome;
+                }
 
-                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: [] };
+                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: opcoesPassadas, tipoInput: "checkbox" };
                 const card = criarCardPreenchimentoItem(itemObj, itemEstado, 'principal', item.nome);
                 container.appendChild(card);
             });
@@ -620,7 +784,7 @@
             const container = document.getElementById('veiculos-aplicaveis-lista');
             container.innerHTML = '';
 
-            // Atualiza os botões numerados no topo
+            // Update screen dynamic numbering buttons
             renderizarBotoesNumerados();
 
             if (appState.aplicaveis.length === 0) {
@@ -651,19 +815,23 @@
             card.className = 'veiculo-card';
             card.id = `veiculo-card-${veiculo.id}`;
 
-            // Header com Input do Nome e Botão Excluir, adicionado orientação visual
+            // Header com orientação e alinhamento milimétrico do carrinho laranja
             const header = document.createElement('div');
             header.className = 'veiculo-card-header';
+            header.style.display = 'flex';
+            header.style.alignItems = 'flex-end';
+            header.style.justifyContent = 'space-between';
+            header.style.padding = '12px 20px';
             header.innerHTML = `
                 <div style="display: flex; align-items: flex-end; gap: 12px; flex: 1; max-width: 70%;">
                     <i class="fa-solid fa-car" style="font-size: 1.5em; color: var(--orange-main); margin-bottom: 6px;"></i>
                     <div style="display: flex; flex-direction: column; flex: 1;">
                         <label style="font-size: 0.8em; font-weight: 600; color: var(--orange-hover); margin-bottom: 2px; text-transform: uppercase;">Modelo, Motor e Versão:</label>
-                        <input type="text" class="form-control" style="font-weight: bold; background: transparent; border: none; border-bottom: 1px solid #ccc; padding: 4px;" 
+                        <input type="text" class="form-control" style="font-weight: bold; background: transparent; border: none; border-bottom: 1px solid #ccc; padding: 4px; height: 35px;" 
                                value="${veiculo.nome}" oninput="atualizarNomeVeiculoAplicavel(${vIndex}, this.value)" placeholder="Nome do Veículo Aplicável">
                     </div>
                 </div>
-                <button class="red-button" style="padding: 6px 12px; font-size: 0.85em; align-self: flex-end; margin-bottom: 4px;" onclick="removerVeiculoAplicavel(${vIndex})">
+                <button class="red-button" style="padding: 6px 12px; font-size: 0.85em; height: 38px; margin-bottom: 4px;" onclick="removerVeiculoAplicavel(${vIndex})">
                     <i class="fa-solid fa-trash-can"></i> Excluir Veículo
                 </button>
             `;
@@ -681,15 +849,25 @@
                 gridItens.appendChild(itemCard);
             });
 
-            // Injetar os Itens Customizados do Veículo Aplicável com descrição elegante
+            // Injetar os Itens Customizados do Veículo Aplicável (Apenas os que NÃO estiverem ocultos)
             appState.itensCustom.forEach(item => {
+                if (item.oculto) return; // Ignora se estiver ocultado
+                
                 const itemEstado = veiculo.valores[item.nome] || { status: "-", detalhes: [] };
                 
-                const labelCompleto = item.obs 
-                    ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
-                    : item.nome;
+                let labelCompleto;
+                let opcoesPassadas = [];
+                
+                if (item.tipo === 'multiple') {
+                    labelCompleto = item.nome;
+                    opcoesPassadas = item.opcoes || [];
+                } else {
+                    labelCompleto = item.obs 
+                        ? `${item.nome} <span style="font-size: 0.85em; font-weight: normal; color: var(--text-muted); font-style: italic;">(${item.obs})</span>` 
+                        : item.nome;
+                }
 
-                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: [] };
+                const itemObj = { id: item.nome, nome: labelCompleto, opcoes: opcoesPassadas, tipoInput: "checkbox" };
                 const itemCard = criarCardPreenchimentoItem(itemObj, itemEstado, 'aplicavel', item.nome, vIndex);
                 gridItens.appendChild(itemCard);
             });
@@ -708,7 +886,7 @@
                 valores: {}
             };
 
-            // Inicializar estados padrões de série e opcionais
+            // Inicializar states padrões de série e opcionais
             ITENS_FIXOS_DEFINICAO.forEach(item => {
                 novoVeiculo.valores[item.id] = { status: "-", detalhes: [] };
             });
@@ -742,13 +920,16 @@
         }
 
         /* ==========================================================================
-           7. ELEMENTO DINÂMICO: CARD DE PREENCHIMENTO DE ITEM
+           7. ELEMENTO DINÂMICO: CARD DE PREENCHIMENTO DE ITEM (SÓ CHECKBOX SE MÚLTIPLO)
            ========================================================================== */
         function criarCardPreenchimentoItem(itemDef, itemEstado, contexto, itemChave, vIndex = null) {
             const card = document.createElement('div');
             card.className = 'item-row-card';
 
             const ehItemFixo = ITENS_FIXOS_DEFINICAO.some(f => f.id === itemChave);
+            const itemMestreObj = appState.itensCustom.find(i => i.nome === itemChave);
+            const ehItemMúltiplo = itemMestreObj && itemMestreObj.tipo === 'multiple';
+            const semTristate = ehItemFixo || ehItemMúltiplo;
 
             // Nome e Sub-opções se houverem
             const infoDiv = document.createElement('div');
@@ -760,8 +941,8 @@
                 const subSelContainer = document.createElement('div');
                 subSelContainer.className = 'item-details-selector';
                 
-                // Se for item fixo, as opções ficam sempre disponíveis (sem depender do tristate S/O/-)
-                const isDisabled = !ehItemFixo && itemEstado.status === '-';
+                // Se for item fixo ou item múltiplo, as opções ficam sempre disponíveis (sem depender do tristate S/O/-)
+                const isDisabled = !semTristate && itemEstado.status === '-';
                 const disabledAttr = isDisabled ? 'disabled' : '';
                 const styleOpacity = isDisabled ? 'opacity: 0.5; pointer-events: none;' : 'opacity: 1; pointer-events: auto;';
                 
@@ -800,8 +981,8 @@
 
             card.appendChild(infoDiv);
 
-            // Os botões S / O / - NÃO se aplicam aos itens fixos/core (Apenas itens customizados e não-fixos)
-            if (!ehItemFixo) {
+            // Os botões S / O / - NÃO se aplicam aos itens fixos/core nem aos itens de múltipla escolha
+            if (!semTristate) {
                 const tristateContainer = document.createElement('div');
                 tristateContainer.className = 'tristate-options';
 
@@ -910,7 +1091,7 @@
         }
 
         /* ==========================================================================
-           9. RENDERIZAÇÃO DA TABELA DE RESUMO COMPARATIVO (Aba 1)
+           9. RENDERIZAÇÃO DA TABELA DE RESUMO COMPARATIVO FILTRADO (Aba 1)
            ========================================================================== */
         function atualizarResumoTab() {
             const tableHeaders = document.getElementById('tabela-headers');
@@ -924,7 +1105,7 @@
                 appState.principal.nome = "Veículo Principal";
             }
 
-            // 2. Reconstruir Header da Tabela Comparativa (Paisagem)
+            // 2. Reconstruir Header da Tabela Comparativa
             tableHeaders.innerHTML = `
                 <th>ITENS</th>
                 <th style="background-color: #1b5e20; text-align: center;">${appState.principal.nome.toUpperCase()}</th>
@@ -943,18 +1124,20 @@
 
             // 3.1. Adicionar os Itens Core Padrão (Fixos)
             ITENS_FIXOS_DEFINICAO.forEach(item => {
-                const row = criarLinhaTabelaResumo(item.id, item.nome, "");
+                const row = criarLinhaTabelaResumo(item.id, item.nome, "", false);
                 tableBody.appendChild(row);
             });
 
-            // 3.2. Adicionar outros itens customizados criados (inclui FUNÇÃO START/STOP agora com tristate)
+            // 3.2. Adicionar outros itens customizados criados que não estão ocultos
             appState.itensCustom.forEach(item => {
-                const row = criarLinhaTabelaResumo(item.nome, item.nome, item.obs);
+                if (item.oculto) return; // Filtra itens marcados para ocultar
+                const ehMúltiplo = item.tipo === 'multiple';
+                const row = criarLinhaTabelaResumo(item.nome, item.nome, ehMúltiplo ? "" : item.obs, ehMúltiplo);
                 tableBody.appendChild(row);
             });
         }
 
-        function criarLinhaTabelaResumo(itemChave, itemNomeExibicao, itemObs = "") {
+        function criarLinhaTabelaResumo(itemChave, itemNomeExibicao, itemObs = "", ehMúltiplo = false) {
             const row = document.createElement('tr');
             
             // Célula do nome do item com a observação formatada em uma segunda linha interna
@@ -980,12 +1163,13 @@
             row.appendChild(tdItem);
 
             const ehItemFixo = ITENS_FIXOS_DEFINICAO.some(f => f.id === itemChave);
+            const renderEstiloFixo = ehItemFixo || ehMúltiplo;
 
             // Coluna do Veículo Principal
             const dadosPrincipal = appState.principal.valores[itemChave] || { status: "-", detalhes: [] };
             const tdPrincipal = document.createElement('td');
             tdPrincipal.style.textAlign = 'center';
-            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, ehItemFixo));
+            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, renderEstiloFixo));
             row.appendChild(tdPrincipal);
 
             // Colunas dos Veículos Aplicáveis
@@ -993,21 +1177,21 @@
                 const dadosAplicavel = v.valores[itemChave] || { status: "-", detalhes: [] };
                 const tdAplicavel = document.createElement('td');
                 tdAplicavel.style.textAlign = 'center';
-                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo));
+                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo)); // Sincroniza visual fixo se múltiplo
                 row.appendChild(tdAplicavel);
             });
 
             return row;
         }
 
-        function obterBadgeStatusFormatado(estado, ehItemFixo = false) {
+        function obterBadgeStatusFormatado(estado, ehEstiloFixo = false) {
             const wrapper = document.createElement('div');
             wrapper.style.display = 'inline-flex';
             wrapper.style.flexDirection = 'column';
             wrapper.style.alignItems = 'center';
 
-            // Tratamento visual diferenciado para Itens Fixos sem status S / O / -
-            if (ehItemFixo) {
+            // Tratamento visual diferenciado para Itens Fixos e Múltiplos sem status S / O / -
+            if (ehEstiloFixo) {
                 if (estado.detalhes && estado.detalhes.length > 0) {
                     const badge = document.createElement('span');
                     badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
@@ -1053,7 +1237,7 @@
         }
 
         /* ==========================================================================
-           10. SALVAR / CARREGAR PROJETO (JSON)
+           10. SALVAR / CARREGAR PROJETO COM VISIBILIDADE (JSON)
            ========================================================================== */
         function salvarComoJSON() {
             // Atualizar os nomes para garantir gravação correta
@@ -1090,10 +1274,19 @@
                     // Validação estrutural simples do JSON
                     if (loadedState && loadedState.principal && Array.isArray(loadedState.itensCustom)) {
                         
-                        // Migração de segurança: se o arquivo JSON antigo tiver strings, converte para o novo formato {nome, obs}
+                        // Migração de segurança: se o arquivo JSON antigo tiver strings, converte para o novo formato {tipo, nome, obs/opcoes, oculto, expandido}
                         loadedState.itensCustom = loadedState.itensCustom.map(item => {
                             if (typeof item === 'string') {
-                                return { nome: item, obs: "" };
+                                return { tipo: "simple", nome: item, obs: "", oculto: false, expandido: false };
+                            }
+                            if (!item.tipo) {
+                                item.tipo = "simple";
+                            }
+                            if (item.oculto === undefined) {
+                                item.oculto = false; // Garante propriedade padrão se não existir
+                            }
+                            if (item.expandido === undefined) {
+                                item.expandido = false; // Garante status colapsado por padrão se não mapeado
                             }
                             return item;
                         });
@@ -1108,7 +1301,7 @@
                             nextVeiculoId = 1;
                         }
 
-                        // Atualizar nome do input
+                        // Update inputs on screen
                         const inputNomePrincipal = document.getElementById('nome-veiculo-principal');
                         if (inputNomePrincipal) {
                             inputNomePrincipal.value = appState.principal.nome || "";
