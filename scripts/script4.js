@@ -773,33 +773,11 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 				y += lineHeight * 2;
 			}
 		}
-	} else { addText("Nenhum sistema adicionado (nesta parte).", 12, "italic", 4); y += lineHeight; }
+	} else {
+		addText("Nenhum sistema adicionado (nesta parte).", 12, "italic", 4); y += lineHeight; }
 	y += lineHeight;
 	addSeparatorLine();
 	y += lineHeight;
-
-	addColoredText("DADOS DO CARD", 18, 'bold', 0, titleColor);
-	y += lineHeight;
-
-	// Se for PARTE 2 e houver dados específicos, usa eles; senão usa os da Parte 1
-	const dificuldadeExibir = (prefixo === "PARTE 2 - " && dataPrincipal.dificuldade_parte2) 
-		? dataPrincipal.dificuldade_parte2 
-		: dataPrincipal.dificuldade;
-	
-	addText(`DIFICULDADE:`, 14, "bold", 0);
-	addText(`- ${dificuldadeExibir}`, 12, 'normal', 4);
-	
-
-	let somaTotal = dataPrincipal.ppp_calculado || 0;
-	let somaTransferidas = 0, somaCriadas = 0;
-	if (dataPrincipal.sistemas) dataPrincipal.sistemas.forEach(s => {
-		const paginas = parseInt(s.paginasprev) || 0;
-		if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') somaTransferidas += paginas;
-		else somaCriadas += paginas;
-	});
-	y += lineSpacing;
-	addText(`PPP:`, 14, "bold", 0);
-	addText(`- Total (esta parte): ${somaTotal}\n- Páginas Criadas do zero: ${somaCriadas}\n- Páginas Transferidas: ${somaTransferidas}`, 12, "normal", 4);
 
 	//VEÍCULOS APLICÁVEIS
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
@@ -973,14 +951,78 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 			y += lineHeight;
 			addSeparatorLine();
 		}
+	}
 
-		y += lineHeight;
-		addColoredText("DADOS DO CARD (APLICÁVEIS)", 18, 'bold', 0, titleColor);
-		y += lineHeight;
-		addText(`DIFICULDADE:`, 14, "bold", 0);
-		addText(`- ${dataPrincipal.dificuldade_aplicaveis}`, 12, 'normal', 4);
-		//addLabeledValue('Dificuldade', dataPrincipal.dificuldade_aplicaveis);
-		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0, somaCriadasAplicaveis = 0;
+
+		// --- DADOS DO CARD UNIFICADO (PRINCIPAL E APLICÁVEIS) ---
+	if (y > pageHeight - margin * 6) { doc.addPage(); y = margin; }
+	
+	addColoredText("DADOS DO CARD", 18, 'bold', 0, titleColor);
+	y += lineHeight;
+	
+	const getMultiplicadorPrincipal = (dificuldade) => {
+		switch (dificuldade) {
+			case "Fácil": return 0.70;
+			case "Médio": return 1.00;
+			case "Difícil": return 1.30;
+			case "Carroceria Fácil": return 1.05;
+			case "Carroceria Médio": return 1.50;
+			case "Carroceria Difícil": return 1.75;
+			default: return 1.00;
+		}
+	};
+
+	const getMultiplicadorAplicaveis = (dificuldade) => {
+		switch (dificuldade) {
+			case "Fácil": return 0.50;
+			case "Moderado": return 0.75;
+			case "Médio": return 1.00;
+			default: return 1.00;
+		}
+	};
+	
+	const dificuldadeExibir = (prefixo === "PARTE 2 - " && dataPrincipal.dificuldade_parte2) 
+		? dataPrincipal.dificuldade_parte2 
+		: dataPrincipal.dificuldade;
+
+	let somaTotal = dataPrincipal.ppp_calculado || 0;
+	let somaTransferidas = 0, somaCriadas = 0;
+	let tempoTotalPrincipal = 0;
+	
+	if (dataPrincipal.sistemas) {
+		dataPrincipal.sistemas.forEach(s => {
+			const paginas = parseInt(s.paginasprev) || 0;
+			if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') {
+				somaTransferidas += paginas;
+				if (s.transferencia === 'transferencia') tempoTotalPrincipal += (paginas * 1.825);
+			} else {
+				somaCriadas += paginas;
+				tempoTotalPrincipal += (paginas * 3.65);
+			}
+		});
+	}
+	
+	const multPrinc = getMultiplicadorPrincipal(dificuldadeExibir);
+	const estimativaPrincipal = (tempoTotalPrincipal * multPrinc).toFixed(2).replace('.', ',');
+	
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		addHighlightedText(`VEÍCULO PRINCIPAL`, 14, 'bold', 0, 212, 255, 214);
+		// addText(`VEÍCULO PRINCIPAL:`, 14, "bold", 0);
+	}
+	
+	// addText(`- DIFICULDADE: ${dificuldadeExibir || 'Não informada'}`, 12, 'normal', 4);
+	// addText(`- PPP (Total): ${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas}`, 12, "normal", 4);
+	// addText(`- ESTIMATIVA DE TEMPO: ${estimativaPrincipal} horas`, 12, "bold", 4);
+	
+	addLabeledValue('DIFICULDADE', `${dificuldadeExibir || 'Não informada'}`);	
+	addLabeledValue('PPP (Total)', `${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas}`);	
+	addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaPrincipal} horas`);	
+	
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		y += lineSpacing;
+		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0;
+		let tempoTotalAplicaveis = 0;
+		
 		dataAplicaveis.forEach(v => {
 			if (v.sistemas && v.sistemas.length > 0) {
 				v.sistemas.forEach(s => {
@@ -988,13 +1030,27 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 					somaTotalAplicaveis += paginas;
 					if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro' || s.transferencia === 'modificar') {
 						somaTransferidasAplicaveis += paginas;
+						if (s.transferencia !== 'modificar') tempoTotalAplicaveis += (paginas * 1.825);
+					} else {
+						tempoTotalAplicaveis += (paginas * 3.65);
 					}
 				});
 			}
 		});
-		y += lineHeight;
-		addText(`PPA:`, 14, "bold");
-		addText(`- Total: ${somaTotalAplicaveis}\n- Páginas Aplicadas: ${somaTransferidasAplicaveis}`, 12, "normal", 4);
+		
+		const multAplic = getMultiplicadorAplicaveis(dataPrincipal.dificuldade_aplicaveis);
+		const estimativaAplicaveis = (tempoTotalAplicaveis * multAplic).toFixed(2).replace('.', ',');
+		
+		//addText(`VEÍCULOS APLICÁVEIS:`, 14, "bold", 0);
+		// addText(`- DIFICULDADE: ${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`, 12, 'normal', 4);
+		// addText(`- PPA (Total): ${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis}`, 12, "normal", 4);
+		// addText(`- ESTIMATIVA DE TEMPO: ${estimativaAplicaveis} horas`, 12, "bold", 4);
+		
+		addHighlightedText(`VEÍCULOS APLICÁVEIS`, 14, 'bold', 0, 250, 231, 67);
+		addLabeledValue('DIFICULDADE', `${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`);
+		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis}`);
+		addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaAplicaveis} horas`);
+		
 	}
 	
 	let nomeBase = "planejamento";
