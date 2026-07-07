@@ -496,12 +496,18 @@
             item.opcoes.splice(optIndex, 1);
             
             // Limpa o estado se algum veículo já possuía essa opção selecionada
+            const filterFn = d => {
+                if (!d) return false;
+                if (typeof d === 'string') return d !== optRemovida;
+                return d.opcao !== optRemovida;
+            };
+
             if (appState.principal.valores[item.nome] && appState.principal.valores[item.nome].detalhes) {
-                appState.principal.valores[item.nome].detalhes = appState.principal.valores[item.nome].detalhes.filter(d => d !== optRemovida);
+                appState.principal.valores[item.nome].detalhes = appState.principal.valores[item.nome].detalhes.filter(filterFn);
             }
             appState.aplicaveis.forEach(v => {
                 if (v.valores[item.nome] && v.valores[item.nome].detalhes) {
-                    v.valores[item.nome].detalhes = v.valores[item.nome].detalhes.filter(d => d !== optRemovida);
+                    v.valores[item.nome].detalhes = v.valores[item.nome].detalhes.filter(filterFn);
                 }
             });
 
@@ -902,7 +908,7 @@
 
         function atualizarNomeVeiculoAplicavel(vIndex, novoNome) {
             appState.aplicaveis[vIndex].nome = novoNome;
-            // Atualizar tooltip do botão correspondente sem re-renderizar tudo
+            // Elevando a segurança de tooltips com sincronização em lote
             const botoes = document.getElementById('veiculos-botoes-container')?.children;
             if (botoes && botoes[vIndex]) {
                 const innerBtn = botoes[vIndex].querySelector('button');
@@ -920,7 +926,7 @@
         }
 
         /* ==========================================================================
-           7. ELEMENTO DINÂMICO: CARD DE PREENCHIMENTO DE ITEM (SÓ CHECKBOX SE MÚLTIPLO)
+           7. ELEMENTO DINÂMICO: CARD DE PREENCHIMENTO DE ITEM (TRISTATE INDIVIDUAL PARA OPÇÕES MÚLTIPLAS)
            ========================================================================== */
         function criarCardPreenchimentoItem(itemDef, itemEstado, contexto, itemChave, vIndex = null) {
             const card = document.createElement('div');
@@ -941,7 +947,6 @@
                 const subSelContainer = document.createElement('div');
                 subSelContainer.className = 'item-details-selector';
                 
-                // Se for item fixo ou item múltiplo, as opções ficam sempre disponíveis (sem depender do tristate S/O/-)
                 const isDisabled = !semTristate && itemEstado.status === '-';
                 const disabledAttr = isDisabled ? 'disabled' : '';
                 const styleOpacity = isDisabled ? 'opacity: 0.5; pointer-events: none;' : 'opacity: 1; pointer-events: auto;';
@@ -949,33 +954,102 @@
                 subSelContainer.style = styleOpacity;
                 subSelContainer.className = `item-details-selector det-sec-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemDef.id}`;
 
-                const isRadio = itemDef.tipoInput === 'radio';
+                if (ehItemMúltiplo) {
+                    // Layout de reordenação/tristate individual para as opções de itens múltiplos
+                    subSelContainer.style.display = 'flex';
+                    subSelContainer.style.flexDirection = 'column';
+                    subSelContainer.style.gap = '6px';
+                    subSelContainer.style.width = '100%';
+                    subSelContainer.style.marginTop = '10px';
+                    subSelContainer.style.opacity = '1';
+                    subSelContainer.style.pointerEvents = 'auto';
 
-                itemDef.opcoes.forEach(opt => {
-                    const isChecked = itemEstado.detalhes.includes(opt) ? 'checked' : '';
-                    const idCheck = `chk-${contexto}-${vIndex !== null ? vIndex : 'p'}-${itemDef.id}-${opt.replace(/\s+/g, '')}`;
-                    
-                    if (isRadio) {
-                        // Seletores Radiais para FUNÇÃO START/STOP (se aplicável)
-                        const radioGroupName = `rad-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemDef.id}`;
-                        subSelContainer.innerHTML += `
-                            <label for="${idCheck}">
-                                <input type="radio" id="${idCheck}" name="${radioGroupName}" value="${opt}" ${isChecked} ${disabledAttr} 
-                                       onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}')">
-                                ${opt}
-                            </label>
-                        `;
-                    } else {
-                        // Checkbox padrão para os outros itens
-                        subSelContainer.innerHTML += `
-                            <label for="${idCheck}">
-                                <input type="checkbox" id="${idCheck}" value="${opt}" ${isChecked} ${disabledAttr} 
-                                       onchange="atualizarCheckboxDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}', this.checked)">
-                                ${opt}
-                            </label>
-                        `;
-                    }
-                });
+                    itemDef.opcoes.forEach(opt => {
+                        const activeOptObj = Array.isArray(itemEstado.detalhes) 
+                            ? itemEstado.detalhes.find(d => d && (d.opcao === opt || d === opt)) 
+                            : null;
+                        
+                        let activeStatus = '-';
+                        if (activeOptObj) {
+                            activeStatus = typeof activeOptObj === 'object' ? (activeOptObj.status || 'S') : 'S';
+                        }
+
+                        const optRow = document.createElement('div');
+                        optRow.style.display = 'flex';
+                        optRow.style.alignItems = 'center';
+                        optRow.style.justifyContent = 'space-between';
+                        optRow.style.padding = '4px 10px';
+                        optRow.style.backgroundColor = '#fbfbfb';
+                        optRow.style.border = '1px solid #eaeaea';
+                        optRow.style.borderRadius = '6px';
+                        optRow.style.gap = '15px';
+                        optRow.style.width = '100%';
+
+                        const labelSpan = document.createElement('span');
+                        labelSpan.style.fontSize = '0.9em';
+                        labelSpan.style.fontWeight = '500';
+                        labelSpan.style.color = 'var(--text-dark)';
+                        labelSpan.innerText = opt;
+
+                        const miniTristate = document.createElement('div');
+                        miniTristate.className = 'tristate-options';
+                        miniTristate.style.scale = '0.85';
+                        miniTristate.style.margin = '0';
+
+                        const miniOpcoes = [
+                            { val: 'S', label: 'S' },
+                            { val: 'O', label: 'O' },
+                            { val: '-', label: '-' }
+                        ];
+
+                        miniOpcoes.forEach(mOpt => {
+                            const btn = document.createElement('button');
+                            btn.className = `tristate-btn ${activeStatus === mOpt.val ? 'active' : ''}`;
+                            btn.setAttribute('data-val', mOpt.val);
+                            btn.innerText = mOpt.label;
+                            btn.style.padding = '3px 8px';
+                            btn.style.minWidth = '28px';
+                            btn.onclick = function() {
+                                miniTristate.querySelectorAll('.tristate-btn').forEach(b => b.classList.remove('active'));
+                                btn.classList.add('active');
+                                atualizarTristateOpcaoMúltipla(contexto, vIndex, itemChave, opt, mOpt.val);
+                            };
+                            miniTristate.appendChild(btn);
+                        });
+
+                        optRow.appendChild(labelSpan);
+                        optRow.appendChild(miniTristate);
+                        subSelContainer.appendChild(optRow);
+                    });
+                } else {
+                    // Checkbox / Radio padrão para os outros itens
+                    const isRadio = itemDef.tipoInput === 'radio';
+
+                    itemDef.opcoes.forEach(opt => {
+                        const isChecked = itemEstado.detalhes.includes(opt) ? 'checked' : '';
+                        const idCheck = `chk-${contexto}-${vIndex !== null ? vIndex : 'p'}-${itemDef.id}-${opt.replace(/\s+/g, '')}`;
+                        
+                        if (isRadio) {
+                            // Seletores Radiais para FUNÇÃO START/STOP (se aplicável)
+                            const radioGroupName = `rad-${contexto}-${vIndex !== null ? vIndex : 'main'}-${itemDef.id}`;
+                            subSelContainer.innerHTML += `
+                                <label for="${idCheck}">
+                                    <input type="radio" id="${idCheck}" name="${radioGroupName}" value="${opt}" ${isChecked} ${disabledAttr} 
+                                           onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}')">
+                                    ${opt}
+                                </label>
+                            `;
+                        } else {
+                            subSelContainer.innerHTML += `
+                                <label for="${idCheck}">
+                                    <input type="checkbox" id="${idCheck}" value="${opt}" ${isChecked} ${disabledAttr} 
+                                           onchange="atualizarCheckboxDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}', this.checked)">
+                                    ${opt}
+                                </label>
+                            `;
+                        }
+                    });
+                }
                 infoDiv.appendChild(subSelContainer);
             }
 
@@ -1010,8 +1084,46 @@
         }
 
         /* ==========================================================================
-           8. MANIPULADORES DE ESTADO (INPUTS E CHECKBOXES)
+           8. MANIPULADORES DE ESTADO (INPUTS, CHECKBOXES E TRISTATES MÚLTIPLOS)
            ========================================================================== */
+        function atualizarTristateOpcaoMúltipla(contexto, vIndex, itemChave, opcao, novoStatus) {
+            let target;
+            if (contexto === 'principal') {
+                target = appState.principal.valores;
+            } else {
+                target = appState.aplicaveis[vIndex].valores;
+            }
+
+            if (!target[itemChave]) {
+                target[itemChave] = { status: "-", detalhes: [] };
+            }
+            
+            // Garantir que detalhes seja um array
+            if (!Array.isArray(target[itemChave].detalhes)) {
+                target[itemChave].detalhes = [];
+            }
+
+            // Encontrar índice existente (pode ser formato string herdado ou objeto novo)
+            const idx = target[itemChave].detalhes.findIndex(d => d && (d.opcao === opcao || d === opcao));
+            
+            if (novoStatus === '-') {
+                if (idx !== -1) {
+                    target[itemChave].detalhes.splice(idx, 1);
+                }
+            } else {
+                if (idx !== -1) {
+                    target[itemChave].detalhes[idx] = { opcao: opcao, status: novoStatus };
+                } else {
+                    target[itemChave].detalhes.push({ opcao: opcao, status: novoStatus });
+                }
+            }
+
+            // Forçar sincronismo e re-renderizar todas as abas
+            renderizarPainelPrincipal();
+            renderizarVeiculosAplicaveis();
+            atualizarResumoTab();
+        }
+
         function atualizarStatusItem(contexto, vIndex, itemChave, novoStatus, itemId = null) {
             let target;
             if (contexto === 'principal') {
@@ -1163,13 +1275,12 @@
             row.appendChild(tdItem);
 
             const ehItemFixo = ITENS_FIXOS_DEFINICAO.some(f => f.id === itemChave);
-            const renderEstiloFixo = ehItemFixo || ehMúltiplo;
 
             // Coluna do Veículo Principal
             const dadosPrincipal = appState.principal.valores[itemChave] || { status: "-", detalhes: [] };
             const tdPrincipal = document.createElement('td');
             tdPrincipal.style.textAlign = 'center';
-            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, renderEstiloFixo));
+            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, ehItemFixo, ehMúltiplo));
             row.appendChild(tdPrincipal);
 
             // Colunas dos Veículos Aplicáveis
@@ -1177,22 +1288,22 @@
                 const dadosAplicavel = v.valores[itemChave] || { status: "-", detalhes: [] };
                 const tdAplicavel = document.createElement('td');
                 tdAplicavel.style.textAlign = 'center';
-                // BUG CORRIGIDO AQUI: ehItemFixo alterado cirurgicamente para renderEstiloFixo
-                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, renderEstiloFixo)); 
+                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo, ehMúltiplo)); 
                 row.appendChild(tdAplicavel);
             });
 
             return row;
         }
 
-        function obterBadgeStatusFormatado(estado, ehEstiloFixo = false) {
+        function obterBadgeStatusFormatado(estado, ehItemFixo = false, ehMúltiplo = false) {
             const wrapper = document.createElement('div');
             wrapper.style.display = 'inline-flex';
             wrapper.style.flexDirection = 'column';
             wrapper.style.alignItems = 'center';
+            wrapper.style.gap = '4px'; // Distância ideal entre as linhas Série e Opcional empilhadas
 
-            // Tratamento visual diferenciado para Itens Fixos e Múltiplos sem status S / O / -
-            if (ehEstiloFixo) {
+            // Tratamento visual diferenciado para Itens Fixos sem status S / O / -
+            if (ehItemFixo) {
                 if (estado.detalhes && estado.detalhes.length > 0) {
                     const badge = document.createElement('span');
                     badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
@@ -1207,7 +1318,53 @@
                 return wrapper;
             }
 
-            // Renderização padrão para os outros itens (S / O / -)
+            // Tratamento visual diferenciado para Itens Múltiplos com Série (Verde) ou Opcional (Laranja) granulares
+            if (ehMúltiplo) {
+                const detalhes = Array.isArray(estado.detalhes) ? estado.detalhes : [];
+                
+                const serieOpts = [];
+                const opcionalOpts = [];
+
+                detalhes.forEach(d => {
+                    if (!d) return;
+                    if (typeof d === 'string') {
+                        // Compatibilidade de conversão legada (marcado como Série por padrão)
+                        serieOpts.push(d);
+                    } else if (typeof d === 'object') {
+                        if (d.status === 'S') {
+                            serieOpts.push(d.opcao);
+                        } else if (d.status === 'O') {
+                            opcionalOpts.push(d.opcao);
+                        }
+                    }
+                });
+
+                if (serieOpts.length === 0 && opcionalOpts.length === 0) {
+                    const badge = document.createElement('span');
+                    badge.className = 'status-badge n';
+                    badge.innerText = "Não Possui";
+                    wrapper.appendChild(badge);
+                    return wrapper;
+                }
+
+                if (serieOpts.length > 0) {
+                    const badgeS = document.createElement('span');
+                    badgeS.className = 'status-badge s';
+                    badgeS.innerText = serieOpts.join(' + ');
+                    wrapper.appendChild(badgeS);
+                }
+
+                if (opcionalOpts.length > 0) {
+                    const badgeO = document.createElement('span');
+                    badgeO.className = 'status-badge o';
+                    badgeO.innerText = opcionalOpts.join(' + ');
+                    wrapper.appendChild(badgeO);
+                }
+
+                return wrapper;
+            }
+
+            // Renderização padrão para os outros itens simples (S / O / -)
             const badge = document.createElement('span');
             let label = "Não Possui";
             let classeCss = "n";
@@ -1291,6 +1448,40 @@
                             }
                             return item;
                         });
+
+                        // Migração de segurança para as opções de itens múltiplos (strings para objetos tristate)
+                        if (loadedState.principal && loadedState.principal.valores) {
+                            for (let key in loadedState.principal.valores) {
+                                const val = loadedState.principal.valores[key];
+                                const isMúltiplo = loadedState.itensCustom.some(item => item.nome === key && item.tipo === 'multiple');
+                                if (isMúltiplo && val && Array.isArray(val.detalhes)) {
+                                    val.detalhes = val.detalhes.map(det => {
+                                        if (typeof det === 'string') {
+                                            return { opcao: det, status: 'S' };
+                                        }
+                                        return det;
+                                    });
+                                }
+                            }
+                        }
+                        if (Array.isArray(loadedState.aplicaveis)) {
+                            loadedState.aplicaveis.forEach(v => {
+                                if (v.valores) {
+                                    for (let key in v.valores) {
+                                        const val = v.valores[key];
+                                        const isMúltiplo = loadedState.itensCustom.some(item => item.nome === key && item.tipo === 'multiple');
+                                        if (isMúltiplo && val && Array.isArray(val.detalhes)) {
+                                            val.detalhes = val.detalhes.map(det => {
+                                                if (typeof det === 'string') {
+                                                    return { opcao: det, status: 'S' };
+                                                }
+                                                return det;
+                                            });
+                                        }
+                                    }
+                                }
+                            });
+                        }
 
                         appState = loadedState;
                         activeVeiculoIndex = 0; // Resetar index de edição
