@@ -281,8 +281,9 @@
                 { tipo: "multiple", nome: "FARÓIS", opcoes: ["Foco simples", "Foco duplo", "LED", "Halógeno"], oculto: false, expandido: false },
                 { tipo: "multiple", nome: "LANTERNAS", opcoes: ["LED", "Halógeno"], oculto: false, expandido: false },
                 { tipo: "multiple", nome: "RETROVISORES EXTERNOS", opcoes: ["Elétricos", "Mecânicos", "Função tilt down", "Aquecido"], oculto: false, expandido: false },
-                { tipo: "multiple", nome: "VIDROS ELÉTRICOS", opcoes: ["Portas Dianteiras", "Portas Traseiras", "Função One Touch (Dianteira)", "Função One Touch (4 portas)"], oculto: false, expandido: false },
-                { tipo: "multiple", nome: "SISTEMAS DE SOM", opcoes: ["Rádio", "Central Multimídia 6 polegadas", "Central Multimídia 24 polegadas"], oculto: false, expandido: false },
+				{ tipo: "simple", nome: "RETROVISOR INTERNO", obs: "Eletrocrômico", oculto: false },
+                { tipo: "multiple", nome: "VIDROS ELÉTRICOS", opcoes: ["Dianteira", "Traseira", "Função One Touch (Dianteira)", "Função One Touch (4 portas)"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "SISTEMAS DE SOM", opcoes: ["Rádio", "Multimídia 6 pol", "Multimídia 24 pol"], oculto: false, expandido: false },
                 { tipo: "simple", nome: "TETO SOLAR", obs: "", oculto: false }
             ];
 
@@ -1307,7 +1308,7 @@
                 if (estado.detalhes && estado.detalhes.length > 0) {
                     const badge = document.createElement('span');
                     badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
-                    badge.innerText = estado.detalhes.join(' + ');
+                    badge.innerText = estado.detalhes.join(' / ');
                     wrapper.appendChild(badge);
                 } else {
                     const badge = document.createElement('span');
@@ -1350,14 +1351,14 @@
                 if (serieOpts.length > 0) {
                     const badgeS = document.createElement('span');
                     badgeS.className = 'status-badge s';
-                    badgeS.innerText = serieOpts.join(' + ');
+                    badgeS.innerText = serieOpts.join(' / ');
                     wrapper.appendChild(badgeS);
                 }
 
                 if (opcionalOpts.length > 0) {
                     const badgeO = document.createElement('span');
                     badgeO.className = 'status-badge o';
-                    badgeO.innerText = opcionalOpts.join(' + ');
+                    badgeO.innerText = opcionalOpts.join(' / ');
                     wrapper.appendChild(badgeO);
                 }
 
