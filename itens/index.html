@@ -281,13 +281,16 @@
                 { tipo: "multiple", nome: "FARÓIS", opcoes: ["Foco simples", "Foco duplo", "LED", "Halógeno"], oculto: false, expandido: false },
                 { tipo: "multiple", nome: "LANTERNAS", opcoes: ["LED", "Halógeno"], oculto: false, expandido: false },
                 { tipo: "multiple", nome: "RETROVISORES EXTERNOS", opcoes: ["Elétricos", "Mecânicos", "Função tilt down", "Aquecido"], oculto: false, expandido: false },
-				{ tipo: "simple", nome: "RETROVISOR INTERNO", obs: "Eletrocrômico", oculto: false },
-                { tipo: "multiple", nome: "VIDROS ELÉTRICOS", opcoes: ["Dianteira", "Traseira", "Função One Touch (Dianteira)", "Função One Touch (4 portas)"], oculto: false, expandido: false },
-                { tipo: "multiple", nome: "SISTEMAS DE SOM", opcoes: ["Rádio", "Multimídia 6 pol", "Multimídia 24 pol"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "VIDROS ELÉTRICOS", opcoes: ["Portas Dianteiras", "Portas Traseiras", "Função One Touch (Dianteira)", "Função One Touch (4 portas)"], oculto: false, expandido: false },
+                { tipo: "multiple", nome: "SISTEMAS DE SOM", opcoes: ["Rádio", "Central Multimídia 6 polegadas", "Central Multimídia 24 polegadas"], oculto: false, expandido: false },
                 { tipo: "simple", nome: "TETO SOLAR", obs: "", oculto: false }
             ];
 
             appState.itensCustom.forEach(item => {
+                // Padroniza as sub-opções iniciais como maiúsculas para evitar disparidades
+                if (item.tipo === 'multiple' && item.opcoes) {
+                    item.opcoes = item.opcoes.map(opt => opt.toUpperCase());
+                }
                 appState.principal.valores[item.nome] = { status: "-", detalhes: [] };
             });
 
@@ -375,7 +378,7 @@
                     const optionsHTML = (item.opcoes || []).map((opt, optIdx) => `
                         <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px; width: 100%;">
                             <span style="font-size: 0.9em; color: var(--text-muted); padding-left: 5px;"><i class="fa-regular fa-square"></i></span>
-                            <input type="text" class="form-control" style="font-size: 0.9em; height: 36px; padding: 4px 10px;" value="${opt}" onchange="atualizarOpcaoItemMúltiplo(${index}, ${optIdx}, this.value)" placeholder="Opção (Ex: FRONTAL)">
+                            <input type="text" class="form-control" style="font-size: 0.9em; height: 36px; padding: 4px 10px; text-transform: uppercase;" value="${opt}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarOpcaoItemMúltiplo(${index}, ${optIdx}, this.value)" placeholder="Opção (Ex: FRONTAL)">
                             <button class="arrow-btn" style="width: 32px; height: 32px; font-size: 1.1em !important;" onclick="removerOpcaoItemMúltiplo(${index}, ${optIdx})" title="Remover esta opção">
                                 <i class="fa-solid fa-xmark" style="color: #d32f2f;"></i>
                             </button>
@@ -386,7 +389,7 @@
                         <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 250px; width: 100%;">
                             <!-- Nome do Item Múltiplo (Removido o badge verde "MÚLTIPLO" para visual minimalista) -->
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="text" class="form-control" style="font-weight: 700; flex: 1;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item múltiplo (ex: AIRBAGS:)">
+                                <input type="text" class="form-control" style="font-weight: 700; flex: 1; text-transform: uppercase;" value="${item.nome}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item múltiplo (ex: AIRBAGS:)">
                             </div>
                             
                             <!-- Container das Opções (Checkboxes editáveis com expansor colapsável) -->
@@ -432,7 +435,7 @@
                 } else {
                     row.innerHTML = `
                         <div style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
-                            <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600;" value="${item.nome}" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
+                            <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600; text-transform: uppercase;" value="${item.nome}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
                             <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
                         </div>
                         
