@@ -378,7 +378,7 @@
                     const optionsHTML = (item.opcoes || []).map((opt, optIdx) => `
                         <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px; width: 100%;">
                             <span style="font-size: 0.9em; color: var(--text-muted); padding-left: 5px;"><i class="fa-regular fa-square"></i></span>
-                            <input type="text" class="form-control" style="font-size: 0.9em; height: 36px; padding: 4px 10px; text-transform: uppercase;" value="${opt}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarOpcaoItemMúltiplo(${index}, ${optIdx}, this.value)" placeholder="Opção (Ex: FRONTAL)">
+                            <input type="text" class="form-control" style="font-size: 0.9em; height: 36px; padding: 4px 10px; text-transform: uppercase;" value="${opt}" oninput="let s=this.selectionStart, e=this.selectionEnd; this.value=this.value.toUpperCase(); this.setSelectionRange(s,e);" onchange="atualizarOpcaoItemMúltiplo(${index}, ${optIdx}, this.value)" placeholder="Opção (Ex: FRONTAL)">
                             <button class="arrow-btn" style="width: 32px; height: 32px; font-size: 1.1em !important;" onclick="removerOpcaoItemMúltiplo(${index}, ${optIdx})" title="Remover esta opção">
                                 <i class="fa-solid fa-xmark" style="color: #d32f2f;"></i>
                             </button>
@@ -389,7 +389,7 @@
                         <div style="display: flex; flex-direction: column; gap: 10px; flex: 1; min-width: 250px; width: 100%;">
                             <!-- Nome do Item Múltiplo (Removido o badge verde "MÚLTIPLO" para visual minimalista) -->
                             <div style="display: flex; gap: 10px; align-items: center;">
-                                <input type="text" class="form-control" style="font-weight: 700; flex: 1; text-transform: uppercase;" value="${item.nome}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item múltiplo (ex: AIRBAGS:)">
+                                <input type="text" class="form-control" style="font-weight: 700; flex: 1; text-transform: uppercase;" value="${item.nome}" oninput="let s=this.selectionStart, e=this.selectionEnd; this.value=this.value.toUpperCase(); this.setSelectionRange(s,e);" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item múltiplo (ex: AIRBAGS:)">
                             </div>
                             
                             <!-- Container das Opções (Checkboxes editáveis com expansor colapsável) -->
@@ -435,7 +435,7 @@
                 } else {
                     row.innerHTML = `
                         <div style="display: flex; gap: 10px; flex: 1; flex-wrap: wrap;">
-                            <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600; text-transform: uppercase;" value="${item.nome}" oninput="this.value = this.value.toUpperCase()" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
+                            <input type="text" class="form-control" style="flex: 1; min-width: 200px; font-weight: 600; text-transform: uppercase;" value="${item.nome}" oninput="let s=this.selectionStart, e=this.selectionEnd; this.value=this.value.toUpperCase(); this.setSelectionRange(s,e);" onchange="atualizarNomeItemCustom(${index}, this.value)" placeholder="Nome do item (ex: VIDROS ELÉTRICOS:)">
                             <input type="text" class="form-control" style="flex: 1.5; min-width: 250px;" value="${item.obs || ''}" onchange="atualizarObsItemCustom(${index}, this.value)" placeholder="Descreva, se necessário...">
                         </div>
                         
@@ -624,7 +624,7 @@
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
             atualizarResumoTab();
-            showToast('Item updated successfully!');
+            showToast('Item atualizado com sucesso!');
         }
 
         function atualizarObsItemCustom(index, novaObs) {
@@ -1039,11 +1039,12 @@
                             subSelContainer.innerHTML += `
                                 <label for="${idCheck}">
                                     <input type="radio" id="${idCheck}" name="${radioGroupName}" value="${opt}" ${isChecked} ${disabledAttr} 
-                                           onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}')">
+                                           onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}', '${itemChave}', '${opt}')">
                                     ${opt}
                                 </label>
                             `;
                         } else {
+                            // Checkbox padrão para os outros itens
                             subSelContainer.innerHTML += `
                                 <label for="${idCheck}">
                                     <input type="checkbox" id="${idCheck}" value="${opt}" ${isChecked} ${disabledAttr} 
@@ -1284,7 +1285,7 @@
             const dadosPrincipal = appState.principal.valores[itemChave] || { status: "-", detalhes: [] };
             const tdPrincipal = document.createElement('td');
             tdPrincipal.style.textAlign = 'center';
-            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, ehItemFixo, ehMúltiplo));
+            tdPrincipal.appendChild(obterBadgeStatusFormatado(dadosPrincipal, ehItemFixo, ehMúltiplo, itemChave)); 
             row.appendChild(tdPrincipal);
 
             // Colunas dos Veículos Aplicáveis
@@ -1292,26 +1293,49 @@
                 const dadosAplicavel = v.valores[itemChave] || { status: "-", detalhes: [] };
                 const tdAplicavel = document.createElement('td');
                 tdAplicavel.style.textAlign = 'center';
-                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo, ehMúltiplo)); 
+                // Passa itemChave para que a ordenação seja aplicada também nos aplicáveis
+                tdAplicavel.appendChild(obterBadgeStatusFormatado(dadosAplicavel, ehItemFixo, ehMúltiplo, itemChave)); 
                 row.appendChild(tdAplicavel);
             });
 
             return row;
         }
 
-        function obterBadgeStatusFormatado(estado, ehItemFixo = false, ehMúltiplo = false) {
+        function obterBadgeStatusFormatado(estado, ehItemFixo = false, ehMúltiplo = false, itemChave = null) {
             const wrapper = document.createElement('div');
             wrapper.style.display = 'inline-flex';
             wrapper.style.flexDirection = 'column';
             wrapper.style.alignItems = 'center';
             wrapper.style.gap = '4px'; // Distância ideal entre as linhas Série e Opcional empilhadas
 
+            // Obter a lista de referência ordenada original definida na aba de mestre
+            let ordemReferencia = [];
+            if (ehItemFixo && itemChave) {
+                const fixoDef = ITENS_FIXOS_DEFINICAO.find(f => f.id === itemChave);
+                if (fixoDef && fixoDef.opcoes) {
+                    ordemReferencia = fixoDef.opcoes;
+                }
+            } else if (ehMúltiplo && itemChave) {
+                const mestreObj = appState.itensCustom.find(i => i.nome === itemChave);
+                if (mestreObj && mestreObj.opcoes) {
+                    ordemReferencia = mestreObj.opcoes;
+                }
+            }
+
             // Tratamento visual diferenciado para Itens Fixos sem status S / O / -
             if (ehItemFixo) {
                 if (estado.detalhes && estado.detalhes.length > 0) {
+                    // Copiar e ordenar as opções de acordo com a ordem da aba master
+                    let detalhesOrdenados = [...estado.detalhes];
+                    if (ordemReferencia.length > 0) {
+                        detalhesOrdenados.sort((a, b) => {
+                            return ordemReferencia.indexOf(a) - ordemReferencia.indexOf(b);
+                        });
+                    }
+
                     const badge = document.createElement('span');
                     badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
-                    badge.innerText = estado.detalhes.join(' / ');
+                    badge.innerText = detalhesOrdenados.join(' / ');
                     wrapper.appendChild(badge);
                 } else {
                     const badge = document.createElement('span');
@@ -1342,6 +1366,12 @@
                         }
                     }
                 });
+
+                // Ordenar as opções individualmente com base no cadastro do item mestre
+                if (ordemReferencia.length > 0) {
+                    serieOpts.sort((a, b) => ordemReferencia.indexOf(a) - ordemReferencia.indexOf(b));
+                    opcionalOpts.sort((a, b) => ordemReferencia.indexOf(a) - ordemReferencia.indexOf(b));
+                }
 
                 if (serieOpts.length === 0 && opcionalOpts.length === 0) {
                     const badge = document.createElement('span');
