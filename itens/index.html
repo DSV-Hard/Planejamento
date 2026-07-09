@@ -624,7 +624,7 @@
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
             atualizarResumoTab();
-            showToast('Item atualizado com sucesso!');
+            showToast('Item updated successfully!');
         }
 
         function atualizarObsItemCustom(index, novaObs) {
@@ -1039,7 +1039,7 @@
                             subSelContainer.innerHTML += `
                                 <label for="${idCheck}">
                                     <input type="radio" id="${idCheck}" name="${radioGroupName}" value="${opt}" ${isChecked} ${disabledAttr} 
-                                           onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}', '${itemChave}', '${opt}')">
+                                           onchange="atualizarRadioDetalhe('${contexto}', ${vIndex}, '${itemChave}', '${opt}')">
                                     ${opt}
                                 </label>
                             `;
@@ -1335,7 +1335,7 @@
 
                     const badge = document.createElement('span');
                     badge.className = 'status-badge s'; // Badge verde indicando especificação ativa
-                    badge.innerText = detalhesOrdenados.join(' / ');
+                    badge.innerText = detalhesOrdenados.join(' / '); // Mudado de ' + ' para ' / ' de forma limpa!
                     wrapper.appendChild(badge);
                 } else {
                     const badge = document.createElement('span');
@@ -1384,14 +1384,14 @@
                 if (serieOpts.length > 0) {
                     const badgeS = document.createElement('span');
                     badgeS.className = 'status-badge s';
-                    badgeS.innerText = serieOpts.join(' / ');
+                    badgeS.innerText = serieOpts.join(' / '); // Mudado de ' + ' para ' / ' de forma limpa!
                     wrapper.appendChild(badgeS);
                 }
 
                 if (opcionalOpts.length > 0) {
                     const badgeO = document.createElement('span');
                     badgeO.className = 'status-badge o';
-                    badgeO.innerText = opcionalOpts.join(' / ');
+                    badgeO.innerText = opcionalOpts.join(' / '); // Mudado de ' + ' para ' / ' de forma limpa!
                     wrapper.appendChild(badgeO);
                 }
 
@@ -1573,10 +1573,39 @@
             // Aguardar renderização das fontes e tabelas antes da captura
             await new Promise(resolve => setTimeout(resolve, 350));
 
+            // --- MELHORIA CRÍTICA CONTRA CORTES DE SCROLL HORIZONTAL ---
+            const tableResponsive = element.querySelector('.table-responsive');
+            let originalTableStyle = null;
+            let originalElementStyle = null;
+            let originalScrollLeft = 0;
+
+            if (tableResponsive) {
+                originalScrollLeft = tableResponsive.scrollLeft;
+                tableResponsive.scrollLeft = 0; // Alinha obrigatoriamente no início antes de fotografar (evita cortes à esquerda)
+                originalTableStyle = tableResponsive.getAttribute('style');
+                
+                // Força o wrapper da tabela a expandir sua largura total para o html2canvas ler todas as colunas
+                tableResponsive.style.setProperty('overflow', 'visible', 'important');
+                tableResponsive.style.setProperty('overflow-x', 'visible', 'important');
+                tableResponsive.style.setProperty('width', 'max-content', 'important');
+                tableResponsive.style.setProperty('max-width', 'none', 'important');
+            }
+
+            // Força o container pai de captura a expandir horizontalmente para comportar toda a tabela larga temporariamente
+            originalElementStyle = element.getAttribute('style');
+            element.style.setProperty('width', 'max-content', 'important');
+            element.style.setProperty('max-width', 'none', 'important');
+            element.style.setProperty('overflow', 'visible', 'important');
+
+            // Opções do html2canvas reforçadas contra rolagem window ativa e cortes horizontais
             const options = {
-                scale: 2, // Melhor qualidade para impressão e zoom
+                scale: 2, // Excelente qualidade para impressão e zoom
                 useCORS: true,
-                backgroundColor: '#ffffff'
+                backgroundColor: '#ffffff',
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: element.scrollWidth, // Força a janela virtual a ter a largura total esticada da tabela
+                windowHeight: element.scrollHeight
             };
 
             html2canvas(element, options).then(canvas => {
@@ -1628,6 +1657,21 @@
                     }
                 }
 
+                // --- RESTAURAÇÃO DE SEGURANÇA IMEDIATA DA TELA ---
+                if (tableResponsive) {
+                    if (originalTableStyle !== null) {
+                        tableResponsive.setAttribute('style', originalTableStyle);
+                    } else {
+                        tableResponsive.removeAttribute('style');
+                    }
+                    tableResponsive.scrollLeft = originalScrollLeft; // Devolve o scroll do usuário no ponto exato
+                }
+                if (originalElementStyle !== null) {
+                    element.setAttribute('style', originalElementStyle);
+                } else {
+                    element.removeAttribute('style');
+                }
+
                 // Ocultar cabeçalho do PDF novamente na tela do HTML
                 if (pdfHeader) pdfHeader.style.display = 'none';
 
@@ -1648,6 +1692,22 @@
             }).catch(err => {
                 console.error("Erro na geração do PDF: ", err);
                 showToast('Erro interno ao tentar gerar o PDF.');
+                
+                // --- RESTAURAÇÃO DE SEGURANÇA EM CASO DE ERRO ---
+                if (tableResponsive) {
+                    if (originalTableStyle !== null) {
+                        tableResponsive.setAttribute('style', originalTableStyle);
+                    } else {
+                        tableResponsive.removeAttribute('style');
+                    }
+                    tableResponsive.scrollLeft = originalScrollLeft;
+                }
+                if (originalElementStyle !== null) {
+                    element.setAttribute('style', originalElementStyle);
+                } else {
+                    element.removeAttribute('style');
+                }
+
                 if (pdfHeader) pdfHeader.style.display = 'none';
             });
         }
