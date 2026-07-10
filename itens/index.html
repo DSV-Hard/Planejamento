@@ -486,7 +486,42 @@
         }
 
         function atualizarOpcaoItemMúltiplo(itemIndex, optIndex, novoValor) {
-            appState.itensCustom[itemIndex].opcoes[optIndex] = novoValor.trim().toUpperCase();
+            const item = appState.itensCustom[itemIndex];
+            const valorAntigo = item.opcoes[optIndex];
+            const valorNovo = novoValor.trim().toUpperCase();
+            
+            if (valorAntigo === valorNovo) return;
+
+            // Atualiza na lista mestre
+            item.opcoes[optIndex] = valorNovo;
+
+            // Função auxiliar para atualizar o nome da opção dentro dos detalhes salvos de um veículo
+            const atualizarDetalhesVeiculo = (valores) => {
+                if (valores && valores[item.nome] && Array.isArray(valores[item.nome].detalhes)) {
+                    valores[item.nome].detalhes = valores[item.nome].detalhes.map(d => {
+                        if (!d) return d;
+                        if (typeof d === 'string') {
+                            return d === valorAntigo ? valorNovo : d;
+                        } else if (typeof d === 'object') {
+                            if (d.opcao === valorAntigo) {
+                                d.opcao = valorNovo;
+                            }
+                            return d;
+                        }
+                        return d;
+                    });
+                }
+            };
+
+            // Aplica o rename no veículo principal
+            atualizarDetalhesVeiculo(appState.principal.valores);
+
+            // Aplica o rename em todos os veículos aplicáveis
+            if (Array.isArray(appState.aplicaveis)) {
+                appState.aplicaveis.forEach(v => {
+                    atualizarDetalhesVeiculo(v.valores);
+                });
+            }
             
             // Re-renderiza e sincroniza instantaneamente com os painéis e resumo
             renderizarPainelPrincipal();
@@ -651,7 +686,7 @@
             renderizarPainelPrincipal();
             renderizarVeiculosAplicaveis();
             atualizarResumoTab();
-            showToast('Item removido com sucesso!');
+            showToast('Item removed successfully!');
         }
 
         /* ==========================================================================
@@ -1355,15 +1390,25 @@
 
                 detalhes.forEach(d => {
                     if (!d) return;
+                    let optNome = "";
+                    let optStatus = "S";
+                    
                     if (typeof d === 'string') {
-                        // Compatibilidade de conversão legada (marcado como Série por padrão)
-                        serieOpts.push(d);
+                        optNome = d;
                     } else if (typeof d === 'object') {
-                        if (d.status === 'S') {
-                            serieOpts.push(d.opcao);
-                        } else if (d.status === 'O') {
-                            opcionalOpts.push(d.opcao);
-                        }
+                        optNome = d.opcao;
+                        optStatus = d.status || 'S';
+                    }
+
+                    // FILTRO DE INTEGRIDADE: Se a opção não existe mais na lista mestre, ignora para evitar fantasmas
+                    if (ordemReferencia.length > 0 && !ordemReferencia.includes(optNome)) {
+                        return;
+                    }
+
+                    if (optStatus === 'S') {
+                        serieOpts.push(optNome);
+                    } else if (optStatus === 'O') {
+                        opcionalOpts.push(optNome);
                     }
                 });
 
