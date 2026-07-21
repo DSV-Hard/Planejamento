@@ -1,4 +1,4 @@
-async function gerarPDF(sistemasParte2 = null) {
+async function gerarPDF(options = null) {
 	// 1. Validar formulário
 	const erros = validarFormularioGlobal();
 	if (erros.length > 0) {
@@ -18,19 +18,30 @@ async function gerarPDF(sistemasParte2 = null) {
 	const dataPrincipalOriginal = dadosCompletos.principal;
 	const dataAplicaveisOriginal = dadosCompletos.aplicaveis;
 
-	const isSplit = dataPrincipalOriginal.qtd_partes === 'duas';
+	const qtdPartes = dataPrincipalOriginal.qtd_partes || 'uma';
+	let sistemasParte2 = [];
+	let indicesVeiculosParte1 = [];
+
+	if (options && typeof options === 'object') {
+		sistemasParte2 = options.sistemasParte2 || [];
+		indicesVeiculosParte1 = options.indicesVeiculosParte1 || [];
+	}
+
+	const isSplit = (qtdPartes === 'duas');
 	let partsToGenerate = [];
 
 	if (isSplit) {
 		const todosSistemas = dataPrincipalOriginal.sistemas || [];
-		const selecaoParte2 = Array.isArray(sistemasParte2) ? sistemasParte2 : [];
-		
 		const sistemasParte1 = todosSistemas.filter(sistema => 
-			!selecaoParte2.some(s2 => s2.sistema === sistema.sistema)
+			!sistemasParte2.some(s2 => s2.sistema === sistema.sistema)
 		);
 		
 		const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-		const pppParte2 = selecaoParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+		const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+		
+		// Filtra os veículos aplicáveis para Parte 1 e Parte 2 com base nos checkboxes selecionados
+		const veiculosParte1 = dataAplicaveisOriginal.filter((_, idx) => indicesVeiculosParte1.includes(idx));
+		const veiculosParte2 = dataAplicaveisOriginal.filter((_, idx) => !indicesVeiculosParte1.includes(idx));
 		
 		// Criar cópias profundas independentes para cada parte
 		partsToGenerate.push({
@@ -41,7 +52,7 @@ async function gerarPDF(sistemasParte2 = null) {
 				sistemas: JSON.parse(JSON.stringify(sistemasParte1)),
 				ppp_calculado: pppParte1
 			},
-			dataAplicaveis: [],
+			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte1)),
 			incluirInfoGerais: true
 		});
 
@@ -50,10 +61,10 @@ async function gerarPDF(sistemasParte2 = null) {
 			sufixoTitulo: " (PARTE 2)",
 			dataPrincipal: {
 				...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
-				sistemas: JSON.parse(JSON.stringify(selecaoParte2)),
+				sistemas: JSON.parse(JSON.stringify(sistemasParte2)),
 				ppp_calculado: pppParte2
 			},
-			dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)),
+			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte2)),
 			incluirInfoGerais: true
 		});
 
@@ -1043,8 +1054,26 @@ function abrirModalSelecaoCapitulos() {
 		document.getElementById('confirmSelection').textContent = 'OK';
 		sistemas.forEach((sistema, index) => {
 			const label = document.createElement('label');
-			label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema}" value="${sistema.sistema}"> Capítulo: ${sistema.sistema} (Páginas: ${sistema.paginasprev || '0'})`;
+			label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema}" value="${sistema.sistema}"> ${sistema.sistema || 'Sem título'}`;
 			checkboxesDiv.appendChild(label);
+		});
+	}
+
+	const aplicaveis = coletarDadosFormulario().aplicaveis;
+	const veiculosDiv = document.getElementById('veiculos-aplicaveis-checkboxes');
+	veiculosDiv.innerHTML = '';
+
+	if (!aplicaveis || aplicaveis.length === 0) {
+		veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável...</p>';
+	} else {
+		aplicaveis.forEach((veiculo, index) => {
+			const label = document.createElement('label');
+			label.style.display = 'block';
+			label.style.marginBottom = '5px';
+			label.style.cursor = 'pointer';
+			const veiculoRef = extrairTooltipVeiculo(veiculo.dadosGerais?.veiculo) || `Veículo ${index + 1}`;
+			label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Aplicável #${index + 1} - <span style="font-size: 0.85em;"><i>${veiculoRef}</i></span>`;
+			veiculosDiv.appendChild(label);
 		});
 	}
 
@@ -1080,22 +1109,27 @@ document.addEventListener('DOMContentLoaded', (event) => {
 		cancelSelection.addEventListener('click', fecharModalSelecaoCapitulos);
 
 		confirmSelection.addEventListener('click', () => {
-			const dataPrincipal = coletarDadosFormulario().principal;
-			const todosSistemas = dataPrincipal.sistemas;
-			const checkboxes = document.querySelectorAll('#capitulos-checkboxes input[type="checkbox"]:checked');
+			const dados = coletarDadosFormulario();
+			const todosSistemas = dados.principal.sistemas;
 			
+			const checkboxesCap = document.querySelectorAll('#capitulos-checkboxes input[type="checkbox"]:checked');
 			const sistemasSelecionadosParaParte2 = [];
-
-			checkboxes.forEach(checkbox => {
+			checkboxesCap.forEach(checkbox => {
 				const nomeSistema = checkbox.getAttribute('data-nome');
 				const sistemaEncontrado = todosSistemas.find(s => s.sistema === nomeSistema);
 				if (sistemaEncontrado) {
 					sistemasSelecionadosParaParte2.push(sistemaEncontrado);
 				}
 			});
+
+			const checkboxesVeh = document.querySelectorAll('#veiculos-aplicaveis-checkboxes input[type="checkbox"]:checked');
+			const indicesVeiculosParte1 = Array.from(checkboxesVeh).map(cb => parseInt(cb.getAttribute('data-veiculo-index'), 10));
 			
 			fecharModalSelecaoCapitulos();
-			gerarPDF(sistemasSelecionadosParaParte2); 
+			gerarPDF({
+				sistemasParte2: sistemasSelecionadosParaParte2,
+				indicesVeiculosParte1: indicesVeiculosParte1
+			}); 
 		});
 	} else {
 		console.error("Erro: Botões do modal 'chapterSelectionModal' (confirmSelection, cancelSelection) não encontrados.");
