@@ -30,13 +30,13 @@ async function gerarPDF(sistemasParte2 = null) {
     const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
     const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
     
-    // CORREÇÃO: Criar cópias profundas independentes para cada parte
+    // Criar cópias profundas independentes para cada parte
     partsToGenerate.push({
         prefixo: "PARTE 1 - ",
         sufixoTitulo: " (PARTE 1)",
         dataPrincipal: {
-            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)), // Cópia profunda
-            sistemas: JSON.parse(JSON.stringify(sistemasParte1)),  // Cópia profunda dos sistemas
+            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
+            sistemas: JSON.parse(JSON.stringify(sistemasParte1)),
             ppp_calculado: pppParte1
         },
         dataAplicaveis: [],
@@ -47,11 +47,11 @@ async function gerarPDF(sistemasParte2 = null) {
         prefixo: "PARTE 2 - ",
         sufixoTitulo: " (PARTE 2)",
         dataPrincipal: {
-            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)), // Cópia profunda
-            sistemas: JSON.parse(JSON.stringify(sistemasParte2)),  // Cópia profunda dos sistemas
+            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
+            sistemas: JSON.parse(JSON.stringify(sistemasParte2)),
             ppp_calculado: pppParte2
         },
-        dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)), // Cópia profunda
+        dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)),
         incluirInfoGerais: true
     });
 
@@ -82,8 +82,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais } = partData;
 
 	const { jsPDF } = window.jspdf;
-    const doc = new jsPDF(); // Initialize the jsPDF instance
-	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+    const doc = new jsPDF();
 	let y = 10;
 	const margin = 10;
 	const lineHeight = 7;
@@ -107,7 +106,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		const sizeMap = { 1: 8, 2: 10, 3: 12, 4: 14, 5: 18 };
 		return sizeMap[sizeNum] || 12;
 	}
-     
+
 	function htmlToFragments(element, parentStyle = {}, listState = null) {
 		let fragments = [];
 		const defaultStyle = {
@@ -149,7 +148,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				let nextListState = listState;
 				let skipChildren = false;
 
-				// Tratamento de blocos que forçam quebra de linha
 				if (['div', 'p'].includes(node.tagName.toLowerCase())) {
 					if (fragments.length > 0 && fragments[fragments.length - 1].type !== 'br') {
 						fragments.push({ type: 'br' });
@@ -184,7 +182,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						const isLikelyUrl = /(https?:\/\/|www\.)/.test(href.trim());
 
 						if (isLikelyPath) {
-							// Para caminhos de PASTA, escrevemos o endereço completo em verde
 							fragments.push({
 								type: 'text',
 								text: href,
@@ -197,7 +194,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 							});
 							skipChildren = true;
 						} else if (isLikelyUrl) {
-							// Para links de INTERNET, usamos o tipo 'link' para exibir "LINK" no PDF
 							fragments.push({
 								type: 'link',
 								text: href,
@@ -257,7 +253,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		let currentX = x;
 		let currentY = startY;
 		const pageBottom = pageHeight - margin;
-		const dataPrincipalOriginal = dadosCompletosJSON.principal;
 		
 		const getCombinedFontStyle = (style) => {
 			if (style.fontWeight === 'bold' && style.fontStyle === 'italic') return 'bolditalic';
@@ -280,70 +275,63 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 
 			if (fragment.type === 'text' || fragment.type === 'link') {
-			if (fragment.style && fragment.style.isPath) {
-				let pathFontSize = fragment.style.fontSize || 12;
-				const pathText = fragment.text;
-				
-				// Tenta renderizar com o tamanho original
-				applyStyle({ ...fragment.style, fontSize: pathFontSize });
-				let textWidth = doc.getTextWidth(pathText);
-				
-				// Se não cabe, reduz a fonte até caber OU até o mínimo de 6pt
-				while (textWidth > maxWidth && pathFontSize > 6) {
-					pathFontSize -= 0.5;
-					doc.setFontSize(pathFontSize);
-					textWidth = doc.getTextWidth(pathText);
-				}
-				
-				// Se AINDA não cabe mesmo com fonte 6pt, quebra em múltiplas linhas SEM espaços/hífens
-				if (textWidth > maxWidth) {
-					// Quebra o caminho em partes que cabem, mas mantém como string contínua
-					let remainingText = pathText;
-					const lines = [];
+				if (fragment.style && fragment.style.isPath) {
+					let pathFontSize = fragment.style.fontSize || 12;
+					const pathText = fragment.text;
 					
-					while (remainingText.length > 0) {
-						let fitLength = remainingText.length;
-						let part = remainingText;
-						
-						while (doc.getTextWidth(part) > maxWidth && fitLength > 1) {
-							fitLength--;
-							part = remainingText.substring(0, fitLength);
-						}
-						
-						// Tenta quebrar em \ para melhor legibilidade
-						if (fitLength < remainingText.length) {
-							const lastBackslash = part.lastIndexOf('\\');
-							if (lastBackslash > Math.floor(fitLength * 0.5)) {
-								fitLength = lastBackslash + 1;
-							}
-						}
-						
-						lines.push(remainingText.substring(0, fitLength));
-						remainingText = remainingText.substring(fitLength);
+					applyStyle({ ...fragment.style, fontSize: pathFontSize });
+					let textWidth = doc.getTextWidth(pathText);
+					
+					while (textWidth > maxWidth && pathFontSize > 6) {
+						pathFontSize -= 0.5;
+						doc.setFontSize(pathFontSize);
+						textWidth = doc.getTextWidth(pathText);
 					}
 					
-					// Renderiza cada linha
-					for (const line of lines) {
+					if (textWidth > maxWidth) {
+						let remainingText = pathText;
+						const lines = [];
+						
+						while (remainingText.length > 0) {
+							let fitLength = remainingText.length;
+							let part = remainingText;
+							
+							while (doc.getTextWidth(part) > maxWidth && fitLength > 1) {
+								fitLength--;
+								part = remainingText.substring(0, fitLength);
+							}
+							
+							if (fitLength < remainingText.length) {
+								const lastBackslash = part.lastIndexOf('\\');
+								if (lastBackslash > Math.floor(fitLength * 0.5)) {
+									fitLength = lastBackslash + 1;
+								}
+							}
+							
+							lines.push(remainingText.substring(0, fitLength));
+							remainingText = remainingText.substring(fitLength);
+						}
+						
+						for (const line of lines) {
+							if (currentY > pageBottom) {
+								doc.addPage();
+								currentY = margin;
+							}
+							doc.text(line, x, currentY);
+							currentY += lineHeight;
+						}
+					} else {
 						if (currentY > pageBottom) {
 							doc.addPage();
 							currentY = margin;
 						}
-						doc.text(line, x, currentY);
+						doc.text(pathText, x, currentY);
 						currentY += lineHeight;
 					}
-				} else {
-					// Cabe em uma linha!
-					if (currentY > pageBottom) {
-						doc.addPage();
-						currentY = margin;
-					}
-					doc.text(pathText, x, currentY);
-					currentY += lineHeight;
+					
+					currentX = x;
+					continue;
 				}
-				
-				currentX = x;
-				continue;
-			}
 				
 				if (fragment.type === 'link' || (fragment.style && fragment.style.isLink)) {
 					applyStyle(fragment.style);
@@ -357,7 +345,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					
 					const displayLinkText = "LINK";
 					const tw = doc.getTextWidth(displayLinkText);
-					const th = (fragment.style.fontSize || 12) * 0.3527; // Converte pt para mm aproximadamente
+					const th = (fragment.style.fontSize || 12) * 0.3527;
 
 					doc.setTextColor(0, 0, 255);
 					doc.text(displayLinkText, currentX, currentY);
@@ -396,65 +384,57 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 				}
 			} else if (fragment.type === 'br') {
-						currentY += lineHeight;
-						currentX = x;
-					} else if (fragment.type === 'image' && fragment.src) {
-						if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
-						
-						try {
-							const imgProps = doc.getImageProperties(fragment.src);
-							
-							// Converte o tamanho original da imagem de pixels para milímetros (usando ~96 DPI como base)
-							const pxToMm = 0.264583;
-							let imgW = imgProps.width * pxToMm;
-							let imgH = imgProps.height * pxToMm;
+				currentY += lineHeight;
+				currentX = x;
+			} else if (fragment.type === 'image' && fragment.src) {
+				if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
+				
+				try {
+					const imgProps = doc.getImageProperties(fragment.src);
+					const pxToMm = 0.264583;
+					let imgW = imgProps.width * pxToMm;
+					let imgH = imgProps.height * pxToMm;
 
-							// 1. Limita a largura para não sair da página (extrapolar à direita)
-							if (imgW > maxWidth) {
-								imgW = maxWidth;
-								imgH = (imgProps.height * imgW) / imgProps.width; // Reduz altura proporcionalmente
-							}
-
-							// 2. Limita a altura máxima para o tamanho total útil de uma página
-							const maxPageHeight = pageBottom - margin;
-							if (imgH > maxPageHeight) {
-								imgH = maxPageHeight;
-								imgW = (imgProps.width * imgH) / imgProps.height; // Reduz largura proporcionalmente
-							}
-
-							// 3. Se a imagem não couber no espaço restante da página ATUAL, joga pra próxima
-							if (currentY + imgH > pageBottom) {
-								doc.addPage();
-								currentY = margin;
-							}
-
-							doc.addImage(fragment.src, imgProps.fileType, x, currentY, imgW, imgH);
-							
-							// Atualiza a posição Y para depois da imagem (+ um pequeno espaço)
-							currentY += imgH + 5; 
-							currentX = x; // Reseta X para a margem esquerda
-						} catch (err) {
-							console.error("Erro ao renderizar imagem:", err);
-							// Fallback: Se der erro na imagem, mostra o texto antigo
-							applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
-							const zipText = `${fragment.filename} (ARQUIVO ANEXADO - Erro ao renderizar)`;
-							doc.text(zipText, currentX, currentY);
-							currentX += doc.getTextWidth(zipText) + 2;
-							}
-
-					} else if (fragment.type === 'attachment') {
-						if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
-
-						applyStyle({ ...fragment.style, color: [0, 0, 150], fontStyle: 'italic' });
-						const zipText = `${fragment.filename} (SALVO NA PASTA MATERIAIS)`;
-						doc.text(zipText, currentX, currentY);
-						currentX += doc.getTextWidth(zipText) + 2;
+					if (imgW > maxWidth) {
+						imgW = maxWidth;
+						imgH = (imgProps.height * imgW) / imgProps.width;
 					}
+
+					const maxPageHeight = pageBottom - margin;
+					if (imgH > maxPageHeight) {
+						imgH = maxPageHeight;
+						imgW = (imgProps.width * imgH) / imgProps.height;
+					}
+
+					if (currentY + imgH > pageBottom) {
+						doc.addPage();
+						currentY = margin;
+					}
+
+					doc.addImage(fragment.src, imgProps.fileType, x, currentY, imgW, imgH);
+					currentY += imgH + 5; 
+					currentX = x;
+				} catch (err) {
+					console.error("Erro ao renderizar imagem:", err);
+					applyStyle({ ...fragment.style, color: [150, 0, 0], fontStyle: 'italic' });
+					const zipText = `${fragment.filename} (ARQUIVO ANEXADO - Erro ao renderizar)`;
+					doc.text(zipText, currentX, currentY);
+					currentX += doc.getTextWidth(zipText) + 2;
 				}
 
-				return currentY;
+			} else if (fragment.type === 'attachment') {
+				if (currentY + 20 > pageBottom) { doc.addPage(); currentY = margin; currentX = x; }
+
+				applyStyle({ ...fragment.style, color: [0, 0, 150], fontStyle: 'italic' });
+				const zipText = `${fragment.filename} (SALVO NA PASTA MATERIAIS)`;
+				doc.text(zipText, currentX, currentY);
+				currentX += doc.getTextWidth(zipText) + 2;
 			}
-	
+		}
+
+		return currentY;
+	}
+
 	const addText = (text, size, style = 'normal', indent = 0) => {
 		if (!text) return;
 		const maxWidth = doc.internal.pageSize.width - (margin * 2) - indent;
@@ -527,7 +507,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		doc.setTextColor(0, 0, 0);
 	};
 	
-	
 	const addColoredText = (text, size, style = 'normal', indent = 0, color = [0, 0, 0]) => {
 		if (y > pageHeight - margin) { doc.addPage(); y = margin; }
 		doc.setFontSize(size);
@@ -566,17 +545,14 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	};
 	
 	const titleColor = [68, 114, 196];
-const rootPrincipal = dataPrincipal.rootPath || '';
-const rootAplicaveis = dataAplicaveis.rootPath || '';
+	const rootPrincipal = dataPrincipal.rootPath || '';
+	const rootAplicaveis = dataAplicaveis.rootPath || '';
 
-	// --- ÍNDICE INTERATIVO ---
-	
-		let indexLinks = [];
+	let indexLinks = [];
 	let targetPages = {};
 	
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		addText(`ÍNDICE RÁPIDO (P/ APLICÁVEIS):`, 14, "bold", 0);
-		// y += lineSpacing;
 		
 		for (const [index, veiculo] of dataAplicaveis.entries()) {
 			if (y > pageHeight - margin) { doc.addPage(); y = margin; }
@@ -585,14 +561,12 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 			const refText = veiculo.dadosGerais.veiculo || 'Sem referência';
 			
 			doc.setFontSize(10);
-			doc.setTextColor(0, 0, 255); // Azul para link
+			doc.setTextColor(0, 0, 255);
 			
-			// Negrito para o prefixo
 			doc.setFont('helvetica', 'bold');
 			const prefixWidth = doc.getTextWidth(prefixText);
 			doc.text(prefixText, margin, y);
 			
-			// Itálico para a referência
 			doc.setFont('helvetica', 'italic');
 			const remainingWidth = doc.internal.pageSize.width - margin * 2 - prefixWidth;
 			const refLines = doc.splitTextToSize(refText, remainingWidth);
@@ -609,7 +583,6 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 				const clickableX = margin;
 				const clickableW = i === 0 ? prefixWidth + lineWidth : lineWidth;
 				
-				// Sublinhado interativo
 				doc.setDrawColor(0, 0, 255);
 				doc.setLineWidth(0.3);
 				doc.line(clickableX, currentLineY + 1, clickableX + clickableW, currentLineY + 1);
@@ -629,13 +602,11 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 			}
 			y = currentLineY + lineHeight;
 		}
-		doc.setTextColor(0, 0, 0); // Reseta a cor
+		doc.setTextColor(0, 0, 0);
 		y += lineHeight;
 		addSeparatorLine();
 		y += lineHeight;
 	}
-	
-	// --- VEÍCULO PRINCIPAL ---
 	
 	addCenteredText(`PLANEJAMENTO - VEÍCULO PRINCIPAL${sufixoTitulo}`, 20, 'bold');
 	addColoredText(dataPrincipal.clickup, 14, 'italic', 0, titleColor);
@@ -677,11 +648,10 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		
 		addLabeledValue('PESQUISA', dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não');
 		if (dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto) {
-		y = await addRichContent(dataPrincipal.pesquisa_texto, y, 4, rootPrincipal, null, -1);
+			y = await addRichContent(dataPrincipal.pesquisa_texto, y, 4, rootPrincipal, null, -1);
 		}
 		
 		y += lineHeight * 2;
-		
 	}
 
 	addColoredText("SISTEMAS", 18, 'bold', 0, titleColor);
@@ -717,22 +687,20 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 			
 			addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
 			
-			const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 			const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-			const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
-			const isModuloDedicado = sistema.modulo_dedicado === 'sim';
-			const isStandardModuleForm = standardSystems.includes(sistema.sistema);
+			const isPaginasFixas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+			const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
 			
-			if (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')) {
+			if (!isCaixasForm && !isPaginasFixas) {
 				addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 			}
 
-			// EXIBE OS CAMPOS DE MÓDULO para sistemas padrão OU quando tem módulo dedicado
-			if (isStandardModuleForm || isModuloDedicado) {
+			// EXIBE OS CAMPOS DE MÓDULO se não for caixas/páginas fixas E tiver módulo dedicado
+			if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
 				addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
 				addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
 				addText(`- Códigos de Conectores:`, 12, "bold", 0);
-				addText(`${sistema.codconectores || ''}`, 12, 'normal', 4)
+				addText(`${sistema.codconectores || ''}`, 12, 'normal', 4);
 				addText(`- Código de Peça / Link:`, 12, "bold", 0);
 				y = await addRichContent(sistema.codmodulo, y, 4, rootPrincipal, sistema, idx);
 				y += 6;
@@ -752,14 +720,14 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 					}
 				} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
 			} 
-			else if (isPaginasForm || (!isModuloDedicado && !isStandardModuleForm)) {
+			else if (isPaginasFixas || !isModuloDedicado) {
 				if (sistema.paginas && sistema.paginas.length > 0) {
 					for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
 						addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
 						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
-				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y+= lineHeight; }
+				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y += lineHeight; }
 			} 
 			else {
 				addText(`- Página de Localização:`, 12, "bold", 0);
@@ -779,7 +747,6 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 	addSeparatorLine();
 	y += lineHeight;
 
-	//VEÍCULOS APLICÁVEIS
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		doc.addPage();
 		y = margin;
@@ -859,8 +826,8 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 					
 					if (sistema.transferencia === 'transferencia_principal') {
 						const idPrincipal = (sistema.sistema === 'Fusíveis e Relés')
-							? dataPrincipal.idfusiveis // Usa o ID Fusiveis do *principal*
-							: dataPrincipal.iddiagramas; // Usa o ID Diagramas do *principal*
+							? dataPrincipal.idfusiveis
+							: dataPrincipal.iddiagramas;
 						addLabeledValue('Transferência (do Principal) - ID', ` ${idPrincipal || 'N/A'}`);
 					} else if (sistema.transferencia === 'transferencia_outro') {
 						addLabeledValue('Transferência (Outro) - ID', ` ${sistema.idtransf || 'N/A'}`);
@@ -872,28 +839,16 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 					const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
 					const isPaginasFixas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
 					const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
-					
-					// Determina se o sistema é do tipo "Manual/Outro" (Iluminação ou qualquer coisa que não seja as fixas/padrão)
-					const sistemasPadrao = [
-						"Airbag", "Ar-condicionado", "Central de Carroceria", "Central Multimídia", 
-						"Freio ABS", "Freio EBS", "Freio de Estacionamento Eletrônico", "Injeção Eletrônica", 
-						"Injeção Eletrônica e Transmissão", "Painel de Instrumentos", "Rádio", 
-						"Redes de Comunicação", "Tração 4x4", "Transmissão Automática"
-					];
-					const isSistemaManual = !sistemasPadrao.includes(sistema.sistema) && !isCaixasForm && !isPaginasFixas;
 
-					// REGRA DE OURO: Usa páginas manuais se for uma página fixa OU se for um sistema manual sem módulo dedicado
-					const isPaginasForm = isPaginasFixas || (isSistemaManual && !isModuloDedicado);
-		
-					if (sistema.sistema === 'Iluminação' || (sistema.sistema === 'Outro' && tituloCapitulo !== 'Outro (Não especificado)')) {
+					if (!isCaixasForm && !isPaginasFixas) {
 						addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 					}
 
-					if (!isCaixasForm && !isPaginasForm && isModuloDedicado) {
-						addLabeledValue('Módulo principal', sistema.modulo);
-						addLabeledValue('Nome no material', sistema.nomematerial);
+					if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
+						addLabeledValue('Módulo principal', sistema.modulo || '');
+						addLabeledValue('Nome no material', sistema.nomematerial || '');
 						addText(`- Códigos de Conectores:`, 12, "bold", 0);
-						addText(sistema.codconectores, 12, 'normal', 4)
+						addText(sistema.codconectores || '', 12, 'normal', 4);
 						addText(`- Código de Peça / Link:`, 12, "bold", 0);
 						y = await addRichContent(sistema.codmodulo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 6;
@@ -904,18 +859,15 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 					y += lineSpacing / 2;
 					
 					if (isCaixasForm) {
-						// Layout de Fusíveis (Caixas)
 						if (sistema.caixas && sistema.caixas.length > 0) {
 							for (const caixa of sistema.caixas) {
 								addText(`- ${caixa.nome || 'Caixa'}:`, 12, "bold", 0);
 								y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
 								y += 5;
 							}
-						}
+						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
 					} 
-					else if (isPaginasForm) {
-						// Layout de Páginas Dinâmicas (+ Adicionar Página)
-						// Entra aqui: Alimentação, Peito, Carga e Partida OU (Outro/Iluminação com Módulo NÃO)
+					else if (isPaginasFixas || !isModuloDedicado) {
 						if (sistema.paginas && sistema.paginas.length > 0) {
 							for (const [pIdx, pagina] of sistema.paginas.entries()) {
 								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
@@ -932,17 +884,14 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 						addText(`- Página de Localização:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagloc, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
-						// y += lineHeight;
 						
 						addText(`- Página de Conectores:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagcon, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
-						// y += lineHeight;
 						
 						addText(`- Página de Diagramas:`, 12, "bold", 0);
 						y = await addRichContent(sistema.pagdiag, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 						y += 12;
-						// y += lineHeight;
 					}
 				}
 			} else {
@@ -953,8 +902,6 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		}
 	}
 
-
-		// --- DADOS DO CARD UNIFICADO (PRINCIPAL E APLICÁVEIS) ---
 	if (y > pageHeight - margin * 6) { doc.addPage(); y = margin; }
 	
 	addColoredText("DADOS DO CARD", 18, 'bold', 0, titleColor);
@@ -1007,12 +954,7 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 	
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		addHighlightedText(`VEÍCULO PRINCIPAL`, 14, 'bold', 0, 212, 255, 214);
-		// addText(`VEÍCULO PRINCIPAL:`, 14, "bold", 0);
 	}
-	
-	// addText(`- DIFICULDADE: ${dificuldadeExibir || 'Não informada'}`, 12, 'normal', 4);
-	// addText(`- PPP (Total): ${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas}`, 12, "normal", 4);
-	// addText(`- ESTIMATIVA DE TEMPO: ${estimativaPrincipal} horas`, 12, "bold", 4);
 	
 	addLabeledValue('DIFICULDADE', `${dificuldadeExibir || 'Não informada'}`);	
 	addLabeledValue('PPP (Total)', `${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas}`);	
@@ -1041,16 +983,10 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 		const multAplic = getMultiplicadorAplicaveis(dataPrincipal.dificuldade_aplicaveis);
 		const estimativaAplicaveis = (tempoTotalAplicaveis * multAplic).toFixed(2).replace('.', ',');
 		
-		//addText(`VEÍCULOS APLICÁVEIS:`, 14, "bold", 0);
-		// addText(`- DIFICULDADE: ${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`, 12, 'normal', 4);
-		// addText(`- PPA (Total): ${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis}`, 12, "normal", 4);
-		// addText(`- ESTIMATIVA DE TEMPO: ${estimativaAplicaveis} horas`, 12, "bold", 4);
-		
 		addHighlightedText(`VEÍCULOS APLICÁVEIS`, 14, 'bold', 0, 250, 231, 67);
 		addLabeledValue('DIFICULDADE', `${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`);
 		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis}`);
 		addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaAplicaveis} horas`);
-		
 	}
 	
 	let nomeBase = "planejamento";
@@ -1078,27 +1014,21 @@ const rootAplicaveis = dataAplicaveis.rootPath || '';
 	doc.save(nomeArquivoPDF);
 }
 
-// FIM: LÓGICA DE GERAÇÃO DE PDF/ZIP
-//INÍCIO: FUNÇÕES DO MODAL DE DIVISÃO: Abre o Modal de "SIM/NÃO"
-
-
 function abrirModalDivisaoPDF() {
 	document.getElementById('pdfSplitModal').style.display = 'flex';
 }
 
-// Fecha o Modal de "SIM/NÃO"
 function fecharModalDivisaoPDF() {
 	document.getElementById('pdfSplitModal').style.display = 'none';
 }
 
-// Abre o Modal de Seleção de Capítulos (SIM)
 function abrirModalSelecaoCapitulos() {
-	fecharModalDivisaoPDF(); // Fecha o primeiro modal
+	fecharModalDivisaoPDF();
 	const dataPrincipal = coletarDadosFormulario().principal;
 	const sistemas = dataPrincipal.sistemas;
 	
 	const checkboxesDiv = document.getElementById('capitulos-checkboxes');
-	checkboxesDiv.innerHTML = ''; // Limpa conteúdo anterior
+	checkboxesDiv.innerHTML = '';
 
 	if (!sistemas || sistemas.length === 0) {
 		checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO. O PDF será gerado em parte única.</p>';
@@ -1113,7 +1043,7 @@ function abrirModalSelecaoCapitulos() {
 	}
 
 	document.getElementById('chapterSelectionModal').style.display = 'flex';
-} // Fecha o Modal de Seleção
+}
 
 function fecharModalSelecaoCapitulos() {
 	document.getElementById('chapterSelectionModal').style.display = 'none';
@@ -1141,16 +1071,15 @@ document.addEventListener('DOMContentLoaded', (event) => {
 	const splitNao = document.getElementById('splitNao');
 
 	if (splitSim && splitNao) {
-		splitSim.addEventListener('click', abrirModalSelecaoCapitulos); // SIM abre a seleção
+		splitSim.addEventListener('click', abrirModalSelecaoCapitulos);
 		splitNao.addEventListener('click', () => {
 			fecharModalDivisaoPDF();
-			gerarPDF(null); // NÃO chama gerarPDF com null (PDF ÚNICO)
+			gerarPDF(null);
 		});
 	} else {
 		console.error("Erro: Botões do modal 'pdfSplitModal' (splitSim, splitNao) não encontrados.");
 	}
 
-	// Lógica para o segundo Modal (OK/CANCELAR)
 	const confirmSelection = document.getElementById('confirmSelection');
 	const cancelSelection = document.getElementById('cancelSelection');
 	
