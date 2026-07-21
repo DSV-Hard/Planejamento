@@ -212,13 +212,25 @@ function renderizarFormularioCapitulo(idx) {
 	container.innerHTML = ""; // limpa antes
 	if (!valor) return;
 
+	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+
+	// TRAVA DE SEGURANÇA: Compatibilidade com JSONs antigos
+	if (!dados.modulo_dedicado) {
+		if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
+			dados.modulo_dedicado = 'sim';
+		} else {
+			dados.modulo_dedicado = 'nao';
+		}
+	}
+
 	const isCaixasForm = valor === "Fusíveis e Relés";
 	const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
 	const isIluminacaoForm = valor === "Iluminação";
 	const isOutroForm = valor === "Outro";
 	const isStandardModuleForm = !isCaixasForm && !isPaginasForm && !isIluminacaoForm && !isOutroForm;
 
-	// --- Bloco Comum (Transferência e Páginas Previstas), Aparece para todos, exceto "Caixas" e "Páginas" que têm seu próprio HTML ---
+
+	// --- Bloco Comum (Transferência e Páginas Previstas) ---
 	const commonTransferHtml = `
 		<div class="checkbox-block">
 			<div class="checkbox-inline" onchange="toggleIdTransfPrincipal(${idx}); togglePaginasPrevistaPrincipal(${idx}); salvarDadosSistema(${idx})">
@@ -235,7 +247,7 @@ function renderizarFormularioCapitulo(idx) {
 		</div>
 	`;
 	
-	// --- Bloco Padrão (Módulo, Nome, Conectores, etc.), Usado pelo "Standard", e condicionalmente por "Iluminação" e "Outro" ---
+	// --- Bloco Padrão (Módulo, Nome, Conectores, etc.) ---
 	const standardModuleHtml = `
 		<label>Módulo principal</label>
 		<input type="text" name="modulo_${idx}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistema(${idx})">
@@ -277,7 +289,7 @@ function renderizarFormularioCapitulo(idx) {
 		</fieldset>
 	`;
 
-	// --- Bloco Desenvolvimento "Páginas" (Ex: Alimentação) ---
+	// --- Bloco Desenvolvimento "Páginas" (Ex: Alimentação Positiva ou Módulo NÃO) ---
 	const pagesDevelopmentHtml = `
 		<fieldset>
 			<legend>DESENVOLVIMENTO</legend>
@@ -339,7 +351,8 @@ function renderizarFormularioCapitulo(idx) {
 		if (dados.modulo_dedicado !== 'sim') {
 			renderizarPaginas(idx);
 		}
-	} else if (isOutroForm) {
+	} else {
+		// TODOS OS DEMAIS SISTEMAS (Standard Systems + Outro) usam a pergunta de Módulo Dedicado
 		container.innerHTML = `
 			${commonTransferHtml}
 			<div class="checkbox-blockk"></div>
@@ -360,11 +373,9 @@ function renderizarFormularioCapitulo(idx) {
 		if (dados.modulo_dedicado !== 'sim') {
 			renderizarPaginas(idx);
 		}
-	} else if (isStandardModuleForm) {
-		container.innerHTML = commonTransferHtml + standardModuleHtml + standardDevelopmentHtml;
 	}
 	
-	if (dados.modulo_dedicado === 'sim' || isStandardModuleForm) {
+	if (dados.modulo_dedicado === 'sim') {
 		setupDragAndDrop(`pagloc_${idx}`);
 		setupEditableContent(`pagloc_${idx}`);
 		setupEditableContent(`codmodulo_${idx}`);
@@ -374,8 +385,8 @@ function renderizarFormularioCapitulo(idx) {
 		setupEditableContent(`pagdiag_${idx}`);
 	}
 }
- 
- function adicionarCaixa(sistemaIndex) {
+
+function adicionarCaixa(sistemaIndex) {
      const dados = sistemasData[sistemaIndex];
      if (!dados.caixas) dados.caixas = [];
      dados.caixas.push({ nome: '', descricoes: '' });
@@ -491,11 +502,20 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 container.innerHTML = ""; // Limpa o container antes de adicionar o novo formulário
 if (!valor) return;
 
+const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+
+// TRAVA DE SEGURANÇA: Compatibilidade com JSONs antigos nos aplicáveis
+if (!dados.modulo_dedicado) {
+	if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
+		dados.modulo_dedicado = 'sim';
+	} else {
+		dados.modulo_dedicado = 'nao';
+	}
+}
+
 const isCaixasForm = valor === "Fusíveis e Relés";
 const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
 const isIluminacaoForm = valor === "Iluminação";
-const isOutroForm = valor === "Outro";
-const isStandardModuleForm = !isCaixasForm && !isPaginasForm && !isIluminacaoForm && !isOutroForm;
 
 // --- Bloco Comum (Transferência e Páginas Previstas) ---
 const commonTransferHtml = `
@@ -609,7 +629,8 @@ if (isCaixasForm) {
 	if (dados.modulo_dedicado !== 'sim') {
 		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 	}
-} else if (isOutroForm) {
+} else {
+	// TODOS OS DEMAIS SISTEMAS APLICÁVEIS (Standard Systems + Outro)
 	container.innerHTML = `
 		${commonTransferHtml}
 		<div class="checkbox-blockk"></div>
@@ -630,11 +651,9 @@ if (isCaixasForm) {
 	if (dados.modulo_dedicado !== 'sim') {
 		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 	}
-} else if (isStandardModuleForm) {
-	container.innerHTML = commonTransferHtml + standardModuleHtml + standardDevelopmentHtml;
 }
 
-if (dados.modulo_dedicado === 'sim' || isStandardModuleForm) {
+if (dados.modulo_dedicado === 'sim') {
 	setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	setupEditableContent(`codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
@@ -724,8 +743,7 @@ function renderizarSistema(index) {
 function toggleModuloDedicadoPrincipal(index) {
 	const radio = document.querySelector(`input[name="modulo_dedicado_${index}"]:checked`);
 	const moduloDedicado = radio ? radio.value : 'nao';
-
-
+	const dados = sistemasData[index];
 
 	const standardFieldsContainer = document.getElementById(`standard-module-fields_${index}`);
 	const developmentContainer = document.getElementById(`development-fields_${index}`);
@@ -741,19 +759,19 @@ function toggleModuloDedicadoPrincipal(index) {
 					<legend>DESENVOLVIMENTO</legend>
 					<label>Página de Localização</label>
 					<div class="development-field-container">
-						<div contenteditable="true" class="editable-content" id="pagloc_${index}" data-field="pagloc" oninput="salvarDadosSistema(${index})"></div>
+						<div contenteditable="true" class="editable-content" id="pagloc_${index}" data-field="pagloc" oninput="salvarDadosSistema(${index})">${dados.pagloc || ''}</div>
 						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_${index}')">Anexar</button>
 						<input type="file" id="file_pagloc_${index}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_${index}', this.files)">
 					</div>
 					<label>Página de Conectores</label>
 					<div class="development-field-container">
-						<div contenteditable="true" class="editable-content" id="pagcon_${index}" data-field="pagcon" oninput="salvarDadosSistema(${index})"></div>
+						<div contenteditable="true" class="editable-content" id="pagcon_${index}" data-field="pagcon" oninput="salvarDadosSistema(${index})">${dados.pagcon || ''}</div>
 						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_${index}')">Anexar</button>
 						<input type="file" id="file_pagcon_${index}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_${index}', this.files)">
 					</div>
 					<label>Página de Diagramas</label>
 					<div class="development-field-container">
-						<div contenteditable="true" class="editable-content" id="pagdiag_${index}" data-field="pagdiag" oninput="salvarDadosSistema(${index})"></div>
+						<div contenteditable="true" class="editable-content" id="pagdiag_${index}" data-field="pagdiag" oninput="salvarDadosSistema(${index})">${dados.pagdiag || ''}</div>
 						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_${index}')">Anexar</button>
 						<input type="file" id="file_pagdiag_${index}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_${index}', this.files)">
 					</div>
@@ -773,19 +791,11 @@ function toggleModuloDedicadoPrincipal(index) {
 					<button type="button" class="btn-adicionar-caixa" onclick="adicionarPagina(${index})">+ Adicionar Página</button>
 				</fieldset>
 			`;
-			const dados = sistemasData[index];
-			dados.modulo = '';
-			dados.nomematerial = '';
-			dados.codmodulo = '';
-			dados.codconectores = '';
-			dados.pagloc = '';
-			dados.pagcon = '';
-			dados.pagdiag = '';
 			renderizarPaginas(index);
 		}
 	}
 }
-			
+
 function toggleIdTransfPrincipal(index) {
 	const radio = document.querySelector(`input[name="transferencia_${index}"]:checked`);
 	const idTransfInput = document.getElementById(`idtransf_${index}`);
@@ -917,7 +927,6 @@ function salvarDadosSistema(index) {
     const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
     const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
     
-    // CORREÇÃO: Usa document em vez de systemDiv para garantir que pega o rádio correto
     const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
     
     const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
@@ -945,8 +954,6 @@ function salvarDadosSistema(index) {
     renderizarPaginacao();
 }
 
-
-// Funções para a aba "Veículos Aplicáveis"
 function renderizarPaginacaoVeiculosAplicaveis() {
 	const paginacaoDiv = document.getElementById("paginacao-veiculos-aplicaveis");
 	paginacaoDiv.innerHTML = "";
@@ -1129,9 +1136,6 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 	setupDragAndDrop(`comentarios_aplicaveis_${veiculoIndex}`);
 	setupEditableContent(`comentarios_aplicaveis_${veiculoIndex}`);
 }
-
-
-// segunda parte
 
 function getCaretPosition(element) {
 	const selection = window.getSelection();
