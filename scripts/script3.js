@@ -2,11 +2,6 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 	if (veiculoIndex < 0 || veiculoIndex >= veiculosAplicaveisData.length) return;
 	const veiculo = veiculosAplicaveisData[veiculoIndex];
 	
-	const getCheckedCheckboxValues = (name) => {
-		const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
-		return Array.from(checkboxes).map(cb => cb.value);
-	};
-
 	veiculo.dadosGerais = {
 		veiculo: document.getElementById(`veiculo_aplicaveis_${veiculoIndex}`).value,
 		iddiagramas: document.getElementById(`iddiagramas_aplicaveis_${veiculoIndex}`).value,
@@ -27,15 +22,13 @@ function abrirModalCopia(veiculoIndex) {
 	targetVeiculoIndexParaCopia = veiculoIndex;
 
 	const selectVeiculo = document.getElementById('select-veiculo-copia');
-	selectVeiculo.innerHTML = ''; // Limpa opções anteriores
+	selectVeiculo.innerHTML = ''; 
 
-	// Adiciona Veículo Principal
 	const optPrincipal = document.createElement('option');
 	optPrincipal.value = 'principal';
 	optPrincipal.textContent = 'Veículo Principal';
 	selectVeiculo.appendChild(optPrincipal);
 
-	// Adiciona Veículos Aplicáveis
 	veiculosAplicaveisData.forEach((veiculo, idx) => {
 		const optAplicavel = document.createElement('option');
 		optAplicavel.value = `aplicavel_${idx}`;
@@ -54,7 +47,7 @@ function popularCapitulosParaCopia() {
 	const checkboxesContainer = document.getElementById('capitulos-checkboxes-copia');
 	const selectedVeiculoValue = selectVeiculo.value;
 
-	checkboxesContainer.innerHTML = ''; // Limpa conteúdo anterior
+	checkboxesContainer.innerHTML = ''; 
 
 	let sourceSistemas = [];
 
@@ -105,8 +98,6 @@ function executarCopiaCapitulo() {
 	const checkboxesContainer = document.getElementById('capitulos-checkboxes-copia');
 
 	const selectedVeiculoValue = selectVeiculo.value;
-	
-	// Coleta todos os checkboxes marcados
 	const checkboxesMarcados = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
 	
 	if (targetVeiculoIndexParaCopia === null) {
@@ -133,46 +124,35 @@ function executarCopiaCapitulo() {
 
 	const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
 	
-	// Copia todos os capítulos selecionados
 	checkboxesMarcados.forEach(checkbox => {
 		const capituloIndex = parseInt(checkbox.value, 10);
 		const capituloParaCopiar = sourceSistemas[capituloIndex];
 		
 		if (capituloParaCopiar) {
-			// Cria uma cópia profunda do capítulo
 			const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
 			
-			// CORREÇÃO: Ajusta o campo 'transferencia' se estiver copiando do principal
 			if (isCopiandoDoPrincipal) {
-				// Converte os valores do principal para os valores dos aplicáveis
 				if (copiaCapitulo.transferencia === 'transferencia') {
 					copiaCapitulo.transferencia = 'transferencia_principal';
 				} else if (copiaCapitulo.transferencia === 'zero') {
-					// Define como transferência do principal por padrão
 					copiaCapitulo.transferencia = 'transferencia_principal';
 				}
-				// 'modificar' permanece igual
 			}
-			// Se estiver copiando de outro aplicável, os valores já estão corretos
 			
 			veiculoDestino.sistemas.push(copiaCapitulo);
 		}
 	});
 
-	// Atualiza a paginação e renderiza o último capítulo copiado
 	veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
 	renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
 	renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
 	
-	// Fecha o modal e reseta o alvo
 	document.getElementById('copy-chapter-modal').style.display = 'none';
 	targetVeiculoIndexParaCopia = null;
 	
-	// Mensagem de sucesso
 	const qtdCopiados = checkboxesMarcados.length;
 	alert(`${qtdCopiados} capítulo(s) copiado(s) com sucesso!`);
 }
-
 
 function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 	const container = document.getElementById(`sistemas-container-aplicaveis_${veiculoIndex}`);
@@ -255,67 +235,58 @@ function toggleIdTransfAplicaveis(veiculoIndex, sistemaIndex) {
 function toggleModuloDedicadoAplicaveis(veiculoIndex, sistemaIndex) {
 	const radio = document.querySelector(`input[name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}"]:checked`);
 	const moduloDedicado = radio ? radio.value : 'nao';
+	const dados = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
 
+	const standardFieldsContainer = document.getElementById(`standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+	const developmentContainer = document.getElementById(`development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 
+	if (standardFieldsContainer) {
+		standardFieldsContainer.style.display = (moduloDedicado === 'sim') ? 'block' : 'none';
+	}
 
-		const standardFieldsContainer = document.getElementById(`standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-		const developmentContainer = document.getElementById(`development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-
-		if (standardFieldsContainer) {
-			standardFieldsContainer.style.display = (moduloDedicado === 'sim') ? 'block' : 'none';
-		}
-
-		if (developmentContainer) {
-			if (moduloDedicado === 'sim') {
-				developmentContainer.innerHTML = `
-					<fieldset>
-						<legend>DESENVOLVIMENTO</legend>
-						<label>Página de Localização</label>
-						<div class="development-field-container">
-							<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})"></div>
-							<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-							<input type="file" id="file_pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-						</div>
-						<label>Página de Conectores</label>
-						<div class="development-field-container">
-							<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})"></div>
-							<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-							<input type="file" id="file_pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-						</div>
-						<label>Página de Diagramas</label>
-						<div class="development-field-container">
-							<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})"></div>
-							<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-							<input type="file" id="file_pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-						</div>
-					</fieldset>
-				`;
-				setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-				setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-				setupDragAndDrop(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-				setupEditableContent(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-				setupDragAndDrop(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-				setupEditableContent(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-			} else {
-				developmentContainer.innerHTML = `
-					<fieldset>
-						<legend>DESENVOLVIMENTO</legend>
-						<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
-						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
-					</fieldset>
-				`;
-				const dados = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
-				dados.modulo = '';
-				dados.nomematerial = '';
-				dados.codmodulo = '';
-				dados.codconectores = '';
-				dados.pagloc = '';
-				dados.pagcon = '';
-				dados.pagdiag = '';
-				renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
-			}
+	if (developmentContainer) {
+		if (moduloDedicado === 'sim') {
+			developmentContainer.innerHTML = `
+				<fieldset>
+					<legend>DESENVOLVIMENTO</legend>
+					<label>Página de Localização</label>
+					<div class="development-field-container">
+						<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
+						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+						<input type="file" id="file_pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+					</div>
+					<label>Página de Conectores</label>
+					<div class="development-field-container">
+						<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
+						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+						<input type="file" id="file_pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+					</div>
+					<label>Página de Diagramas</label>
+					<div class="development-field-container">
+						<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
+						<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+						<input type="file" id="file_pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+					</div>
+				</fieldset>
+			`;
+			setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupDragAndDrop(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupEditableContent(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupDragAndDrop(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+			setupEditableContent(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		} else {
+			developmentContainer.innerHTML = `
+				<fieldset>
+					<legend>DESENVOLVIMENTO</legend>
+					<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
+					<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+				</fieldset>
+			`;
+			renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 		}
 	}
+}
 
 function adicionarSistemaAplicaveis(veiculoIndex) {
 	const veiculo = veiculosAplicaveisData[veiculoIndex];
@@ -329,23 +300,22 @@ function adicionarSistemaAplicaveis(veiculoIndex) {
 }
 
 function moverSistemaAplicavel(veiculoIndex, direcao) {
-     const veiculo = veiculosAplicaveisData[veiculoIndex];
-     if (!veiculo || veiculo.sistemas.length < 2) return;
+	const veiculo = veiculosAplicaveisData[veiculoIndex];
+	if (!veiculo || veiculo.sistemas.length < 2) return;
 
-     const sistemaIndex = veiculo.paginaAtual;
-     const newIndex = sistemaIndex + direcao;
+	const sistemaIndex = veiculo.paginaAtual;
+	const newIndex = sistemaIndex + direcao;
 
-     if (newIndex < 0 || newIndex >= veiculo.sistemas.length) return;
+	if (newIndex < 0 || newIndex >= veiculo.sistemas.length) return;
 
-     salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex);
+	salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex);
+	[veiculo.sistemas[sistemaIndex], veiculo.sistemas[newIndex]] = [veiculo.sistemas[newIndex], veiculo.sistemas[sistemaIndex]];
 
-     [veiculo.sistemas[sistemaIndex], veiculo.sistemas[newIndex]] = [veiculo.sistemas[newIndex], veiculo.sistemas[sistemaIndex]];
+	veiculo.paginaAtual = newIndex;
 
-     veiculo.paginaAtual = newIndex;
-
-     renderizarPaginacaoAplicaveis(veiculoIndex);
-     renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
- }
+	renderizarPaginacaoAplicaveis(veiculoIndex);
+	renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+}
 
 function removerUltimoSistemaAplicaveis(veiculoIndex) {
 	const veiculo = veiculosAplicaveisData[veiculoIndex];
@@ -419,157 +389,156 @@ function renderizarPaginacaoAplicaveis(veiculoIndex) {
 }
 
 function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
-const veiculo = veiculosAplicaveisData[veiculoIndex];
-if (!veiculo || !veiculo.sistemas[sistemaIndex]) return;
+	const veiculo = veiculosAplicaveisData[veiculoIndex];
+	if (!veiculo || !veiculo.sistemas[sistemaIndex]) return;
 
-		const systemDiv = document.querySelector(`#sistemas-container-aplicaveis_${veiculoIndex} .system-block`);
-		if (!systemDiv) return;
+	const systemDiv = document.querySelector(`#sistemas-container-aplicaveis_${veiculoIndex} .system-block`);
+	if (!systemDiv) return;
 
-		const selectElement = systemDiv.querySelector(`select[name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
-		const sistemaValor = selectElement.value === 'Outro' 
-			? systemDiv.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`)?.value 
-			: selectElement.value;
+	const selectElement = systemDiv.querySelector(`select[name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+	const sistemaValor = selectElement.value === 'Outro' 
+		? systemDiv.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`)?.value 
+		: selectElement.value;
+	
+	const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"]:checked`)?.value;
+
+	const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
+	const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
+	const getRadio = (name) => systemDiv.querySelector(`input[name="${name}"]:checked`)?.value || '';
+
+	const caixasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].caixas : [];
+	const paginasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].paginas : [];
+
+	veiculo.sistemas[sistemaIndex] = {
+		caixas: caixasExistentes,
+		paginas: paginasExistentes,
+
+		sistema: sistemaValor,
+		transferencia: transferenciaValue,
+		idtransf: getVal(`#idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		paginasprev: getVal(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
+
+		tipo_iluminacao: getRadio(`tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		modulo_dedicado: getRadio(`modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		tipo_fusiveis: getRadio(`tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 		
-		const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"]:checked`)?.value;
-
-		const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
-		const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
-		const getRadio = (name) => systemDiv.querySelector(`input[name="${name}"]:checked`)?.value || '';
-
-		const caixasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].caixas : [];
-		const paginasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].paginas : [];
-
-		veiculo.sistemas[sistemaIndex] = {
-			caixas: caixasExistentes,
-			paginas: paginasExistentes,
-
-			sistema: sistemaValor,
-			transferencia: transferenciaValue,
-			idtransf: getVal(`#idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			paginasprev: getVal(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
-
-			tipo_iluminacao: getRadio(`tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			modulo_dedicado: getRadio(`modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			tipo_fusiveis: getRadio(`tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			
-			modulo: getVal(`input[name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
-			nomematerial: getVal(`input[name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
-			codmodulo: getHtml(`#codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			codconectores: getVal(`textarea[name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
-			pagloc: getHtml(`#pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			pagcon: getHtml(`#pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-			pagdiag: getHtml(`#pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`)
-		};
-		
-		renderizarPaginacaoAplicaveis(veiculoIndex);
+		modulo: getVal(`input[name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
+		nomematerial: getVal(`input[name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
+		codmodulo: getHtml(`#codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		codconectores: getVal(`textarea[name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
+		pagloc: getHtml(`#pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		pagcon: getHtml(`#pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
+		pagdiag: getHtml(`#pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`)
+	};
+	
+	renderizarPaginacaoAplicaveis(veiculoIndex);
 }
 
- function adicionarCaixaAplicaveis(veiculoIndex, sistemaIndex) {
-     const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
-     if (!sistema.caixas) sistema.caixas = [];
-     sistema.caixas.push({ nome: '', descricoes: '' });
-     renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function adicionarCaixaAplicaveis(veiculoIndex, sistemaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
+	if (!sistema.caixas) sistema.caixas = [];
+	sistema.caixas.push({ nome: '', descricoes: '' });
+	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function removerCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex) {
-     veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas.splice(caixaIndex, 1);
-     renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function removerCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex) {
+	veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas.splice(caixaIndex, 1);
+	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function moverCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex, direcao) {
-     const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas;
-     const newIndex = caixaIndex + direcao;
-     if (newIndex < 0 || newIndex >= caixas.length) return;
-     const itemMovido = caixas.splice(caixaIndex, 1)[0];
-     caixas.splice(newIndex, 0, itemMovido);
-     renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function moverCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex, direcao) {
+	const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas;
+	const newIndex = caixaIndex + direcao;
+	if (newIndex < 0 || newIndex >= caixas.length) return;
+	const itemMovido = caixas.splice(caixaIndex, 1)[0];
+	caixas.splice(newIndex, 0, itemMovido);
+	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex) {
-     const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-     if (!container) return;
-     const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas || [];
-     container.innerHTML = '';
-     caixas.forEach((caixa, i) => {
-         const descId = `descricoes_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
-         const caixaDiv = document.createElement('div');
-         caixaDiv.className = 'caixa-item';
-         caixaDiv.innerHTML = `
-             <label>Nome da Caixa</label>
-             <input type="text" value="${caixa.nome || ''}" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
-             <label>Descrições</label>
-             <div class="development-field-container">
-                 <div contenteditable="true" class="editable-content" id="${descId}">${caixa.descricoes || ''}</div>
-                 <div class="caixa-actions-column">
-                     <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-                     <input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
-                     <button type="button" class="btn-remover-caixa" onclick="removerCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
-                     <div class="mover-buttons">
-                         <button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-                         <button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
-                     </div>
-                 </div>
-             </div>`;
-         container.appendChild(caixaDiv);
-         const descElement = document.getElementById(descId);
-         descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
-         setupDragAndDrop(descId);
-         setupEditableContent(descId);
-     });
- }
+function renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+	if (!container) return;
+	const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas || [];
+	container.innerHTML = '';
+	caixas.forEach((caixa, i) => {
+		const descId = `descricoes_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const caixaDiv = document.createElement('div');
+		caixaDiv.className = 'caixa-item';
+		caixaDiv.innerHTML = `
+			<label>Nome da Caixa</label>
+			<input type="text" value="${caixa.nome || ''}" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
+			<label>Descrições</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}">${caixa.descricoes || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(caixaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
 
- function adicionarPaginaAplicaveis(veiculoIndex, sistemaIndex) {
-     const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
-     if (!sistema.paginas) sistema.paginas = [];
-     sistema.paginas.push({ conteudo: '' });
-     renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function adicionarPaginaAplicaveis(veiculoIndex, sistemaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
+	if (!sistema.paginas) sistema.paginas = [];
+	sistema.paginas.push({ conteudo: '' });
+	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function removerPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex) {
-     veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas.splice(paginaIndex, 1);
-     renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function removerPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex) {
+	veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas.splice(paginaIndex, 1);
+	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function moverPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex, direcao) {
-     const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas;
-     const newIndex = paginaIndex + direcao;
-     if (newIndex < 0 || newIndex >= paginas.length) return;
-     const itemMovido = paginas.splice(paginaIndex, 1)[0];
-     paginas.splice(newIndex, 0, itemMovido);
-     renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
- }
+function moverPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex, direcao) {
+	const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
+}
 
- function renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex) {
-     const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-     if (!container) return;
-     const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas || [];
-     container.innerHTML = '';
-     paginas.forEach((pagina, i) => {
-         const descId = `descricoes_pagina_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
-         const paginaDiv = document.createElement('div');
-         paginaDiv.className = 'caixa-item';
-         paginaDiv.innerHTML = `
-             <label>Página ${i + 1}</label>
-             <div class="development-field-container">
-                 <div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
-                 <div class="caixa-actions-column">
-                     <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-                     <input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
-                     <button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
-                     <div class="mover-buttons">
-                         <button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-                         <button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
-                     </div>
-                 </div>
-             </div>`;
-         container.appendChild(paginaDiv);
-         const descElement = document.getElementById(descId);
-         descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas[i].conteudo = descElement.innerHTML; };
-         setupDragAndDrop(descId);
-         setupEditableContent(descId);
-     });
- }
-
+function renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label>Página ${i + 1}</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
 
 function coletarDadosFormulario() {
 	if (sistemasData.length > 0) {
@@ -586,11 +555,6 @@ function coletarDadosFormulario() {
 		}
 		salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
 	}
-
-	const getCheckedCheckboxValues = (name) => {
-		const checkboxes = document.querySelectorAll(`input[name="${name}"]:checked`);
-		return Array.from(checkboxes).map(cb => cb.value);
-	};
 
 	const dataPrincipal = {
 		planejado_por: document.getElementById("planejado_por").value,
@@ -718,15 +682,8 @@ function carregarDeJSON(input) {
 					const element = document.querySelector(`input[name="${name}"][value="${value}"]`);
 					if (element) { element.checked = true; }
 				};
-				const setCheckedCheckboxes = (name, values) => {
-					if (!Array.isArray(values)) return;
-					const checkboxes = document.querySelectorAll(`input[name="${name}"]`);
-					checkboxes.forEach(cb => {
-						cb.checked = values.includes(cb.value);
-					});
-				};
 
-                 setData('planejado_por', dataPrincipal.planejado_por);
+				setData('planejado_por', dataPrincipal.planejado_por);
 				setData('veiculo', dataPrincipal.veiculo);
 				setData('clickup', dataPrincipal.clickup);
 				setData('iddiagramas', dataPrincipal.iddiagramas);
@@ -746,14 +703,27 @@ function carregarDeJSON(input) {
 				setChecked('qtd_partes', dataPrincipal.qtd_partes || 'uma');
 				toggleParte2Principal();
 
-				// Carrega nos campos corretos baseado em qtd_partes
 				if (dataPrincipal.qtd_partes === 'duas') {
 					setData('dificuldade_parte1', dataPrincipal.dificuldade);
 					setData('dificuldade_parte2', dataPrincipal.dificuldade_parte2);
 				} else {
 					setData('dificuldade_unica', dataPrincipal.dificuldade);
-}
+				}
+
 				sistemasData = dataPrincipal.sistemas || [];
+				
+				// Normalização retrocompatível de JSONs antigos
+				const standardList = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+				sistemasData.forEach(s => {
+					if (!s.modulo_dedicado) {
+						if (standardList.includes(s.sistema) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
+							s.modulo_dedicado = 'sim';
+						} else {
+							s.modulo_dedicado = 'nao';
+						}
+					}
+				});
+
 				if (sistemasData.length > 0) {
 					paginaAtual = 0;
 					renderizarPaginacao();
@@ -764,6 +734,20 @@ function carregarDeJSON(input) {
 				}
 
 				veiculosAplicaveisData = dataAplicaveis;
+				veiculosAplicaveisData.forEach(v => {
+					if (v.sistemas) {
+						v.sistemas.forEach(s => {
+							if (!s.modulo_dedicado) {
+								if (standardList.includes(s.sistema) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
+									s.modulo_dedicado = 'sim';
+								} else {
+									s.modulo_dedicado = 'nao';
+								}
+							}
+						});
+					}
+				});
+
 				if (veiculosAplicaveisData.length > 0) {
 					veiculoAplicavelAtual = 0;
 					renderizarPaginacaoVeiculosAplicaveis();
@@ -785,134 +769,117 @@ function carregarDeJSON(input) {
 	}
 }
 
-	function validarFormularioGlobal() {
-		  const erros = [];
+function validarFormularioGlobal() {
+	const erros = [];
 
-		  document.querySelectorAll('.campo-invalido, .radio-invalido').forEach(el => el.classList.remove('campo-invalido', 'radio-invalido'));
+	document.querySelectorAll('.campo-invalido, .radio-invalido').forEach(el => el.classList.remove('campo-invalido', 'radio-invalido'));
 
-		  const checarCampo = (id, nome) => {
-			const el = document.getElementById(id);
-			let valor = '';
-			if (el) {
-				if (el.isContentEditable) {
-					valor = el.innerHTML.trim();
-				} else {
-					valor = el.value.trim();
-				}
+	const checarCampo = (id, nome) => {
+		const el = document.getElementById(id);
+		let valor = '';
+		if (el) {
+			if (el.isContentEditable) {
+				valor = el.innerHTML.trim();
+			} else {
+				valor = el.value.trim();
 			}
-			
-			if (!el || valor === '' || valor === '<br>') {
-			  erros.push(nome);
-			  if (el) el.classList.add('campo-invalido');
-			}
-		  };
+		}
+		
+		if (!el || valor === '' || valor === '<br>') {
+			erros.push(nome);
+			if (el) el.classList.add('campo-invalido');
+		}
+	};
 
-		  const checarRadio = (name, nome) => {
-			const selecionado = document.querySelector(`input[name="${name}"]:checked`);
-			if (!selecionado) {
-			  erros.push(nome);
-			  const radios = document.querySelectorAll(`input[name="${name}"]`);
-			  if (radios.length > 0) {
+	const checarRadio = (name, nome) => {
+		const selecionado = document.querySelector(`input[name="${name}"]:checked`);
+		if (!selecionado) {
+			erros.push(nome);
+			const radios = document.querySelectorAll(`input[name="${name}"]`);
+			if (radios.length > 0) {
 				const container = radios[0].closest('.checkbox-inline');
 				if (container) container.classList.add('radio-invalido');
-			  }
 			}
-		  };
+		}
+	};
 
-		  const checarAlgumCheckbox = (name, nome) => {
-			const marcados = document.querySelectorAll(`input[name="${name}"]:checked`);
-			if (marcados.length === 0) {
-			  erros.push(nome);
-			  const boxes = document.querySelectorAll(`input[name="${name}"]`);
-			  if (boxes.length > 0) {
-				const container = boxes[0].closest('.checkbox-inline');
-				if (container) container.classList.add('radio-invalido');
-			  }
+	checarCampo('planejado_por', 'Planejado por');
+	checarCampo('clickup', 'Link do Card (ClickUp)');
+	checarCampo('veiculo', 'Veículo Referência');
+	checarCampo('iddiagramas', 'ID DIAGRAMAS');
+	checarCampo('idfusiveis', 'ID FUSÍVEIS');
+	checarCampo('pasta', 'Pasta do Veículo');
+	checarRadio('aplicacao_chassi', 'Associação / Chassi');
+
+	const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
+	if (qtdPartes === 'duas') {
+		checarCampo('dificuldade_parte1', 'Dificuldade (Parte 1)');
+		checarCampo('dificuldade_parte2', 'Dificuldade (Parte 2)');
+	} else {
+		checarCampo('dificuldade_unica', 'Dificuldade');
+	}
+
+	sistemasData.forEach((sistema, idx) => {
+		const capLabel = `(Capítulo Principal ${idx + 1})`;
+		if (!sistema.transferencia) {
+			erros.push(`Opção de Transferência ${capLabel}`);
+		} else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
+			erros.push(`ID de Transferência ${capLabel}`);
+		} else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
+			erros.push(`Nº páginas prevista ${capLabel}`);
+			const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
+			if (el) el.classList.add('campo-invalido');
+		}
+		
+		const isModuloDedicado = sistema.modulo_dedicado === 'sim';
+		
+		if (isModuloDedicado) {
+			if (!sistema.modulo || sistema.modulo.trim() === '') {
+				erros.push(`Módulo principal ${capLabel}`);
+				const el = document.querySelector(`input[name="modulo_${idx}"]`);
+				if (el) el.classList.add('campo-invalido');
 			}
-		  };
-
-		  checarCampo('planejado_por', 'Planejado por');
-		  checarCampo('clickup', 'Link do Card (ClickUp)');
-		  checarCampo('veiculo', 'Veículo Referência');
-		  checarCampo('iddiagramas', 'ID DIAGRAMAS');
-		  checarCampo('idfusiveis', 'ID FUSÍVEIS');
-		  checarCampo('pasta', 'Pasta do Veículo');
-		  checarRadio('aplicacao_chassi', 'Associação / Chassi');
-
-		const qtdPartes = document.querySelector('input[name="qtd_partes"]:checked')?.value;
-			if (qtdPartes === 'duas') {
-				checarCampo('dificuldade_parte1', 'Dificuldade (Parte 1)');
-				checarCampo('dificuldade_parte2', 'Dificuldade (Parte 2)');
-			} else {
-				checarCampo('dificuldade_unica', 'Dificuldade');
+			if (!sistema.nomematerial || sistema.nomematerial.trim() === '') {
+				erros.push(`Nome no material ${capLabel}`);
+				const el = document.querySelector(`input[name="nomematerial_${idx}"]`);
+				if (el) el.classList.add('campo-invalido');
 			}
+			if (!sistema.codmodulo || sistema.codmodulo.trim() === '' || sistema.codmodulo.trim() === '<br>') {
+				erros.push(`Código de Peça / Link ${capLabel}`);
+				const el = document.getElementById(`codmodulo_${idx}`);
+				if (el) el.classList.add('campo-invalido');
+			}
+		}
+	});
 
-           sistemasData.forEach((sistema, idx) => {
-				const capLabel = `(Capítulo Principal ${idx + 1})`;
+	if (veiculosAplicaveisData.length > 0) {
+		salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
+
+		veiculosAplicaveisData.forEach((veiculo, idx) => {
+			const sfx = `(Aplicável ${idx + 1})`;
+
+			if (!veiculo.dadosGerais.veiculo) erros.push(`Veículo Referência ${sfx}`);
+			if (!veiculo.dadosGerais.iddiagramas) erros.push(`ID DIAGRAMAS ${sfx}`);
+			if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
+			if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
+			if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
+			
+			veiculo.sistemas.forEach((sistema, sIdx) => {
+				const capLabel = `(Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`;
 				if (!sistema.transferencia) {
 					erros.push(`Opção de Transferência ${capLabel}`);
-				} else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
+				} else if (sistema.transferencia === 'transferencia_outro' && !sistema.idtransf) {
 					erros.push(`ID de Transferência ${capLabel}`);
 				} else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
-					erros.push(`Nº páginas prevista ${capLabel}`);
-					const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
-					if (el) el.classList.add('campo-invalido');
-				}
-				
-				// VALIDAÇÃO DOS CAMPOS MÓDULO, NOME NO MATERIAL E CÓDIGO DE PEÇA
-				const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
-				const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-				const isPaginasForm = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
-				const isModuloDedicado = sistema.modulo_dedicado === 'sim';
-				
-				// Valida apenas se for sistema padrão OU se tiver módulo dedicado
-				if ((!isCaixasForm && !isPaginasForm && standardSystems.includes(sistema.sistema)) || isModuloDedicado) {
-					if (!sistema.modulo || sistema.modulo.trim() === '') {
-						erros.push(`Módulo principal ${capLabel}`);
-						const el = document.querySelector(`input[name="modulo_${idx}"]`);
-						if (el) el.classList.add('campo-invalido');
-					}
-					if (!sistema.nomematerial || sistema.nomematerial.trim() === '') {
-						erros.push(`Nome no material ${capLabel}`);
-						const el = document.querySelector(`input[name="nomematerial_${idx}"]`);
-						if (el) el.classList.add('campo-invalido');
-					}
-					if (!sistema.codmodulo || sistema.codmodulo.trim() === '' || sistema.codmodulo.trim() === '<br>') {
-						erros.push(`Código de Peça / Link ${capLabel}`);
-						const el = document.getElementById(`codmodulo_${idx}`);
-						if (el) el.classList.add('campo-invalido');
-					}
-				}
-			});
-
-		  if (veiculosAplicaveisData.length > 0) {
-			salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
-
-			veiculosAplicaveisData.forEach((veiculo, idx) => {
-			  const sfx = `(Aplicável ${idx + 1})`;
-
-			  if (!veiculo.dadosGerais.veiculo) erros.push(`Veículo Referência ${sfx}`);
-			  if (!veiculo.dadosGerais.iddiagramas) erros.push(`ID DIAGRAMAS ${sfx}`);
-			  if (!veiculo.dadosGerais.idfusiveis) erros.push(`ID FUSÍVEIS ${sfx}`);
-               if (!veiculo.dadosGerais.pasta || veiculo.dadosGerais.pasta.trim() === '' || veiculo.dadosGerais.pasta.trim() === '<br>') erros.push(`Pasta do Veículo ${sfx}`);
-			  if (!veiculo.dadosGerais.aplicacao_chassi) erros.push(`Associação / Chassi ${sfx}`);
-               
-               veiculo.sistemas.forEach((sistema, sIdx) => {
-				const capLabel = `(Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`;
-                 if (!sistema.transferencia) {
-                     erros.push(`Opção de Transferência ${capLabel}`);
-                 } else if (sistema.transferencia === 'transferencia_outro' && !sistema.idtransf) {
-                     erros.push(`ID de Transferência ${capLabel}`);
-                 } else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
 					erros.push(`Nº páginas prevista ${capLabel}`);
 					const el = document.querySelector(`input[name="paginasprev_aplicaveis_${idx}_${sIdx}"]`);
 					if (el) el.classList.add('campo-invalido');
 				}
-               });
 			});
+		});
 
-			checarCampo('dificuldade_aplicaveis', 'Dificuldade (Aplicáveis)');
-		  }
+		checarCampo('dificuldade_aplicaveis', 'Dificuldade (Aplicáveis)');
+	}
 
-		  return [...new Set(erros)];
-		}
+	return [...new Set(erros)];
+}
