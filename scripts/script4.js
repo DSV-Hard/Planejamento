@@ -18,45 +18,47 @@ async function gerarPDF(sistemasParte2 = null) {
 	const dataPrincipalOriginal = dadosCompletos.principal;
 	const dataAplicaveisOriginal = dadosCompletos.aplicaveis;
 
-	const isSplit = Array.isArray(sistemasParte2) && sistemasParte2.length > 0;
+	const isSplit = dataPrincipalOriginal.qtd_partes === 'duas';
 	let partsToGenerate = [];
 
 	if (isSplit) {
-    const todosSistemas = dataPrincipalOriginal.sistemas;
-    const sistemasParte1 = todosSistemas.filter(sistema => 
-        !sistemasParte2.some(s2 => s2.sistema === sistema.sistema)
-    );
-    
-    const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-    const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
-    
-    // Criar cópias profundas independentes para cada parte
-    partsToGenerate.push({
-        prefixo: "PARTE 1 - ",
-        sufixoTitulo: " (PARTE 1)",
-        dataPrincipal: {
-            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
-            sistemas: JSON.parse(JSON.stringify(sistemasParte1)),
-            ppp_calculado: pppParte1
-        },
-        dataAplicaveis: [],
-        incluirInfoGerais: true
-    });
+		const todosSistemas = dataPrincipalOriginal.sistemas || [];
+		const selecaoParte2 = Array.isArray(sistemasParte2) ? sistemasParte2 : [];
+		
+		const sistemasParte1 = todosSistemas.filter(sistema => 
+			!selecaoParte2.some(s2 => s2.sistema === sistema.sistema)
+		);
+		
+		const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+		const pppParte2 = selecaoParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+		
+		// Criar cópias profundas independentes para cada parte
+		partsToGenerate.push({
+			prefixo: "PARTE 1 - ",
+			sufixoTitulo: " (PARTE 1)",
+			dataPrincipal: {
+				...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
+				sistemas: JSON.parse(JSON.stringify(sistemasParte1)),
+				ppp_calculado: pppParte1
+			},
+			dataAplicaveis: [],
+			incluirInfoGerais: true
+		});
 
-    partsToGenerate.push({
-        prefixo: "PARTE 2 - ",
-        sufixoTitulo: " (PARTE 2)",
-        dataPrincipal: {
-            ...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
-            sistemas: JSON.parse(JSON.stringify(sistemasParte2)),
-            ppp_calculado: pppParte2
-        },
-        dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)),
-        incluirInfoGerais: true
-    });
+		partsToGenerate.push({
+			prefixo: "PARTE 2 - ",
+			sufixoTitulo: " (PARTE 2)",
+			dataPrincipal: {
+				...JSON.parse(JSON.stringify(dataPrincipalOriginal)),
+				sistemas: JSON.parse(JSON.stringify(selecaoParte2)),
+				ppp_calculado: pppParte2
+			},
+			dataAplicaveis: JSON.parse(JSON.stringify(dataAplicaveisOriginal)),
+			incluirInfoGerais: true
+		});
 
 	} else {
-		const pppTotal = dataPrincipalOriginal.sistemas.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
+		const pppTotal = (dataPrincipalOriginal.sistemas || []).reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
 
 		partsToGenerate.push({
 			prefixo: "",
@@ -1015,7 +1017,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 }
 
 function abrirModalDivisaoPDF() {
-	document.getElementById('pdfSplitModal').style.display = 'flex';
+	const dataPrincipal = coletarDadosFormulario().principal;
+	if (dataPrincipal.qtd_partes === 'duas') {
+		abrirModalSelecaoCapitulos();
+	} else {
+		gerarPDF(null);
+	}
 }
 
 function fecharModalDivisaoPDF() {
@@ -1023,7 +1030,6 @@ function fecharModalDivisaoPDF() {
 }
 
 function abrirModalSelecaoCapitulos() {
-	fecharModalDivisaoPDF();
 	const dataPrincipal = coletarDadosFormulario().principal;
 	const sistemas = dataPrincipal.sistemas;
 	
@@ -1067,19 +1073,6 @@ function toggleParte2Principal() {
 
 document.addEventListener('DOMContentLoaded', (event) => {
 	
-	const splitSim = document.getElementById('splitSim');
-	const splitNao = document.getElementById('splitNao');
-
-	if (splitSim && splitNao) {
-		splitSim.addEventListener('click', abrirModalSelecaoCapitulos);
-		splitNao.addEventListener('click', () => {
-			fecharModalDivisaoPDF();
-			gerarPDF(null);
-		});
-	} else {
-		console.error("Erro: Botões do modal 'pdfSplitModal' (splitSim, splitNao) não encontrados.");
-	}
-
 	const confirmSelection = document.getElementById('confirmSelection');
 	const cancelSelection = document.getElementById('cancelSelection');
 	
