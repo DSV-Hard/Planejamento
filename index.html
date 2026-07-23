@@ -16,16 +16,22 @@
 		<h1>PLANEJAMENTO</h1>
     </div>
     <div id="main-frame">
-	<div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-        <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
-        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
-        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
-        <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/JSON</button>
-    </div>
-    <div style="font-size: 20px; text-align: center; margin-bottom: 20px; margin-top: 20px;">
-        <button id="btn-principal" class="active principal" onclick="alternarAbas('principal')">VEÍCULO PRINCIPAL</button>
-        <button id="btn-aplicaveis" class="aplicaveis" onclick="alternarAbas('aplicaveis')">VEÍCULOS APLICÁVEIS</button>
-    </div>
+	
+	<!-- STREAMING_CHUNK:Wrapping action and navigation buttons into sticky top container... -->
+	<!-- CONTAINER FIXO NO TOPO DA TELA (STICKY HEADER) -->
+	<div id="sticky-action-bar" style="position: sticky; top: 10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.96); backdrop-filter: blur(8px); padding: 14px 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px;">
+		<div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+			<input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
+			<button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
+			<button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
+			<button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/JSON</button>
+		</div>
+		<div style="font-size: 20px; text-align: center; margin-top: 10px;">
+			<button id="btn-principal" class="active principal" onclick="alternarAbas('principal')">VEÍCULO PRINCIPAL</button>
+			<button id="btn-aplicaveis" class="aplicaveis" onclick="alternarAbas('aplicaveis')">VEÍCULOS APLICÁVEIS</button>
+		</div>
+	</div>
+
     <h2 id="aba-titulo" style="text-align: center; margin-top: 10px;">VEÍCULO PRINCIPAL</h2>
 
     <div id="aba-principal">
@@ -244,12 +250,13 @@
 		</div>
 		</div>
 
-    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-        <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
-        <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
-        <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
-        <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/JSON</button>
-    </div>
+   <!-- <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+       <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
+       <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
+       <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
+       <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/JSON</button>
+   </div>
+   -->
 
     <div id="validation-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
