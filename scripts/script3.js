@@ -556,6 +556,32 @@ function coletarDadosFormulario() {
 		salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
 	}
 
+	// --- CÁLCULO DE PÁGINAS DO VEÍCULO PRINCIPAL (PPP) ---
+	let pppCriadas = 0, pppTransferidas = 0;
+	sistemasData.forEach(s => {
+		const paginas = parseInt(s.paginasprev, 10) || 0;
+		if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') {
+			pppTransferidas += paginas;
+		} else {
+			pppCriadas += paginas;
+		}
+	});
+
+	// --- CÁLCULO DE PÁGINAS DOS VEÍCULOS APLICÁVEIS (PPA) ---
+	let ppaCriadas = 0, ppaTransferidas = 0;
+	veiculosAplicaveisData.forEach(v => {
+		if (v.sistemas && v.sistemas.length > 0) {
+			v.sistemas.forEach(s => {
+				const paginas = parseInt(s.paginasprev, 10) || 0;
+				if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro' || s.transferencia === 'modificar') {
+					ppaTransferidas += paginas;
+				} else {
+					ppaCriadas += paginas;
+				}
+			});
+		}
+	});
+
 	const dataPrincipal = {
 		planejado_por: document.getElementById("planejado_por").value,
 		veiculo: document.getElementById("veiculo").value,
@@ -581,6 +607,15 @@ function coletarDadosFormulario() {
 		})(),
 		dificuldade_parte2: document.getElementById("dificuldade_parte2")?.value || '',
 		dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
+
+		// NOVOS CAMPOS SALVOS EM SEQUÊNCIA DAS DIFICULDADES:
+		ppp_criadas: pppCriadas,
+		ppp_transferidas: pppTransferidas,
+		ppp_total: pppCriadas + pppTransferidas,
+		ppa_criadas: ppaCriadas,
+		ppa_transferidas: ppaTransferidas,
+		ppa_total: ppaCriadas + ppaTransferidas,
+
 		sistemas: sistemasData
 	};
 
