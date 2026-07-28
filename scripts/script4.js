@@ -951,10 +951,13 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	
 	if (dataPrincipal.sistemas) {
 		dataPrincipal.sistemas.forEach(s => {
-			const paginas = parseInt(s.paginasprev) || 0;
-			if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') {
+			// Se for "modificar", tempo é 0h e ignora da conta
+			if (s.transferencia === 'modificar') return;
+
+			const paginas = parseInt(s.paginasprev, 10) || 0;
+			if (s.transferencia === 'transferencia') {
 				somaTransferidas += paginas;
-				if (s.transferencia === 'transferencia') tempoTotalPrincipal += (paginas * 1.825);
+				tempoTotalPrincipal += (paginas * 1.825);
 			} else {
 				somaCriadas += paginas;
 				tempoTotalPrincipal += (paginas * 3.65);
@@ -981,12 +984,15 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		dataAplicaveis.forEach(v => {
 			if (v.sistemas && v.sistemas.length > 0) {
 				v.sistemas.forEach(s => {
-					const paginas = parseInt(s.paginasprev) || 0;
-					somaTotalAplicaveis += paginas;
-					if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro' || s.transferencia === 'modificar') {
+					// Se for "modificar", tempo é 0h e ignora da conta
+					if (s.transferencia === 'modificar') return;
+
+					const paginas = parseInt(s.paginasprev, 10) || 0;
+					if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
-						if (s.transferencia !== 'modificar') tempoTotalAplicaveis += (paginas * 1.825);
+						tempoTotalAplicaveis += (paginas * 1.825);
 					} else {
+						somaTotalAplicaveis += paginas;
 						tempoTotalAplicaveis += (paginas * 3.65);
 					}
 				});
