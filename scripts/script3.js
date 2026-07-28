@@ -557,10 +557,12 @@ function coletarDadosFormulario() {
 	}
 
 	// --- CÁLCULO DE PÁGINAS DO VEÍCULO PRINCIPAL (PPP) ---
-	let pppCriadas = 0, pppTransferidas = 0;
+	let pppCriadas = 0, pppTransferidas = 0, pppModificadas = 0;
 	sistemasData.forEach(s => {
 		const paginas = parseInt(s.paginasprev, 10) || 0;
-		if (s.transferencia === 'transferencia' || s.transferencia === 'modificar') {
+		if (s.transferencia === 'modificar') {
+			pppModificadas += (paginas || 1);
+		} else if (s.transferencia === 'transferencia') {
 			pppTransferidas += paginas;
 		} else {
 			pppCriadas += paginas;
@@ -568,12 +570,14 @@ function coletarDadosFormulario() {
 	});
 
 	// --- CÁLCULO DE PÁGINAS DOS VEÍCULOS APLICÁVEIS (PPA) ---
-	let ppaCriadas = 0, ppaTransferidas = 0;
+	let ppaCriadas = 0, ppaTransferidas = 0, ppaModificadas = 0;
 	veiculosAplicaveisData.forEach(v => {
 		if (v.sistemas && v.sistemas.length > 0) {
 			v.sistemas.forEach(s => {
 				const paginas = parseInt(s.paginasprev, 10) || 0;
-				if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro' || s.transferencia === 'modificar') {
+				if (s.transferencia === 'modificar') {
+					ppaModificadas += (paginas || 1);
+				} else if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 					ppaTransferidas += paginas;
 				} else {
 					ppaCriadas += paginas;
@@ -608,13 +612,15 @@ function coletarDadosFormulario() {
 		dificuldade_parte2: document.getElementById("dificuldade_parte2")?.value || '',
 		dificuldade_aplicaveis: document.getElementById("dificuldade_aplicaveis").value,
 
-		// NOVOS CAMPOS SALVOS EM SEQUÊNCIA DAS DIFICULDADES:
+		// CAMPOS SALVOS EM SEQUÊNCIA DAS DIFICULDADES:
 		ppp_criadas: pppCriadas,
 		ppp_transferidas: pppTransferidas,
-		ppp_total: pppCriadas + pppTransferidas,
+		ppp_modificadas: pppModificadas,
+		ppp_total: pppCriadas + pppTransferidas + pppModificadas,
 		ppa_criadas: ppaCriadas,
 		ppa_transferidas: ppaTransferidas,
-		ppa_total: ppaCriadas + ppaTransferidas,
+		ppa_modificadas: ppaModificadas,
+		ppa_total: ppaCriadas + ppaTransferidas + ppaModificadas,
 
 		sistemas: sistemasData
 	};
