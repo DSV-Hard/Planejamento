@@ -1,5 +1,4 @@
 async function gerarPDF(options = null) {
-	// 1. Validar formulário
 	const erros = validarFormularioGlobal();
 	if (erros.length > 0) {
 		const lista = document.getElementById('lista-campos-faltando');
@@ -13,7 +12,6 @@ async function gerarPDF(options = null) {
 		return; 
 	}
 
-	// 2. Coletar todos os dados
 	const dadosCompletos = coletarDadosFormulario();
 	const dataPrincipalOriginal = dadosCompletos.principal;
 	const dataAplicaveisOriginal = dadosCompletos.aplicaveis;
@@ -39,11 +37,9 @@ async function gerarPDF(options = null) {
 		const pppParte1 = sistemasParte1.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
 		const pppParte2 = sistemasParte2.reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
 		
-		// Filtra os veículos aplicáveis para Parte 1 e Parte 2 com base nos checkboxes selecionados
 		const veiculosParte1 = dataAplicaveisOriginal.filter((_, idx) => indicesVeiculosParte1.includes(idx));
 		const veiculosParte2 = dataAplicaveisOriginal.filter((_, idx) => !indicesVeiculosParte1.includes(idx));
 		
-		// Criar cópias profundas independentes para cada parte
 		partsToGenerate.push({
 			prefixo: "PARTE 1 - ",
 			sufixoTitulo: " (PARTE 1)",
@@ -708,7 +704,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 			}
 
-			// EXIBE OS CAMPOS DE MÓDULO se não for caixas/páginas fixas E tiver módulo dedicado
 			if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
 				addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
 				addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
@@ -723,7 +718,6 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('DESENVOLVIMENTO:', 14, "bold", 0);
 			y += lineSpacing / 2;
 
-			// RENDERIZA O DESENVOLVIMENTO baseado no tipo
 			if (isCaixasForm) {
 				if (sistema.caixas && sistema.caixas.length > 0) {
 					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
@@ -945,17 +939,15 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		? dataPrincipal.dificuldade_parte2 
 		: dataPrincipal.dificuldade;
 
-	let somaTotal = dataPrincipal.ppp_calculado || 0;
-	let somaTransferidas = 0, somaCriadas = 0;
+	let somaTransferidas = 0, somaCriadas = 0, somaModificadas = 0;
 	let tempoTotalPrincipal = 0;
 	
 	if (dataPrincipal.sistemas) {
 		dataPrincipal.sistemas.forEach(s => {
-			// Se for "modificar", tempo é 0h e ignora da conta
-			if (s.transferencia === 'modificar') return;
-
 			const paginas = parseInt(s.paginasprev, 10) || 0;
-			if (s.transferencia === 'transferencia') {
+			if (s.transferencia === 'modificar') {
+				somaModificadas += (paginas || 1);
+			} else if (s.transferencia === 'transferencia') {
 				somaTransferidas += paginas;
 				tempoTotalPrincipal += (paginas * 1.825);
 			} else {
@@ -964,6 +956,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			}
 		});
 	}
+
+	let somaTotal = somaCriadas + somaTransferidas + somaModificadas;
 	
 	const multPrinc = getMultiplicadorPrincipal(dificuldadeExibir);
 	const estimativaPrincipal = (tempoTotalPrincipal * multPrinc).toFixed(2).replace('.', ',');
@@ -973,38 +967,36 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	}
 	
 	addLabeledValue('DIFICULDADE', `${dificuldadeExibir || 'Não informada'}`);	
-	addLabeledValue('PPP (Total)', `${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas}`);	
+	addLabeledValue('PPP (Total)', `${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas} | Modificadas: ${somaModificadas}`);	
 	addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaPrincipal} horas`);	
 	
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		y += lineSpacing;
-		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0;
+		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0, somaModificadasAplicaveis = 0;
 		let tempoTotalAplicaveis = 0;
 		
 		dataAplicaveis.forEach(v => {
 			if (v.sistemas && v.sistemas.length > 0) {
 				v.sistemas.forEach(s => {
-					// Se for "modificar", tempo é 0h e ignora da conta
-					if (s.transferencia === 'modificar') return;
-
 					const paginas = parseInt(s.paginasprev, 10) || 0;
-					if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
+					if (s.transferencia === 'modificar') {
+						somaModificadasAplicaveis += (paginas || 1);
+					} else if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
-						tempoTotalAplicaveis += (paginas * 1.825);
-					} else {
-						somaTotalAplicaveis += paginas;
-						tempoTotalAplicaveis += (paginas * 3.65);
+						tempoTotalAplicaveis += (paginas * 1.0); // TEMPO BASE CORRETO: 1.0h por página aplicada
 					}
 				});
 			}
 		});
+
+		somaTotalAplicaveis = somaTransferidasAplicaveis + somaModificadasAplicaveis;
 		
 		const multAplic = getMultiplicadorAplicaveis(dataPrincipal.dificuldade_aplicaveis);
 		const estimativaAplicaveis = (tempoTotalAplicaveis * multAplic).toFixed(2).replace('.', ',');
 		
 		addHighlightedText(`VEÍCULOS APLICÁVEIS`, 14, 'bold', 0, 250, 231, 67);
 		addLabeledValue('DIFICULDADE', `${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`);
-		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis}`);
+		addLabeledValue('PPA (Total)', `${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}`);
 		addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaAplicaveis} horas`);
 	}
 	
@@ -1012,10 +1004,18 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
 		const partes = dataPrincipal.veiculo.split('>');
 		if (partes.length >= 5) {
-			const ano = partes[1].trim();
-			const modelo = partes[3].trim();
-			const motor = partes[4].trim();
-			nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
+			const p1 = partes[1].trim();
+			if (/^\d/.test(p1)) {
+				const ano = partes[1].trim();
+				const modelo = partes[3].trim();
+				const motor = partes[4].trim();
+				nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
+			} else {
+				const modelo = partes[2].trim();
+				const motor = partes[3].trim();
+				const ano = partes[4].trim();
+				nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
+			}
 		}
 	} else if (dataPrincipal.veiculo) {
 		nomeBase = `Planejamento - ${dataPrincipal.veiculo}`;
@@ -1047,30 +1047,31 @@ function fecharModalDivisaoPDF() {
 }
 
 function abrirModalSelecaoCapitulos() {
-	const dataPrincipal = coletarDadosFormulario().principal;
-	const sistemas = dataPrincipal.sistemas;
+	const dados = coletarDadosFormulario();
+	const sistemas = dados.principal.sistemas;
+	const aplicaveis = dados.aplicaveis;
 	
 	const checkboxesDiv = document.getElementById('capitulos-checkboxes');
 	checkboxesDiv.innerHTML = '';
 
 	if (!sistemas || sistemas.length === 0) {
-		checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO. O PDF será gerado em parte única.</p>';
-		document.getElementById('confirmSelection').textContent = 'GERAR PDF ÚNICO';
+		checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO.</p>';
 	} else {
-		document.getElementById('confirmSelection').textContent = 'OK';
 		sistemas.forEach((sistema, index) => {
 			const label = document.createElement('label');
+			label.style.display = 'block';
+			label.style.marginBottom = '5px';
+			label.style.cursor = 'pointer';
 			label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema}" value="${sistema.sistema}"> ${sistema.sistema || 'Sem título'}`;
 			checkboxesDiv.appendChild(label);
 		});
 	}
 
-	const aplicaveis = coletarDadosFormulario().aplicaveis;
 	const veiculosDiv = document.getElementById('veiculos-aplicaveis-checkboxes');
 	veiculosDiv.innerHTML = '';
 
 	if (!aplicaveis || aplicaveis.length === 0) {
-		veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável...</p>';
+		veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável cadastrado.</p>';
 	} else {
 		aplicaveis.forEach((veiculo, index) => {
 			const label = document.createElement('label');
@@ -1078,7 +1079,7 @@ function abrirModalSelecaoCapitulos() {
 			label.style.marginBottom = '5px';
 			label.style.cursor = 'pointer';
 			const veiculoRef = extrairTooltipVeiculo(veiculo.dadosGerais?.veiculo) || `Veículo ${index + 1}`;
-			label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Aplicável #${index + 1} - <span style="font-size: 0.85em;"><i>${veiculoRef}</i></span>`;
+			label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Veículo Aplicável #${index + 1} - <i>${veiculoRef}</i>`;
 			veiculosDiv.appendChild(label);
 		});
 	}
