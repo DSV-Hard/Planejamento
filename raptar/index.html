@@ -50,23 +50,24 @@
       padding: 20px 40px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: center;
       box-shadow: 0 4px 20px rgba(0,0,0,0.5);
     }
 
     .brand {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 15px;
     }
 
-    .brand-icon {
-      font-size: 2.2rem;
-      color: var(--orange-primary);
-      background: rgba(255, 102, 0, 0.1);
-      padding: 10px 14px;
-      border-radius: 12px;
+    .brand-logo-img {
+      height: 100px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 8px;
       border: 1px solid var(--orange-glow);
+      box-shadow: 0 0 12px var(--orange-glow);
     }
 
     .brand-text h1 {
@@ -84,21 +85,6 @@
     .brand-text p {
       font-size: 0.85rem;
       color: var(--text-muted);
-    }
-
-    .company-badge {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      border: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .company-badge i {
-      color: var(--orange-primary);
     }
 
     /* BANNER TOPO */
@@ -505,16 +491,11 @@
   <!-- HEADER -->
   <header>
     <div class="brand">
-      <div class="brand-icon">
-        <i class="fa-solid fa-dragon"></i>
-      </div>
+      <img src="logo.png" alt="RAPTOR PDF Logo" class="brand-logo-img">
       <div class="brand-text">
         <h1>RAPTOR <span>PDF</span></h1>
         <p>Extrator e Compilador de Capítulos Inteligente</p>
       </div>
-    </div>
-    <div class="company-badge">
-      <i class="fa-solid fa-bolt"></i> Doutor-IE
     </div>
   </header>
 
