@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RAPTOR PDF - Doutor-IE</title>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- PDF.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <!-- PDF-Lib CDN -->
+  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dark: #0f1117;
+      --card-bg: #1a1d26;
+      --card-header: #242836;
+      --orange-primary: #ff6600;
+      --orange-hover: #e05500;
+      --orange-glow: rgba(255, 102, 0, 0.3);
+      --text-main: #f0f2f5;
+      --text-muted: #9aa0a6;
+      --border-color: #2e3445;
+      --accent-green: #00e676;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(135deg, #141720 0%, #1f2433 100%);
+      border-bottom: 3px solid var(--orange-primary);
+      padding: 20px 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .brand-icon {
+      font-size: 2.2rem;
+      color: var(--orange-primary);
+      background: rgba(255, 102, 0, 0.1);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--orange-glow);
+    }
+
+    .brand-text h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 900;
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .brand-text h1 span {
+      color: var(--orange-primary);
+    }
+
+    .brand-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .company-badge {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .company-badge i {
+      color: var(--orange-primary);
+    }
+
+    /* BANNER TOPO */
+    .banner-container {
+      width: 100%;
+      max-width: 1600px;
+      margin: 20px auto 0 auto;
+      padding: 0 40px;
+      text-align: center;
+    }
+
+    .top-banner-img {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(255, 102, 0, 0.15);
+      transition: transform 0.3s ease;
+    }
+
+    .top-banner-img:hover {
+      transform: scale(1.003);
+    }
+
+    /* MAIN CONTAINER */
+    main {
+      flex: 1;
+      padding: 30px 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* UPLOAD AREA */
+    .upload-card {
+      background: var(--card-bg);
+      border: 2px dashed var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      text-align: center;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .upload-card:hover, .upload-card.dragover {
+      border-color: var(--orange-primary);
+      background: rgba(255, 102, 0, 0.03);
+      box-shadow: 0 0 25px var(--orange-glow);
+    }
+
+    .upload-card input[type="file"] {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      color: var(--orange-primary);
+      margin-bottom: 15px;
+    }
+
+    .upload-card h3 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.3rem;
+      margin-bottom: 8px;
+    }
+
+    .upload-card p {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* PROGRESS BAR */
+    .progress-container {
+      display: none;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: -10px;
+    }
+
+    .progress-bar-bg {
+      background: var(--border-color);
+      height: 10px;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-bar-fill {
+      background: linear-gradient(90deg, var(--orange-primary), #ff9900);
+      height: 100%;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    /* COLUMNS GRID */
+    .columns-wrapper {
+      display: none;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .section-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-left: 4px solid var(--orange-primary);
+      padding-left: 12px;
+    }
+
+    .columns-container {
+      display: flex;
+      gap: 20px;
+      overflow-x: auto;
+      padding-bottom: 15px;
+      align-items: flex-start;
+    }
+
+    /* CUSTOM SCROLLBAR */
+    .columns-container::-webkit-scrollbar {
+      height: 8px;
+    }
+    .columns-container::-webkit-scrollbar-track {
+      background: var(--card-bg);
+      border-radius: 4px;
+    }
+    .columns-container::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    .columns-container::-webkit-scrollbar-thumb:hover {
+      background: var(--orange-primary);
+    }
+
+    /* BOOK COLUMN CARD */
+    .book-column {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      min-width: 340px;
+      max-width: 380px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .book-header {
+      background: var(--card-header);
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      position: relative;
+    }
+
+    .book-header-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .book-order-badge {
+      background: var(--orange-primary);
+      color: #fff;
+      font-weight: bold;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .book-title {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 10px;
+    }
+
+    .book-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+    }
+
+    .btn-select-all {
+      background: transparent;
+      border: none;
+      color: var(--orange-primary);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .btn-select-all:hover {
+      text-decoration: underline;
+    }
+
+    .chapters-list {
+      max-height: 450px;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chapter-item {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      transition: all 0.2s;
+    }
+
+    .chapter-item:hover {
+      background: rgba(255, 102, 0, 0.05);
+      border-color: var(--border-color);
+    }
+
+    .chapter-item input[type="checkbox"] {
+      accent-color: var(--orange-primary);
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    .chapter-info {
+      flex: 1;
+    }
+
+    .chapter-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.35;
+      margin-bottom: 6px;
+      cursor: pointer;
+    }
+
+    .chapter-details {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .chapter-pages {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .subsections-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .sub-badge {
+      font-size: 0.68rem;
+      background: rgba(255, 102, 0, 0.12);
+      color: #ff9944;
+      border: 1px solid rgba(255, 102, 0, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    /* FOOTER BAR / BUTTON */
+    .action-bar {
+      position: sticky;
+      bottom: 20px;
+      background: rgba(26, 29, 38, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      margin-top: auto;
+    }
+
+    .summary-text {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .summary-text strong {
+      color: var(--orange-primary);
+    }
+
+    .btn-raptar {
+      background: linear-gradient(135deg, var(--orange-primary) 0%, #e05500 100%);
+      color: white;
+      border: none;
+      padding: 14px 40px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 900;
+      letter-spacing: 1px;
+      border-radius: 10px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px var(--orange-glow);
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-raptar:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 102, 0, 0.5);
+      background: linear-gradient(135deg, #ff771a 0%, #f05e00 100%);
+    }
+
+    .btn-raptar:active {
+      transform: translateY(0);
+    }
+
+    .btn-raptar:disabled {
+      background: var(--border-color);
+      color: var(--text-muted);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    /* CUSTOM MODAL */
+    .custom-modal {
+      position: fixed;
+      top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .custom-modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 30px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px var(--orange-glow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .custom-modal-icon {
+      font-size: 2.5rem;
+      color: var(--orange-primary);
+    }
+
+    .custom-modal-text {
+      font-size: 1rem;
+      color: var(--text-main);
+      line-height: 1.4;
+    }
+
+    .custom-modal-btn {
+      background: var(--orange-primary);
+      color: white;
+      border: none;
+      padding: 10px 25px;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .custom-modal-btn:hover {
+      background: var(--orange-hover);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-dragon"></i>
+      </div>
+      <div class="brand-text">
+        <h1>RAPTOR <span>PDF</span></h1>
+        <p>Extrator e Compilador de Capítulos Inteligente</p>
+      </div>
+    </div>
+    <div class="company-badge">
+      <i class="fa-solid fa-bolt"></i> Doutor-IE
+    </div>
+  </header>
+
+  <!-- BANNER TOPO -->
+  <div class="banner-container">
+    <img src="topo.png" alt="Raptor PDF Banner" class="top-banner-img" onerror="this.style.display='none'">
+  </div>
+
+  <!-- CONTENT -->
+  <main>
+    
+    <!-- UPLOAD ZONE -->
+    <div class="upload-card" id="dropZone">
+      <input type="file" id="fileInput" multiple accept="application/pdf">
+      <div class="upload-icon">
+        <i class="fa-solid fa-file-circle-plus"></i>
+      </div>
+      <h3>Arraste e solte seus PDFs aqui</h3>
+      <p>ou clique para selecionar vários arquivos do computador</p>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-container" id="progressContainer">
+      <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+        <span id="progressText">Lendo estrutura dos PDFs...</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressBarFill"></div>
+      </div>
+    </div>
+
+    <!-- COLUMNS SECTION -->
+    <div class="columns-wrapper" id="columnsWrapper">
+      <div class="section-title">
+        <span><i class="fa-solid fa-layer-group" style="color:var(--orange-primary); margin-right:8px;"></i> Livros e Capítulos Identificados</span>
+      </div>
+
+      <div class="columns-container" id="columnsContainer">
+        <!-- As colunas dos PDFs serão geradas via JS aqui -->
+      </div>
+    </div>
+
+    <!-- ACTION FOOTER -->
+    <div class="action-bar" id="actionBar">
+      <div class="summary-text" id="summaryText">
+        Nenhum capítulo selecionado.
+      </div>
+      <button class="btn-raptar" id="btnRaptar" disabled>
+        <i class="fa-solid fa-scissors"></i> RAPTAR!
+      </button>
+    </div>
+
+  </main>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // Alerta de confirmação anti-fechamento (Sempre ativo)
+    window.addEventListener('beforeunload', (e) => {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    // Modal personalizado substituto de alert
+    function showModalAlert(message) {
+      const existingModal = document.getElementById('customAlertModal');
+      if (existingModal) existingModal.remove();
+
+      const modalHtml = `
+        <div class="custom-modal" id="customAlertModal">
+          <div class="custom-modal-content">
+            <div class="custom-modal-icon">
+              <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            <div class="custom-modal-text">${message}</div>
+            <button class="custom-modal-btn" onclick="document.getElementById('customAlertModal').remove()">OK</button>
+          </div>
+        </div>
+      `;
+      document.body.insertAdjacentHTML('beforeend', modalHtml);
+    }
+
+    // Configura o worker do PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // RegEx para marcas d'água e marcadores de página
+    const HEADER_BRAND_REGEX = /(MANUAL\s*[\|\/I1i]?\s*DIAGRAMAS\s*ELÉTRICOS|MANUALI\s*DIAGRAMAS\s*ELÉTRICOS|DOUTOR\s*[-–—]?\s*IE)/i;
+    const PAGE_COUNTER_REGEX = /^\d{1,2}\s*\/\s*\d{1,2}$|^p[áa]g\b/i;
+
+    let uploadedBooks = []; // Array de livros carregados
+
+    // Referências DOM
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressText = document.getElementById('progressText');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressBarFill = document.getElementById('progressBarFill');
+    const columnsWrapper = document.getElementById('columnsWrapper');
+    const columnsContainer = document.getElementById('columnsContainer');
+    const summaryText = document.getElementById('summaryText');
+    const btnRaptar = document.getElementById('btnRaptar');
+
+    // Drag & Drop Handling
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleFiles(Array.from(e.dataTransfer.files));
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFiles(Array.from(e.target.files));
+      }
+    });
+
+    // Processar Arquivos Enviados
+    async function handleFiles(files) {
+      const pdfFiles = files.filter(f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf'));
+      
+      if (pdfFiles.length === 0) {
+        showModalAlert("Por favor, selecione apenas arquivos em formato PDF!");
+        return;
+      }
+
+      progressContainer.style.display = 'block';
+
+      for (let i = 0; i < pdfFiles.length; i++) {
+        const file = pdfFiles[i];
+        progressText.innerText = `Analisando [${i + 1}/${pdfFiles.length}]: ${file.name}`;
+        
+        const percent = Math.round(((i) / pdfFiles.length) * 100);
+        progressPercent.innerText = `${percent}%`;
+        progressBarFill.style.width = `${percent}%`;
+
+        try {
+          const bookData = await parsePdfBook(file, uploadedBooks.length + 1);
+          uploadedBooks.push(bookData);
+        } catch (err) {
+          console.error(`Erro ao processar ${file.name}:`, err);
+        }
+      }
+
+      progressPercent.innerText = `100%`;
+      progressBarFill.style.width = `100%`;
+      
+      setTimeout(() => {
+        progressContainer.style.display = 'none';
+        renderColumns();
+      }, 400);
+    }
+
+    // Leitura e Varredura refinada do PDF
+    async function parsePdfBook(file, orderIndex) {
+      const arrayBuffer = await file.arrayBuffer();
+      const bufferForPdfJs = arrayBuffer.slice(0);
+      const bufferForPdfLib = arrayBuffer.slice(0);
+
+      const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(bufferForPdfJs) });
+      const pdfDoc = await loadingTask.promise;
+      const numPages = pdfDoc.numPages;
+
+      const pageDetailsList = [];
+
+      // Passagem 1: Escanear todas as páginas e extrair Título e Subtítulo
+      for (let p = 1; p <= numPages; p++) {
+        const page = await pdfDoc.getPage(p);
+        const viewport = page.getViewport({ scale: 1.0 });
+        const textContent = await page.getTextContent();
+        
+        const parsedDetails = extractPageHeaderDetails(textContent.items, viewport.height);
+        
+        pageDetailsList.push({
+          pageNum: p,
+          title: parsedDetails.title,
+          subtitle: parsedDetails.subtitle
+        });
+      }
+
+      // Preencher páginas que porventura não tenham título com o título da página anterior
+      let currentTitleFallback = "Capítulo Não Identificado";
+      for (let i = 0; i < pageDetailsList.length; i++) {
+        if (pageDetailsList[i].title) {
+          currentTitleFallback = pageDetailsList[i].title;
+        } else {
+          pageDetailsList[i].title = currentTitleFallback;
+        }
+      }
+
+      // Passagem 2: Agrupar páginas consecutivas que pertencem ao MESMO TÍTULO DE CAPÍTULO
+      const chapters = [];
+      let currentChap = null;
+
+      pageDetailsList.forEach((pageInfo) => {
+        const normTitle = pageInfo.title.replace(/\s+/g, ' ').trim().toUpperCase();
+
+        if (!currentChap) {
+          currentChap = {
+            title: pageInfo.title,
+            normTitle: normTitle,
+            startPage: pageInfo.pageNum,
+            endPage: pageInfo.pageNum,
+            subtitlesDetected: new Set(pageInfo.subtitle ? [pageInfo.subtitle] : [])
+          };
+        } else if (currentChap.normTitle === normTitle) {
+          // É o mesmo capítulo! Expande a página final e registra o subtítulo
+          currentChap.endPage = pageInfo.pageNum;
+          if (pageInfo.subtitle) {
+            currentChap.subtitlesDetected.add(pageInfo.subtitle);
+          }
+        } else {
+          // Mudou o capítulo! Salva o anterior e começa um novo
+          chapters.push({
+            title: currentChap.title,
+            startPage: currentChap.startPage,
+            endPage: currentChap.endPage,
+            subtitles: Array.from(currentChap.subtitlesDetected)
+          });
+
+          currentChap = {
+            title: pageInfo.title,
+            normTitle: normTitle,
+            startPage: pageInfo.pageNum,
+            endPage: pageInfo.pageNum,
+            subtitlesDetected: new Set(pageInfo.subtitle ? [pageInfo.subtitle] : [])
+          };
+        }
+      });
+
+      if (currentChap) {
+        chapters.push({
+          title: currentChap.title,
+          startPage: currentChap.startPage,
+          endPage: currentChap.endPage,
+          subtitles: Array.from(currentChap.subtitlesDetected)
+        });
+      }
+
+      return {
+        id: 'book_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+        fileName: file.name,
+        order: orderIndex,
+        numPages: numPages,
+        arrayBuffer: bufferForPdfLib,
+        chapters: chapters
+      };
+    }
+
+    // Extrai o Título Principal e o Subtítulo analisando as coordenadas da REGIÃO VERDE (topo da página)
+    function extractPageHeaderDetails(items, pageHeight) {
+      if (!items || items.length === 0) return { title: null, subtitle: null };
+
+      // Área de escaneamento ajustada estritamente para a caixa verde (81% a 91.5% da altura da página)
+      const minTopY = pageHeight * 0.81;
+      const maxHeaderY = pageHeight * 0.915;
+
+      const topCandidates = [];
+
+      items.forEach(item => {
+        const str = item.str ? item.str.trim() : "";
+        if (!str) return;
+
+        const y = item.transform ? item.transform[5] : 0;
+        const x = item.transform ? item.transform[4] : 0;
+
+        // Ignorar marcadores de página (ex: 01/02, Pág 1)
+        if (PAGE_COUNTER_REGEX.test(str) || /^p[áa]g\b/i.test(str)) return;
+
+        // Ignorar marca d'água/cabeçalho acima da caixa verde (MANUAL | DIAGRAMAS ELÉTRICOS, DOUTOR-IE)
+        if (HEADER_BRAND_REGEX.test(str)) return;
+
+        // Filtro estrito dentro da faixa vertical da caixa verde
+        if (y >= minTopY && y <= maxHeaderY) {
+          topCandidates.push({ str, x, y });
+        }
+      });
+
+      if (topCandidates.length === 0) return { title: null, subtitle: null };
+
+      // Ordenar do topo para baixo (Y decrescente)
+      topCandidates.sort((a, b) => b.y - a.y);
+
+      // Agrupar elementos por linha com tolerância de Y (~7 unidades)
+      const rawLines = [];
+      let currentLine = [];
+      let currentY = null;
+
+      topCandidates.forEach(item => {
+        if (currentY === null || Math.abs(item.y - currentY) < 7) {
+          currentLine.push(item);
+          currentY = item.y;
+        } else {
+          currentLine.sort((a, b) => a.x - b.x);
+          const lineText = currentLine.map(i => i.str).join(" ").trim();
+          if (lineText) rawLines.push(lineText);
+          
+          currentLine = [item];
+          currentY = item.y;
+        }
+      });
+
+      if (currentLine.length > 0) {
+        currentLine.sort((a, b) => a.x - b.x);
+        const lineText = currentLine.map(i => i.str).join(" ").trim();
+        if (lineText) rawLines.push(lineText);
+      }
+
+      // Remover resíduos de contador de página que possam ter ficado (ex: "01/02")
+      const lines = rawLines
+        .map(line => line.replace(/\s*\b\d{1,2}\/\d{1,2}\b/g, "").trim())
+        .filter(line => line.length > 0 && !HEADER_BRAND_REGEX.test(line));
+
+      if (lines.length === 0) return { title: null, subtitle: null };
+
+      // Regra direta da região verde:
+      // 1ª linha = Título do Capítulo (ex: "AR-CONDICIONADO SEMIAUTOMÁTICO - CLIMATIC")
+      // 2ª linha em diante = Subtítulo (ex: "DIAGRAMA ELÉTRICO")
+      const chapterTitle = lines[0];
+      const detectedSubtitle = lines.length > 1 ? lines.slice(1).join(" - ") : null;
+
+      return {
+        title: chapterTitle,
+        subtitle: detectedSubtitle
+      };
+    }
+
+    // Renderizar as Colunas de Livros na Tela
+    function renderColumns() {
+      if (uploadedBooks.length === 0) {
+        columnsWrapper.style.display = 'none';
+        return;
+      }
+
+      columnsWrapper.style.display = 'flex';
+      columnsContainer.innerHTML = '';
+
+      uploadedBooks.forEach((book, bookIdx) => {
+        const col = document.createElement('div');
+        col.className = 'book-column';
+        col.dataset.bookIndex = bookIdx;
+
+        let chaptersHtml = '';
+        book.chapters.forEach((chap, chapIdx) => {
+          const totalPages = chap.endPage - chap.startPage + 1;
+          
+          // Badges demonstrando os subtítulos incluídos neste capítulo
+          let subBadgesHtml = '';
+          if (chap.subtitles && chap.subtitles.length > 0) {
+            subBadgesHtml = '<div class="subsections-badges">';
+            chap.subtitles.forEach(sub => {
+              subBadgesHtml += `<span class="sub-badge"><i class="fa-solid fa-check"></i> ${sub}</span>`;
+            });
+            subBadgesHtml += '</div>';
+          }
+
+          chaptersHtml += `
+            <div class="chapter-item">
+              <input type="checkbox" 
+                     class="chap-checkbox" 
+                     id="cb_${book.id}_${chapIdx}" 
+                     data-book-index="${bookIdx}"
+                     data-start="${chap.startPage}" 
+                     data-end="${chap.endPage}">
+              <div class="chapter-info">
+                <label for="cb_${book.id}_${chapIdx}" class="chapter-name">${chap.title}</label>
+                <div class="chapter-details">
+                  <div class="chapter-pages"><i class="fa-regular fa-file"></i> Páginas: ${chap.startPage} a ${chap.endPage} (${totalPages} ${totalPages > 1 ? 'págs' : 'pág'})</div>
+                  ${subBadgesHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        col.innerHTML = `
+          <div class="book-header">
+            <div class="book-header-top">
+              <span class="book-order-badge">LIVRO #${book.order}</span>
+              <span style="font-size:0.75rem; color:var(--text-muted);">${book.numPages} PÁGS</span>
+            </div>
+            <div class="book-title" title="${book.fileName}">${book.fileName}</div>
+            <div class="book-actions">
+              <span style="font-size:0.75rem; color:var(--text-muted);">${book.chapters.length} Capítulos</span>
+              <button class="btn-select-all" onclick="toggleSelectAll(${bookIdx})">Marcar Todos</button>
+            </div>
+          </div>
+          <div class="chapters-list">
+            ${chaptersHtml}
+          </div>
+        `;
+
+        columnsContainer.appendChild(col);
+      });
+
+      // Escutar alterações nos checkboxes
+      document.querySelectorAll('.chap-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateSummary);
+      });
+
+      updateSummary();
+    }
+
+    // Alternar Marcar/Desmarcar Todos de uma coluna
+    function toggleSelectAll(bookIdx) {
+      const col = columnsContainer.children[bookIdx];
+      const checkboxes = col.querySelectorAll('.chap-checkbox');
+      const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+
+      checkboxes.forEach(cb => cb.checked = !allChecked);
+      updateSummary();
+    }
+
+    // Atualizar resumo no rodapé
+    function updateSummary() {
+      const selected = document.querySelectorAll('.chap-checkbox:checked');
+      const totalSelected = selected.length;
+
+      if (totalSelected === 0) {
+        summaryText.innerHTML = 'Nenhum capítulo selecionado.';
+        btnRaptar.disabled = true;
+      } else {
+        summaryText.innerHTML = `Total de capítulos selecionados para compilar: <strong>${totalSelected}</strong>`;
+        btnRaptar.disabled = false;
+      }
+    }
+
+    // BOTÃO "RAPTAR!" (União dos PDFs)
+    btnRaptar.addEventListener('click', async () => {
+      const selectedBoxes = document.querySelectorAll('.chap-checkbox:checked');
+      if (selectedBoxes.length === 0) return;
+
+      btnRaptar.disabled = true;
+      btnRaptar.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> RAPTANDO...`;
+
+      try {
+        const mergedPdf = await PDFLib.PDFDocument.create();
+        const columns = document.querySelectorAll('.book-column');
+        
+        for (let col of columns) {
+          const bookIdx = col.dataset.bookIndex;
+          const book = uploadedBooks[bookIdx];
+          const checkedInCol = col.querySelectorAll('.chap-checkbox:checked');
+
+          if (checkedInCol.length > 0) {
+            const srcPdf = await PDFLib.PDFDocument.load(book.arrayBuffer);
+
+            for (let cb of checkedInCol) {
+              const start = parseInt(cb.dataset.start, 10);
+              const end = parseInt(cb.dataset.end, 10);
+
+              const pageIndices = [];
+              for (let p = start; p <= end; p++) {
+                pageIndices.push(p - 1); // PDF-Lib utiliza índice 0
+              }
+
+              const copiedPages = await mergedPdf.copyPages(srcPdf, pageIndices);
+              copiedPages.forEach(p => mergedPdf.addPage(p));
+            }
+          }
+        }
+
+        // Fazer o download automático do compilado final
+        const pdfBytes = await mergedPdf.save();
+        const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `RAPTADO_COMPILADO_${new Date().getTime()}.pdf`;
+        link.click();
+
+      } catch (err) {
+        console.error("Erro ao gerar PDF:", err);
+        showModalAlert("Ocorreu um erro ao unificar os capítulos. Verifique o console.");
+      } finally {
+        btnRaptar.disabled = false;
+        btnRaptar.innerHTML = `<i class="fa-solid fa-scissors"></i> RAPTAR!`;
+      }
+    });
+  </script>
+</body>
+</html>
