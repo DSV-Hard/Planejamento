@@ -165,39 +165,47 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 
 	const div = document.createElement("div");
 	div.className = "system-block";
+
+	const opcoesSistemas = [
+		"ADAS", "AIRBAG", "ALARME", "ALARME E TRAVAS", "ALERTA DE PONTO CEGO", "ALIMENTAÇÃO POSITIVA",
+		"AR-CONDICIONADO", "AR-CONDICIONADO AUTOMÁTICO", "AR-CONDICIONADO MANUAL", "AR-CONDICIONADO SEMIAUTOMÁTICO",
+		"ARREFECIMENTO DO MOTOR", "ASSISTÊNCIA DE ESTACIONAMENTO", "BANCOS", "BLOQUEIO DO DIFERENCIAL", "BUZINA",
+		"CAIXA DE FUSÍVEIS DA BATERIA", "CAIXA DE FUSÍVEIS DO INTERIOR", "CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS",
+		"CÂMERA DE RÉ", "CARGA E PARTIDA", "CENTRAL DE CARROCERIA", "CENTRAL DE CARROCERIA 1", "CENTRAL DE CARROCERIA 2",
+		"CENTRAL MULTIMÍDIA", "CHAVE DE SETA", "CHAVE PRESENCIAL", "CHAVE PRESENCIAL E TPMS", "COMPUTADOR DE BORDO",
+		"COMUTADOR DE IGNIÇÃO ELETRÔNICO", "CONECTORES DE PEITO", "CONVERSOR DC/DC", "DIREÇÃO", "FREIO ABS",
+		"FREIO ABS E DE ESTACIONAMENTO", "FREIO EBS", "FREIO DE ESTACIONAMENTO", "ILUMINAÇÃO", "ILUMINAÇÃO EXTERNA", "ILUMINAÇÃO INTERNA",
+		"IMOBILIZADOR DE PARTIDA", "INJEÇÃO ELETRÔNICA", "INJEÇÃO ELETRÔNICA E PÓS-TRATAMENTO", "INJEÇÃO ELETRÔNICA E TRAÇÃO 4X4",
+		"INJEÇÃO ELETRÔNICA E TRANSMISSÃO", "LIMPADORES E LAVADORES", "MONITORAMENTO DA PRESSÃO DOS PNEUS - TPMS",
+		"MÓDULO DA PORTA DO MOTORISTA", "MÓDULO DA PORTA DO PASSAGEIRO", "MÓDULO DA PORTA TRASEIRA DIREITA",
+		"MÓDULO DA PORTA TRASEIRA ESQUERDA", "MÓDULO DAS PORTAS", "MÓDULO DE CONFORTO", "PAINÉIS DE INSTRUMENTOS",
+		"PAINEL DE INSTRUMENTOS", "PAINEL DE INSTRUMENTOS E IMOBILIZADOR", "PÓS-TRATAMENTO", "PREDISPOSIÇÃO DE RÁDIO",
+		"RÁDIO", "REBOQUE", "REDES DE COMUNICAÇÃO", "RETROVISORES", "RETROVISORES E VIDROS ELÉTRICOS", "TELEMÁTICA",
+		"TOMADA 12V", "TRAÇÃO 4X4", "TRAÇÃO 4X4 E BLOQUEIO DO DIFERENCIAL", "TRANSMISSÃO", "TRAVAS E VIDROS ELÉTRICOS",
+		"TRAVAS ELÉTRICAS", "TREM DE FORÇA", "VENTILAÇÃO INTERNA", "VIDROS ELÉTRICOS", "VISÃO 360º", "VOLANTE MULTIFUNCIONAL",
+		"FUSÍVEIS E RELÉS"
+	];
+
+	const sistemaUpper = (dados.sistema || '').toUpperCase();
+	const isOutro = dados.sistema && !opcoesSistemas.some(opt => opt.toUpperCase() === sistemaUpper) && sistemaUpper !== 'OUTRO';
+
+	let optionsHtml = `<option value="">Selecione</option>`;
+	opcoesSistemas.forEach(opt => {
+		const isSelected = sistemaUpper === opt.toUpperCase() ||
+			(opt === "CARGA E PARTIDA" && sistemaUpper === "SISTEMA DE CARGA E PARTIDA") ||
+			(opt === "TRANSMISSÃO" && sistemaUpper === "TRANSMISSÃO AUTOMÁTICA");
+		optionsHtml += `<option value="${opt}" ${isSelected ? 'selected' : ''}>${opt}</option>`;
+	});
+	optionsHtml += `<option value="OUTRO" ${isOutro || sistemaUpper === 'OUTRO' ? 'selected' : ''}>OUTRO</option>`;
+
 	div.innerHTML = `
 		<label>Título do capítulo</label>
 		<select name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}" id="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex}); renderizarFormularioCapituloAplicaveis(${veiculoIndex}, ${sistemaIndex});">
-			<option value="">Selecione</option>
-			<option value="Airbag" ${dados.sistema === 'Airbag' ? 'selected' : ''}>Airbag</option>
-			<option value="Alimentação Positiva" ${dados.sistema === 'Alimentação Positiva' ? 'selected' : ''}>Alimentação Positiva</option>
-			<option value="Ar-condicionado" ${dados.sistema === 'Ar-condicionado' ? 'selected' : ''}>Ar-condicionado</option>
-			<option value="Central de Carroceria" ${dados.sistema === 'Central de Carroceria' ? 'selected' : ''}>Central de Carroceria</option>
-			<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
-			<option value="Conectores de Peito" ${dados.sistema === 'Conectores de Peito' ? 'selected' : ''}>Conectores de Peito</option>
-			<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
-			<option value="Freio EBS" ${dados.sistema === 'Freio EBS' ? 'selected' : ''}>Freio EBS</option>
-			<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
-			<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
-			<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
-			<option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
-			<option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
-			<option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
-			<option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
-			<option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
-			<option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
-			<option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
-			<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
-			<option value="Outro" ${dados.sistema && ![
-			'Airbag','Alimentação Positiva','Ar-condicionado','Central de Carroceria','Central Multimídia',
-			'Conectores de Peito','Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
-			'Iluminação','Injeção Eletrônica','Sistema de Carga e Partida','Injeção Eletrônica e Transmissão',
-			'Painel de Instrumentos','Rádio','Redes de Comunicação','Tração 4x4','Transmissão Automática'
-			].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
+			${optionsHtml}
 		</select>
 		<div id="outrocampo_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display:none; margin-top: 5px;">
 			<label>Especifique o título:</label>
-			<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.sistema && !['Fusíveis e Relés', 'Alimentação Positiva', 'Conectores de Peito', 'Central de Carroceria', 'Injeção Eletrônica', 'Sistema de Carga e Partida', 'Injeção Eletrônica e Transmissão', 'Transmissão Automática', 'Tração 4x4', 'Redes de Comunicação', 'Painel de Instrumentos', 'Airbag', 'Ar-condicionado', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Rádio', 'Central Multimídia', 'Iluminação'].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+			<input type="text" name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${isOutro ? dados.sistema : ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 		</div>
 		<div id="formulario-capitulo-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
 	`;
@@ -208,7 +216,7 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 	const outroInput = div.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
 
 	const toggleOutroCampo = () => {
-		if (selectElement.value === 'Outro' || (selectElement.value === '' && outroInput.value !== '')) {
+		if (selectElement.value.toUpperCase() === 'OUTRO' || (selectElement.value === '' && outroInput.value !== '')) {
 			outroCampo.style.display = 'block';
 		} else {
 			outroCampo.style.display = 'none';
@@ -396,7 +404,7 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 	if (!systemDiv) return;
 
 	const selectElement = systemDiv.querySelector(`select[name="sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
-	const sistemaValor = selectElement.value === 'Outro' 
+	const sistemaValor = selectElement.value.toUpperCase() === 'OUTRO' 
 		? systemDiv.querySelector(`input[name="sistema_outro_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`)?.value 
 		: selectElement.value;
 	
@@ -754,10 +762,16 @@ function carregarDeJSON(input) {
 				sistemasData = dataPrincipal.sistemas || [];
 				
 				// Normalização retrocompatível de JSONs antigos
-				const standardList = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+				const nonModuleList = [
+					"FUSÍVEIS E RELÉS", "ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", 
+					"CARGA E PARTIDA", "SISTEMA DE CARGA E PARTIDA", 
+					"CAIXA DE FUSÍVEIS DA BATERIA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
+					"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS"
+				];
+				
 				sistemasData.forEach(s => {
 					if (!s.modulo_dedicado) {
-						if (standardList.includes(s.sistema) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
+						if (!nonModuleList.includes((s.sistema || '').toUpperCase()) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
 							s.modulo_dedicado = 'sim';
 						} else {
 							s.modulo_dedicado = 'nao';
@@ -779,7 +793,7 @@ function carregarDeJSON(input) {
 					if (v.sistemas) {
 						v.sistemas.forEach(s => {
 							if (!s.modulo_dedicado) {
-								if (standardList.includes(s.sistema) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
+								if (!nonModuleList.includes((s.sistema || '').toUpperCase()) || s.pagloc || s.pagcon || s.pagdiag || s.modulo) {
 									s.modulo_dedicado = 'sim';
 								} else {
 									s.modulo_dedicado = 'nao';
