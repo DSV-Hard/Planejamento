@@ -671,19 +671,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 			y += lineSpacing / 2;
 
-			let tituloCapitulo = sistema.sistema || '';
-			if (sistema.sistema === 'Iluminação') {
-				if (sistema.tipo_iluminacao === 'interna') tituloCapitulo = 'ILUMINAÇÃO INTERNA';
-				else if (sistema.tipo_iluminacao === 'externa') tituloCapitulo = 'ILUMINAÇÃO EXTERNA';
-				else if (sistema.tipo_iluminacao === 'ambos') tituloCapitulo = 'ILUMINAÇÃO INTERNA E EXTERNA';
-				else tituloCapitulo = 'ILUMINAÇÃO';
-			} else if (sistema.sistema === 'Fusíveis e Relés') {
+			let tituloCapitulo = (sistema.sistema || '').toUpperCase();
+			if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
 				const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
 				tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
-			} else if (sistema.sistema === 'Outro' && !tituloCapitulo) {
-				tituloCapitulo = 'Outro (Não especificado)'.toUpperCase();
-			} else {
-				tituloCapitulo = tituloCapitulo.toUpperCase();
+			} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
+				tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
 			}
 			
 			addHighlightedText(`${tituloCapitulo}`, 14, 'bold', 0, 212, 255, 214);
@@ -696,14 +689,21 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			
 			addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
 			
-			const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-			const isPaginasFixas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+			const sysUpper = (sistema.sistema || '').toUpperCase();
+			const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
+			const isPaginasFixas = [
+				"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
+				"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
+				"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+				"CAIXA DE FUSÍVEIS DA BATERIA"
+			].includes(sysUpper);
 			const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
 			
 			if (!isCaixasForm && !isPaginasFixas) {
 				addLabeledValue('Módulo Dedicado', isModuloDedicado ? 'Sim' : 'Não');
 			}
 
+			// EXIBE OS CAMPOS DE MÓDULO se não for caixas/páginas fixas E tiver módulo dedicado
 			if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
 				addLabeledValue('Módulo principal', `${sistema.modulo || ''}`);
 				addLabeledValue('Nome no material', `${sistema.nomematerial || ''}`);
@@ -718,6 +718,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			addText('DESENVOLVIMENTO:', 14, "bold", 0);
 			y += lineSpacing / 2;
 
+			// RENDERIZA O DESENVOLVIMENTO baseado no tipo
 			if (isCaixasForm) {
 				if (sistema.caixas && sistema.caixas.length > 0) {
 					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
@@ -814,19 +815,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					if (y > pageHeight - margin * 4) { doc.addPage(); y = margin; }
 					y += lineHeight;
 
-					let tituloCapitulo = sistema.sistema || '';
-					if (sistema.sistema === 'Iluminação') {
-						if (sistema.tipo_iluminacao === 'interna') tituloCapitulo = 'ILUMINAÇÃO INTERNA';
-						else if (sistema.tipo_iluminacao === 'externa') tituloCapitulo = 'ILUMINAÇÃO EXTERNA';
-						else if (sistema.tipo_iluminacao === 'ambos') tituloCapitulo = 'ILUMINAÇÃO INTERNA E EXTERNA';
-						else tituloCapitulo = 'ILUMINAÇÃO';
-					} else if (sistema.sistema === 'Fusíveis e Relés') {
+					let tituloCapitulo = (sistema.sistema || '').toUpperCase();
+					if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
 						const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
 						tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
-					} else if (sistema.sistema === 'Outro' && !tituloCapitulo) {
-						tituloCapitulo = 'Outro (Não especificado)'.toUpperCase();
-					} else {
-						tituloCapitulo = tituloCapitulo.toUpperCase();
+					} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
+						tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
 					}
 					
 					addHighlightedText(`${tituloCapitulo}`, 14, 'bold', 0, 250, 231, 67);
@@ -843,8 +837,14 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					}
 					addLabeledValue('Nº páginas prevista', sistema.transferencia === 'modificar' ? '0' : sistema.paginasprev);
 					
-					const isCaixasForm = sistema.sistema === "Fusíveis e Relés";
-					const isPaginasFixas = ["Alimentação Positiva", "Conectores de Peito", "Sistema de Carga e Partida"].includes(sistema.sistema);
+					const sysUpper = (sistema.sistema || '').toUpperCase();
+					const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
+					const isPaginasFixas = [
+						"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
+						"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
+						"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+						"CAIXA DE FUSÍVEIS DA BATERIA"
+					].includes(sysUpper);
 					const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
 
 					if (!isCaixasForm && !isPaginasFixas) {
@@ -939,6 +939,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		? dataPrincipal.dificuldade_parte2 
 		: dataPrincipal.dificuldade;
 
+	let somaTotal = 0;
 	let somaTransferidas = 0, somaCriadas = 0, somaModificadas = 0;
 	let tempoTotalPrincipal = 0;
 	
@@ -957,7 +958,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		});
 	}
 
-	let somaTotal = somaCriadas + somaTransferidas + somaModificadas;
+	somaTotal = somaCriadas + somaTransferidas + somaModificadas;
 	
 	const multPrinc = getMultiplicadorPrincipal(dificuldadeExibir);
 	const estimativaPrincipal = (tempoTotalPrincipal * multPrinc).toFixed(2).replace('.', ',');
@@ -972,7 +973,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	
 	if (dataAplicaveis && dataAplicaveis.length > 0) {
 		y += lineSpacing;
-		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0, somaModificadasAplicaveis = 0;
+		let somaTotalAplicaveis = 0, somaTransferidasAplicaveis = 0, somaCriadasAplicaveis = 0, somaModificadasAplicaveis = 0;
 		let tempoTotalAplicaveis = 0;
 		
 		dataAplicaveis.forEach(v => {
@@ -983,20 +984,23 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						somaModificadasAplicaveis += (paginas || 1);
 					} else if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
-						tempoTotalAplicaveis += (paginas * 1.0); // TEMPO BASE CORRETO: 1.0h por página aplicada
+						tempoTotalAplicaveis += (paginas * 1.0);
+					} else {
+						somaCriadasAplicaveis += paginas;
+						tempoTotalAplicaveis += (paginas * 1.0);
 					}
 				});
 			}
 		});
 
-		somaTotalAplicaveis = somaTransferidasAplicaveis + somaModificadasAplicaveis;
+		somaTotalAplicaveis = somaCriadasAplicaveis + somaTransferidasAplicaveis + somaModificadasAplicaveis;
 		
 		const multAplic = getMultiplicadorAplicaveis(dataPrincipal.dificuldade_aplicaveis);
 		const estimativaAplicaveis = (tempoTotalAplicaveis * multAplic).toFixed(2).replace('.', ',');
 		
 		addHighlightedText(`VEÍCULOS APLICÁVEIS`, 14, 'bold', 0, 250, 231, 67);
 		addLabeledValue('DIFICULDADE', `${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`);
-		addLabeledValue('PPA (Total)', `${somaTotalAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}`);
+		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Criadas: ${somaCriadasAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}`);
 		addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaAplicaveis} horas`);
 	}
 	
@@ -1004,18 +1008,10 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
 		const partes = dataPrincipal.veiculo.split('>');
 		if (partes.length >= 5) {
-			const p1 = partes[1].trim();
-			if (/^\d/.test(p1)) {
-				const ano = partes[1].trim();
-				const modelo = partes[3].trim();
-				const motor = partes[4].trim();
-				nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
-			} else {
-				const modelo = partes[2].trim();
-				const motor = partes[3].trim();
-				const ano = partes[4].trim();
-				nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
-			}
+			const ano = partes[1].trim();
+			const modelo = partes[3].trim();
+			const motor = partes[4].trim();
+			nomeBase = `Planejamento - ${ano} ${modelo} ${motor}`;
 		}
 	} else if (dataPrincipal.veiculo) {
 		nomeBase = `Planejamento - ${dataPrincipal.veiculo}`;
@@ -1047,31 +1043,30 @@ function fecharModalDivisaoPDF() {
 }
 
 function abrirModalSelecaoCapitulos() {
-	const dados = coletarDadosFormulario();
-	const sistemas = dados.principal.sistemas;
-	const aplicaveis = dados.aplicaveis;
+	const dataPrincipal = coletarDadosFormulario().principal;
+	const sistemas = dataPrincipal.sistemas;
 	
 	const checkboxesDiv = document.getElementById('capitulos-checkboxes');
 	checkboxesDiv.innerHTML = '';
 
 	if (!sistemas || sistemas.length === 0) {
-		checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO.</p>';
+		checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO. O PDF será gerado em parte única.</p>';
+		document.getElementById('confirmSelection').textContent = 'GERAR PDF ÚNICO';
 	} else {
+		document.getElementById('confirmSelection').textContent = 'OK';
 		sistemas.forEach((sistema, index) => {
 			const label = document.createElement('label');
-			label.style.display = 'block';
-			label.style.marginBottom = '5px';
-			label.style.cursor = 'pointer';
 			label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema}" value="${sistema.sistema}"> ${sistema.sistema || 'Sem título'}`;
 			checkboxesDiv.appendChild(label);
 		});
 	}
 
+	const aplicaveis = coletarDadosFormulario().aplicaveis;
 	const veiculosDiv = document.getElementById('veiculos-aplicaveis-checkboxes');
 	veiculosDiv.innerHTML = '';
 
 	if (!aplicaveis || aplicaveis.length === 0) {
-		veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável cadastrado.</p>';
+		veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável...</p>';
 	} else {
 		aplicaveis.forEach((veiculo, index) => {
 			const label = document.createElement('label');
@@ -1079,7 +1074,7 @@ function abrirModalSelecaoCapitulos() {
 			label.style.marginBottom = '5px';
 			label.style.cursor = 'pointer';
 			const veiculoRef = extrairTooltipVeiculo(veiculo.dadosGerais?.veiculo) || `Veículo ${index + 1}`;
-			label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Veículo Aplicável #${index + 1} - <i>${veiculoRef}</i>`;
+			label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Aplicável #${index + 1} - <span style="font-size: 0.85em;"><i>${veiculoRef}</i></span>`;
 			veiculosDiv.appendChild(label);
 		});
 	}
