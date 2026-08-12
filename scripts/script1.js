@@ -146,10 +146,20 @@ function extrairTooltipVeiculo(veiculoStr) {
 	if (veiculoStr.includes('>')) {
 		const partes = veiculoStr.split('>');
 		if (partes.length >= 5) {
-			const ano = partes[1].trim();
-			const modelo = partes[3].trim();
-			const motor = partes[4].trim();
-			return `${ano} ${modelo} ${motor}`;
+			const p1 = partes[1].trim();
+			// Se o 2º elemento começar com número (ex: 1994 > Mazda > RX-7), segue o padrão antigo
+			if (/^\d/.test(p1)) {
+				const ano = partes[1].trim();
+				const modelo = partes[3].trim();
+				const motor = partes[4].trim();
+				return `${ano} ${modelo} ${motor}`;
+			} else {
+				// Formato com Marca na 2ª posição (ex: Car > Chevrolet > Onix > 1.0... > 2026-)
+				const modelo = partes[2].trim();
+				const motor = partes[3].trim();
+				const ano = partes[4].trim();
+				return `${ano} ${modelo} ${motor}`;
+			}
 		}
 	}
 	return veiculoStr;
@@ -212,23 +222,28 @@ function renderizarFormularioCapitulo(idx) {
 	container.innerHTML = ""; // limpa antes
 	if (!valor) return;
 
-	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+	const valorUpper = valor.toUpperCase();
+
+	const isCaixasForm = valorUpper === "FUSÍVEIS E RELÉS";
+	const isPaginasForm = [
+		"ALIMENTAÇÃO POSITIVA", 
+		"CONECTORES DE PEITO", 
+		"CARGA E PARTIDA", 
+		"SISTEMA DE CARGA E PARTIDA",
+		"CAIXA DE FUSÍVEIS DO INTERIOR", 
+		"CAIXA DE FUSÍVEIS DO MOTOR", 
+		"CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+		"CAIXA DE FUSÍVEIS DA BATERIA"
+	].includes(valorUpper);
 
 	// TRAVA DE SEGURANÇA: Compatibilidade com JSONs antigos
 	if (!dados.modulo_dedicado) {
-		if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
+		if (!isCaixasForm && !isPaginasForm) {
 			dados.modulo_dedicado = 'sim';
 		} else {
 			dados.modulo_dedicado = 'nao';
 		}
 	}
-
-	const isCaixasForm = valor === "Fusíveis e Relés";
-	const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
-	const isIluminacaoForm = valor === "Iluminação";
-	const isOutroForm = valor === "Outro";
-	const isStandardModuleForm = !isCaixasForm && !isPaginasForm && !isIluminacaoForm && !isOutroForm;
-
 
 	// --- Bloco Comum (Transferência e Páginas Previstas) ---
 	const commonTransferHtml = `
@@ -289,7 +304,7 @@ function renderizarFormularioCapitulo(idx) {
 		</fieldset>
 	`;
 
-	// --- Bloco Desenvolvimento "Páginas" (Ex: Alimentação Positiva ou Módulo NÃO) ---
+	// --- Bloco Desenvolvimento "Páginas" ---
 	const pagesDevelopmentHtml = `
 		<fieldset>
 			<legend>DESENVOLVIMENTO</legend>
@@ -298,7 +313,7 @@ function renderizarFormularioCapitulo(idx) {
 		</fieldset>
 	`;
 
-	// --- Bloco Desenvolvimento "Caixas" (Ex: Fusíveis) ---
+	// --- Bloco Desenvolvimento "Caixas" ---
 	const caixasDevelopmentHtml = `
 		<fieldset>
 			<legend>DESENVOLVIMENTO</legend>
@@ -323,43 +338,15 @@ function renderizarFormularioCapitulo(idx) {
 	} else if (isPaginasForm) {
 		container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
 		renderizarPaginas(idx);
-	} else if (isIluminacaoForm) {
-		container.innerHTML = `
-			${commonTransferHtml}
-			<div class="checkbox-blockk"></div>
-			<label class="checkbox-title">TIPO:</label>
-			<div class="checkbox-inline" onchange="salvarDadosSistema(${idx})">
-				<label><input type="radio" name="tipo_iluminacao_${idx}" value="interna" ${dados.tipo_iluminacao === 'interna' || !dados.tipo_iluminacao ? 'checked' : ''}> INTERNA</label>
-				<label><input type="radio" name="tipo_iluminacao_${idx}" value="externa" ${dados.tipo_iluminacao === 'externa' ? 'checked' : ''}> EXTERNA</label>
-				<label><input type="radio" name="tipo_iluminacao_${idx}" value="ambos" ${dados.tipo_iluminacao === 'ambos' ? 'checked' : ''}> AMBOS</label>
-			</div>
-			<div class="checkbox-blockk"></div>
-			<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
-			<div class="checkbox-inline" onchange="toggleModuloDedicadoPrincipal(${idx}); salvarDadosSistema(${idx})">
-				<label><input type="radio" name="modulo_dedicado_${idx}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
-				<label><input type="radio" name="modulo_dedicado_${idx}" value="nao" ${dados.modulo_dedicado === 'nao' || !dados.modulo_dedicado ? 'checked' : ''}> NÃO</label>
-			</div>
-			
-			<div id="standard-module-fields_${idx}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
-				${standardModuleHtml}
-			</div>
-			
-			<div id="development-fields_${idx}">
-				${dados.modulo_dedicado === 'sim' ? standardDevelopmentHtml : pagesDevelopmentHtml}
-			</div>
-		`;
-		if (dados.modulo_dedicado !== 'sim') {
-			renderizarPaginas(idx);
-		}
 	} else {
-		// TODOS OS DEMAIS SISTEMAS (Standard Systems + Outro) usam a pergunta de Módulo Dedicado
+		// TODOS OS DEMAIS SISTEMAS (Com Módulo Dedicado opcional)
 		container.innerHTML = `
 			${commonTransferHtml}
 			<div class="checkbox-blockk"></div>
 			<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
 			<div class="checkbox-inline" onchange="toggleModuloDedicadoPrincipal(${idx}); salvarDadosSistema(${idx})">
 				<label><input type="radio" name="modulo_dedicado_${idx}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
-				<label><input type="radio" name="modulo_dedicado_${idx}" value="nao" ${dados.modulo_dedicado === 'nao' || !dados.modulo_dedicado ? 'checked' : ''}> NÃO</label>
+				<label><input type="radio" name="modulo_dedicado_${idx}" value="nao" ${dados.modulo_dedicado === 'nao' ? 'checked' : ''}> NÃO</label>
 			</div>
 			
 			<div id="standard-module-fields_${idx}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
@@ -370,6 +357,7 @@ function renderizarFormularioCapitulo(idx) {
 				${dados.modulo_dedicado === 'sim' ? standardDevelopmentHtml : pagesDevelopmentHtml}
 			</div>
 		`;
+
 		if (dados.modulo_dedicado !== 'sim') {
 			renderizarPaginas(idx);
 		}
@@ -387,110 +375,110 @@ function renderizarFormularioCapitulo(idx) {
 }
 
 function adicionarCaixa(sistemaIndex) {
-     const dados = sistemasData[sistemaIndex];
-     if (!dados.caixas) dados.caixas = [];
-     dados.caixas.push({ nome: '', descricoes: '' });
-     renderizarCaixas(sistemaIndex);
- }
+	const dados = sistemasData[sistemaIndex];
+	if (!dados.caixas) dados.caixas = [];
+	dados.caixas.push({ nome: '', descricoes: '' });
+	renderizarCaixas(sistemaIndex);
+}
 
- function removerCaixa(sistemaIndex, caixaIndex) {
-     sistemasData[sistemaIndex].caixas.splice(caixaIndex, 1);
-     renderizarCaixas(sistemaIndex);
- }
+function removerCaixa(sistemaIndex, caixaIndex) {
+	sistemasData[sistemaIndex].caixas.splice(caixaIndex, 1);
+	renderizarCaixas(sistemaIndex);
+}
 
- function moverCaixa(sistemaIndex, caixaIndex, direcao) {
-     const caixas = sistemasData[sistemaIndex].caixas;
-     const newIndex = caixaIndex + direcao;
-     if (newIndex < 0 || newIndex >= caixas.length) return;
-     const itemMovido = caixas.splice(caixaIndex, 1)[0];
-     caixas.splice(newIndex, 0, itemMovido);
-     renderizarCaixas(sistemaIndex);
- }
+function moverCaixa(sistemaIndex, caixaIndex, direcao) {
+	const caixas = sistemasData[sistemaIndex].caixas;
+	const newIndex = caixaIndex + direcao;
+	if (newIndex < 0 || newIndex >= caixas.length) return;
+	const itemMovido = caixas.splice(caixaIndex, 1)[0];
+	caixas.splice(newIndex, 0, itemMovido);
+	renderizarCaixas(sistemaIndex);
+}
 
- function renderizarCaixas(sistemaIndex) {
-     const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
-     if (!container) return;
-     const caixas = sistemasData[sistemaIndex].caixas || [];
-     container.innerHTML = '';
-     caixas.forEach((caixa, i) => {
-         const descId = `descricoes_${sistemaIndex}_${i}`;
-         const caixaDiv = document.createElement('div');
-         caixaDiv.className = 'caixa-item';
-         caixaDiv.innerHTML = `
-             <label for="nome_caixa_${sistemaIndex}_${i}">Nome da Caixa</label>
-             <input type="text" id="nome_caixa_${sistemaIndex}_${i}" value="${caixa.nome || ''}" oninput="sistemasData[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
-             <label for="${descId}">Descrições</label>
-             <div class="development-field-container">
-                 <div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${caixa.descricoes || ''}</div>
-                 <div class="caixa-actions-column">
-                     <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-                     <input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
-                     <button type="button" class="btn-remover-caixa" onclick="removerCaixa(${sistemaIndex}, ${i})">- Remover</button>
-                     <div class="mover-buttons">
-                         <button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
-                         <button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
-                     </div>
-                 </div>
-             </div>`;
-         container.appendChild(caixaDiv);
-         const descElement = document.getElementById(descId);
-         descElement.oninput = () => { sistemasData[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
-         setupDragAndDrop(descId);
-         setupEditableContent(descId);
-     });
- }
+function renderizarCaixas(sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
+	if (!container) return;
+	const caixas = sistemasData[sistemaIndex].caixas || [];
+	container.innerHTML = '';
+	caixas.forEach((caixa, i) => {
+		const descId = `descricoes_${sistemaIndex}_${i}`;
+		const caixaDiv = document.createElement('div');
+		caixaDiv.className = 'caixa-item';
+		caixaDiv.innerHTML = `
+			<label for="nome_caixa_${sistemaIndex}_${i}">Nome da Caixa</label>
+			<input type="text" id="nome_caixa_${sistemaIndex}_${i}" value="${caixa.nome || ''}" oninput="sistemasData[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
+			<label for="${descId}">Descrições</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${caixa.descricoes || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerCaixa(${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(caixaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { sistemasData[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
 
 function adicionarPagina(sistemaIndex) {
-     const dados = sistemasData[sistemaIndex];
-     if (!dados.paginas) dados.paginas = [];
-     dados.paginas.push({ conteudo: '' });
-     renderizarPaginas(sistemaIndex);
- }
+	const dados = sistemasData[sistemaIndex];
+	if (!dados.paginas) dados.paginas = [];
+	dados.paginas.push({ conteudo: '' });
+	renderizarPaginas(sistemaIndex);
+}
 
- function removerPagina(sistemaIndex, paginaIndex) {
-     sistemasData[sistemaIndex].paginas.splice(paginaIndex, 1);
-     renderizarPaginas(sistemaIndex);
- }
+function removerPagina(sistemaIndex, paginaIndex) {
+	sistemasData[sistemaIndex].paginas.splice(paginaIndex, 1);
+	renderizarPaginas(sistemaIndex);
+}
 
- function moverPagina(sistemaIndex, paginaIndex, direcao) {
-     const paginas = sistemasData[sistemaIndex].paginas;
-     const newIndex = paginaIndex + direcao;
-     if (newIndex < 0 || newIndex >= paginas.length) return;
-     const itemMovido = paginas.splice(paginaIndex, 1)[0];
-     paginas.splice(newIndex, 0, itemMovido);
-     renderizarPaginas(sistemaIndex);
- }
+function moverPagina(sistemaIndex, paginaIndex, direcao) {
+	const paginas = sistemasData[sistemaIndex].paginas;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginas(sistemaIndex);
+}
 
- function renderizarPaginas(sistemaIndex) {
-     const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
-     if (!container) return;
-     const paginas = sistemasData[sistemaIndex].paginas || [];
-     container.innerHTML = '';
-     paginas.forEach((pagina, i) => {
-         const descId = `descricoes_pagina_${sistemaIndex}_${i}`;
-         const paginaDiv = document.createElement('div');
-         paginaDiv.className = 'caixa-item';
-         paginaDiv.innerHTML = `
-             <label for="${descId}">Página ${i + 1}</label>
-             <div class="development-field-container">
-                 <div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
-                 <div class="caixa-actions-column">
-                     <button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-                     <input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
-                     <button type="button" class="btn-remover-caixa" onclick="removerPagina(${sistemaIndex}, ${i})">- Remover</button>
-                     <div class="mover-buttons">
-                         <button type="button" class="btn-mover-caixa" onclick="moverPagina(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
-                         <button type="button" class="btn-mover-caixa" onclick="moverPagina(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
-                     </div>
-                 </div>
-             </div>`;
-         container.appendChild(paginaDiv);
-         const descElement = document.getElementById(descId);
-         descElement.oninput = () => { sistemasData[sistemaIndex].paginas[i].conteudo = descElement.innerHTML; };
-         setupDragAndDrop(descId);
-         setupEditableContent(descId);
-     });
- }
+function renderizarPaginas(sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = sistemasData[sistemaIndex].paginas || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label for="${descId}">Página ${i + 1}</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPagina(${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPagina(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPagina(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { sistemasData[sistemaIndex].paginas[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
 
 function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 	const select = document.getElementById(`sistema_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
@@ -499,246 +487,228 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 	const veiculo = veiculosAplicaveisData[veiculoIndex];
 	const dados = veiculo.sistemas[sistemaIndex];
 
-container.innerHTML = ""; // Limpa o container antes de adicionar o novo formulário
-if (!valor) return;
+	container.innerHTML = "";
+	if (!valor) return;
 
-const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
 
-// TRAVA DE SEGURANÇA: Compatibilidade com JSONs antigos nos aplicáveis
-if (!dados.modulo_dedicado) {
-	if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
-		dados.modulo_dedicado = 'sim';
+	if (!dados.modulo_dedicado) {
+		if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
+			dados.modulo_dedicado = 'sim';
+		} else {
+			dados.modulo_dedicado = 'nao';
+		}
+	}
+
+	const isCaixasForm = valor === "Fusíveis e Relés";
+	const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
+	const isIluminacaoForm = valor === "Iluminação";
+
+	const commonTransferHtml = `
+		<div class="checkbox-block">
+			<div class="checkbox-inline" onchange="toggleIdTransfAplicaveis(${veiculoIndex}, ${sistemaIndex}); togglePaginasPrevistaAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_principal" ${dados.transferencia === 'transferencia_principal' || !dados.transferencia ? 'checked' : ''}> Transferência (do Principal)</label>
+				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_outro" ${dados.transferencia === 'transferencia_outro' ? 'checked' : ''}> Transferência (Outro)</label>
+				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
+			</div>
+		</div>
+		<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia_outro' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<div data-container-for="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.transferencia === 'modificar' ? 'none' : 'block'}">
+			<label>Nº páginas prevista</label>
+			<input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		</div>
+	`;
+
+	const standardModuleHtml = `
+		<label>Módulo principal</label><input type="text" name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<label>Nome no material</label><input type="text" name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.nomematerial || ''}" placeholder="Engine Control Unit" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<label>Código de Peça / Link</label>
+		<div contenteditable="true" class="editable-content short" id="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="codmodulo_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.codmodulo || ''}</div>
+		<label>Códigos de Conectores</label><textarea name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" rows="3" placeholder="T20 = A / LB = B / T50d = C" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.codconectores || ''}</textarea>
+	`;
+
+	const standardDevelopmentHtml = `
+		<fieldset>
+			<legend>DESENVOLVIMENTO</legend>
+			<label>Página de Localização</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
+				<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+				<input type="file" id="file_pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+			</div>
+			<label>Página de Conectores</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
+				<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+				<input type="file" id="file_pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+			</div>
+			<label>Página de Diagramas</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
+				<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
+				<input type="file" id="file_pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
+			</div>
+		</fieldset>
+	`;
+
+	const pagesDevelopmentHtml = `
+		<fieldset>
+			<legend>DESENVOLVIMENTO</legend>
+			<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
+			<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+		</fieldset>
+	`;
+
+	const caixasDevelopmentHtml = `
+		<fieldset>
+			<legend>DESENVOLVIMENTO</legend>
+			<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
+			<button type="button" class="btn-adicionar-caixa" onclick="adicionarCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Caixa</button>
+		</fieldset>
+	`;
+
+	if (isCaixasForm) {
+		const fusiveisOptionsHtml = `
+			<div class="checkbox-blockk"></div>
+			<label class="checkbox-title">TIPO DE DEMANDA:</label>
+			<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
+				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
+				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
+			</div>
+			<div class="checkbox-blockk"></div>
+		`;
+		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
+		renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+	} else if (isPaginasForm) {
+		container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
+		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 	} else {
-		dados.modulo_dedicado = 'nao';
+		let extraTypeHtml = '';
+		if (isIluminacaoForm) {
+			extraTypeHtml = `
+				<div class="checkbox-blockk"></div>
+				<label class="checkbox-title">TIPO:</label>
+				<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="interna" ${dados.tipo_iluminacao === 'interna' || !dados.tipo_iluminacao ? 'checked' : ''}> INTERNA</label>
+					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="externa" ${dados.tipo_iluminacao === 'externa' ? 'checked' : ''}> EXTERNA</label>
+					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="ambos" ${dados.tipo_iluminacao === 'ambos' ? 'checked' : ''}> AMBOS</label>
+				</div>
+			`;
+		}
+
+		container.innerHTML = `
+			${commonTransferHtml}
+			${extraTypeHtml}
+			<div class="checkbox-blockk"></div>
+			<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
+			<div class="checkbox-inline" onchange="toggleModuloDedicadoAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
+				<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.modulo_dedicado === 'nao' ? 'checked' : ''}> NÃO</label>
+			</div>
+			
+			<div id="standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
+				${standardModuleHtml}
+			</div>
+			
+			<div id="development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}">
+				${dados.modulo_dedicado === 'sim' ? standardDevelopmentHtml : pagesDevelopmentHtml}
+			</div>
+		`;
+
+		if (dados.modulo_dedicado !== 'sim') {
+			renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
+		}
 	}
-}
 
-const isCaixasForm = valor === "Fusíveis e Relés";
-const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
-const isIluminacaoForm = valor === "Iluminação";
-
-// --- Bloco Comum (Transferência e Páginas Previstas) ---
-const commonTransferHtml = `
-	<div class="checkbox-block">
-		<div class="checkbox-inline" onchange="toggleIdTransfAplicaveis(${veiculoIndex}, ${sistemaIndex}); togglePaginasPrevistaAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-			<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_principal" ${dados.transferencia === 'transferencia_principal' || !dados.transferencia ? 'checked' : ''}> Transferência (do Principal)</label>
-			<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_outro" ${dados.transferencia === 'transferencia_outro' ? 'checked' : ''}> Transferência (Outro)</label>
-			<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
-		</div>
-	</div>
-	<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia_outro' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-	<div data-container-for="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.transferencia === 'modificar' ? 'none' : 'block'}">
-		<label>Nº páginas prevista</label>
-		<input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-	</div>
-`;
-
-// --- Bloco Padrão (Módulo, Nome, Conectores, etc.) ---
-const standardModuleHtml = `
-	<label>Módulo principal</label><input type="text" name="modulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.modulo || ''}" placeholder="UCE do Motor" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-	<label>Nome no material</label><input type="text" name="nomematerial_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.nomematerial || ''}" placeholder="Engine Control Unit" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-	<label>Código de Peça / Link</label>
-	<div contenteditable="true" class="editable-content short" id="codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="codmodulo_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.codmodulo || ''}</div>
-	<label>Códigos de Conectores</label><textarea name="codconectores_aplicaveis_${veiculoIndex}_${sistemaIndex}" rows="3" placeholder="T20 = A / LB = B / T50d = C" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.codconectores || ''}</textarea>
-`;
-
-// --- Bloco Desenvolvimento Padrão (Loc, Con, Diag) ---
-const standardDevelopmentHtml = `
-	<fieldset>
-		<legend>DESENVOLVIMENTO</legend>
-		<label>Página de Localização</label>
-		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagloc_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagloc || ''}</div>
-			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-			<input type="file" id="file_pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-		</div>
-		<label>Página de Conectores</label>
-		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagcon_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagcon || ''}</div>
-			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-			<input type="file" id="file_pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-		</div>
-		<label>Página de Diagramas</label>
-		<div class="development-field-container">
-			<div contenteditable="true" class="editable-content" id="pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" data-field="pagdiag_aplicaveis" oninput="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">${dados.pagdiag || ''}</div>
-			<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}')">Anexar</button>
-			<input type="file" id="file_pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}', this.files)">
-		</div>
-	</fieldset>
-`;
-
-// --- Bloco Desenvolvimento "Páginas" (Ex: Alimentação) ---
-const pagesDevelopmentHtml = `
-	<fieldset>
-		<legend>DESENVOLVIMENTO</legend>
-		<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
-		<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
-	</fieldset>
-`;
-
-// --- Bloco Desenvolvimento "Caixas" (Ex: Fusíveis) ---
-const caixasDevelopmentHtml = `
-	<fieldset>
-		<legend>DESENVOLVIMENTO</legend>
-		<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
-		<button type="button" class="btn-adicionar-caixa" onclick="adicionarCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Caixa</button>
-	</fieldset>
-`;
-
-if (isCaixasForm) {
-     const fusiveisOptionsHtml = `
-         <div class="checkbox-blockk"></div>
-         <label class="checkbox-title">TIPO DE DEMANDA:</label>
-         <div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-             <label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
-             <label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
-             <label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
-         </div>
-         <div class="checkbox-blockk"></div>
-     `;
-	container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
-	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
-} else if (isPaginasForm) {
-	container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
-	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
-} else if (isIluminacaoForm) {
-	container.innerHTML = `
-		${commonTransferHtml}
-		<div class="checkbox-blockk"></div>
-		<label class="checkbox-title">TIPO:</label>
-		<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-			<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="interna" ${dados.tipo_iluminacao === 'interna' || !dados.tipo_iluminacao ? 'checked' : ''}> INTERNA</label>
-			<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="externa" ${dados.tipo_iluminacao === 'externa' ? 'checked' : ''}> EXTERNA</label>
-			<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="ambos" ${dados.tipo_iluminacao === 'ambos' ? 'checked' : ''}> AMBOS</label>
-		</div>
-		<div class="checkbox-blockk"></div>
-		<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
-		<div class="checkbox-inline" onchange="toggleModuloDedicadoAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-			<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
-			<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.modulo_dedicado === 'nao' || !dados.modulo_dedicado ? 'checked' : ''}> NÃO</label>
-		</div>
-		
-		<div id="standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
-			${standardModuleHtml}
-		</div>
-		
-		<div id="development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}">
-			${dados.modulo_dedicado === 'sim' ? standardDevelopmentHtml : pagesDevelopmentHtml}
-		</div>
-	`;
-	if (dados.modulo_dedicado !== 'sim') {
-		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
+	if (dados.modulo_dedicado === 'sim') {
+		setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupEditableContent(`codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupDragAndDrop(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupEditableContent(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupDragAndDrop(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		setupEditableContent(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	}
-} else {
-	// TODOS OS DEMAIS SISTEMAS APLICÁVEIS (Standard Systems + Outro)
-	container.innerHTML = `
-		${commonTransferHtml}
-		<div class="checkbox-blockk"></div>
-		<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
-		<div class="checkbox-inline" onchange="toggleModuloDedicadoAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-			<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
-			<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.modulo_dedicado === 'nao' || !dados.modulo_dedicado ? 'checked' : ''}> NÃO</label>
-		</div>
-		
-		<div id="standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
-			${standardModuleHtml}
-		</div>
-		
-		<div id="development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}">
-			${dados.modulo_dedicado === 'sim' ? standardDevelopmentHtml : pagesDevelopmentHtml}
-		</div>
-	`;
-	if (dados.modulo_dedicado !== 'sim') {
-		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
-	}
-}
 
-if (dados.modulo_dedicado === 'sim') {
-	setupDragAndDrop(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupEditableContent(`pagloc_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupEditableContent(`codmodulo_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupDragAndDrop(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupEditableContent(`pagcon_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupDragAndDrop(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	setupEditableContent(`pagdiag_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-}
-
-toggleIdTransfAplicaveis(veiculoIndex, sistemaIndex);
+	toggleIdTransfAplicaveis(veiculoIndex, sistemaIndex);
 }
 
 function renderizarSistema(index) {
-		const container = document.getElementById("sistemas-container");
-		container.innerHTML = "";
-		if (sistemasData.length === 0) return;
+	const container = document.getElementById("sistemas-container");
+	container.innerHTML = "";
+	if (sistemasData.length === 0) return;
 
-		const dados = sistemasData[index];
-		const div = document.createElement("div");
-		div.className = "system-block";
-		const idx = index;
+	const dados = sistemasData[index];
+	const div = document.createElement("div");
+	div.className = "system-block";
+	const idx = index;
 
-		div.innerHTML = `
+	const opcoesSistemas = [
+		"ADAS", "AIRBAG", "ALARME", "ALARME E TRAVAS", "ALERTA DE PONTO CEGO", "ALIMENTAÇÃO POSITIVA",
+		"AR-CONDICIONADO", "AR-CONDICIONADO AUTOMÁTICO", "AR-CONDICIONADO MANUAL", "AR-CONDICIONADO SEMIAUTOMÁTICO",
+		"ARREFECIMENTO DO MOTOR", "ASSISTÊNCIA DE ESTACIONAMENTO", "BANCOS", "BLOQUEIO DO DIFERENCIAL", "BUZINA",
+		"CAIXA DE FUSÍVEIS DA BATERIA", "CAIXA DE FUSÍVEIS DO INTERIOR", "CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS",
+		"CÂMERA DE RÉ", "CARGA E PARTIDA", "CENTRAL DE CARROCERIA", "CENTRAL DE CARROCERIA 1", "CENTRAL DE CARROCERIA 2",
+		"CENTRAL MULTIMÍDIA", "CHAVE DE SETA", "CHAVE PRESENCIAL", "CHAVE PRESENCIAL E TPMS", "COMPUTADOR DE BORDO",
+		"COMUTADOR DE IGNIÇÃO ELETRÔNICO", "CONECTORES DE PEITO", "CONVERSOR DC/DC", "DIREÇÃO", "FREIO ABS",
+		"FREIO ABS E DE ESTACIONAMENTO", "FREIO EBS", "FREIO DE ESTACIONAMENTO", "ILUMINAÇÃO", "ILUMINAÇÃO EXTERNA", "ILUMINAÇÃO INTERNA",
+		"IMOBILIZADOR DE PARTIDA", "INJEÇÃO ELETRÔNICA", "INJEÇÃO ELETRÔNICA E PÓS-TRATAMENTO", "INJEÇÃO ELETRÔNICA E TRAÇÃO 4X4",
+		"INJEÇÃO ELETRÔNICA E TRANSMISSÃO", "LIMPADORES E LAVADORES", "MONITORAMENTO DA PRESSÃO DOS PNEUS - TPMS",
+		"MÓDULO DA PORTA DO MOTORISTA", "MÓDULO DA PORTA DO PASSAGEIRO", "MÓDULO DA PORTA TRASEIRA DIREITA",
+		"MÓDULO DA PORTA TRASEIRA ESQUERDA", "MÓDULO DAS PORTAS", "MÓDULO DE CONFORTO", "PAINÉIS DE INSTRUMENTOS",
+		"PAINEL DE INSTRUMENTOS", "PAINEL DE INSTRUMENTOS E IMOBILIZADOR", "PÓS-TRATAMENTO", "PREDISPOSIÇÃO DE RÁDIO",
+		"RÁDIO", "REBOQUE", "REDES DE COMUNICAÇÃO", "RETROVISORES", "RETROVISORES E VIDROS ELÉTRICOS", "TELEMÁTICA",
+		"TOMADA 12V", "TRAÇÃO 4X4", "TRAÇÃO 4X4 E BLOQUEIO DO DIFERENCIAL", "TRANSMISSÃO", "TRAVAS E VIDROS ELÉTRICOS",
+		"TRAVAS ELÉTRICAS", "TREM DE FORÇA", "VENTILAÇÃO INTERNA", "VIDROS ELÉTRICOS", "VISÃO 360º", "VOLANTE MULTIFUNCIONAL",
+		"FUSÍVEIS E RELÉS"
+	];
+
+	const sistemaUpper = (dados.sistema || '').toUpperCase();
+	const isOutro = dados.sistema && !opcoesSistemas.some(opt => opt.toUpperCase() === sistemaUpper) && sistemaUpper !== 'OUTRO';
+
+	let optionsHtml = `<option value="">Selecione</option>`;
+	opcoesSistemas.forEach(opt => {
+		const isSelected = sistemaUpper === opt.toUpperCase() ||
+			(opt === "CARGA E PARTIDA" && sistemaUpper === "SISTEMA DE CARGA E PARTIDA") ||
+			(opt === "TRANSMISSÃO" && sistemaUpper === "TRANSMISSÃO AUTOMÁTICA");
+		optionsHtml += `<option value="${opt}" ${isSelected ? 'selected' : ''}>${opt}</option>`;
+	});
+	optionsHtml += `<option value="OUTRO" ${isOutro || sistemaUpper === 'OUTRO' ? 'selected' : ''}>OUTRO</option>`;
+
+	div.innerHTML = `
 		<label>Título do capítulo</label>
-			<select name="sistema_${idx}" id="sistema_${idx}" onchange="salvarDadosSistema(${idx}); renderizarFormularioCapitulo(${idx});">
-				<option value="">Selecione</option>
-				<option value="Airbag" ${dados.sistema === 'Airbag' ? 'selected' : ''}>Airbag</option>
-				<option value="Alimentação Positiva" ${dados.sistema === 'Alimentação Positiva' ? 'selected' : ''}>Alimentação Positiva</option>
-				<option value="Ar-condicionado" ${dados.sistema === 'Ar-condicionado' ? 'selected' : ''}>Ar-condicionado</option>
-				<option value="Central de Carroceria" ${dados.sistema === 'Central de Carroceria' ? 'selected' : ''}>Central de Carroceria</option>
-				<option value="Central Multimídia" ${dados.sistema === 'Central Multimídia' ? 'selected' : ''}>Central Multimídia</option>
-				<option value="Conectores de Peito" ${dados.sistema === 'Conectores de Peito' ? 'selected' : ''}>Conectores de Peito</option>
-				<option value="Freio ABS" ${dados.sistema === 'Freio ABS' ? 'selected' : ''}>Freio ABS</option>
-				<option value="Freio EBS" ${dados.sistema === 'Freio EBS' ? 'selected' : ''}>Freio EBS</option>
-				<option value="Freio de Estacionamento Eletrônico" ${dados.sistema === 'Freio de Estacionamento Eletrônico' ? 'selected' : ''}>Freio de Estacionamento Eletrônico</option>
-				<option value="Fusíveis e Relés" ${dados.sistema === 'Fusíveis e Relés' ? 'selected' : ''}>Fusíveis e Relés</option>
-				<option value="Iluminação" ${dados.sistema === 'Iluminação' ? 'selected' : ''}>Iluminação</option>
-				<option value="Injeção Eletrônica" ${dados.sistema === 'Injeção Eletrônica' ? 'selected' : ''}>Injeção Eletrônica</option>
-				<option value="Sistema de Carga e Partida" ${dados.sistema === 'Sistema de Carga e Partida' ? 'selected' : ''}>Sistema de Carga e Partida</option>
-				<option value="Injeção Eletrônica e Transmissão" ${dados.sistema === 'Injeção Eletrônica e Transmissão' ? 'selected' : ''}>Injeção Eletrônica e Transmissão</option>
-				<option value="Painel de Instrumentos" ${dados.sistema === 'Painel de Instrumentos' ? 'selected' : ''}>Painel de Instrumentos</option>
-				<option value="Rádio" ${dados.sistema === 'Rádio' ? 'selected' : ''}>Rádio</option>
-				<option value="Redes de Comunicação" ${dados.sistema === 'Redes de Comunicação' ? 'selected' : ''}>Redes de Comunicação</option>
-				<option value="Tração 4x4" ${dados.sistema === 'Tração 4x4' ? 'selected' : ''}>Tração 4x4</option>
-				<option value="Transmissão Automática" ${dados.sistema === 'Transmissão Automática' ? 'selected' : ''}>Transmissão Automática</option>
-				<option value="Outro" ${dados.sistema && ![
-				'Airbag','Alimentação Positiva','Ar-condicionado','Central de Carroceria','Central Multimídia',
-				'Conectores de Peito','Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Fusíveis e Relés',
-				'Iluminação','Injeção Eletrônica','Sistema de Carga e Partida','Injeção Eletrônica e Transmissão',
-				'Painel de Instrumentos','Rádio','Redes de Comunicação','Tração 4x4','Transmissão Automática'
-				].includes(dados.sistema) ? 'selected' : ''}>Outro</option>
-			</select>
-			<div id="outrocampo_${idx}" style="display:none; margin-top: 5px;">
-				<label>Especifique o título:</label>
-				<input type="text" name="sistema_outro_${idx}" value="${dados.sistema && ![
-					'Fusíveis e Relés','Alimentação Positiva','Conectores de Peito','Central de Carroceria','Injeção Eletrônica',
-					'Sistema de Carga e Partida','Injeção Eletrônica e Transmissão','Transmissão Automática',
-					'Tração 4x4','Redes de Comunicação','Painel de Instrumentos','Airbag','Ar-condicionado',
-					'Freio ABS','Freio EBS','Freio de Estacionamento Eletrônico','Rádio','Central Multimídia','Iluminação'
-				].includes(dados.sistema) ? dados.sistema : ''}" onchange="salvarDadosSistema(${idx})">
-			</div>
-			<div id="formulario-capitulo_${idx}"></div>
-		`;
+		<select name="sistema_${idx}" id="sistema_${idx}" onchange="salvarDadosSistema(${idx}); renderizarFormularioCapitulo(${idx});">
+			${optionsHtml}
+		</select>
+		<div id="outrocampo_${idx}" style="display:none; margin-top: 5px;">
+			<label>Especifique o título:</label>
+			<input type="text" name="sistema_outro_${idx}" value="${isOutro ? dados.sistema : ''}" onchange="salvarDadosSistema(${idx})">
+		</div>
+		<div id="formulario-capitulo_${idx}"></div>
+	`;
 
-		container.appendChild(div);
+	container.appendChild(div);
 
-		const selectElement = div.querySelector(`#sistema_${idx}`);
-		const outroCampo = div.querySelector(`#outrocampo_${idx}`);
-		const outroInput = div.querySelector(`input[name="sistema_outro_${idx}"]`);
+	const selectElement = div.querySelector(`#sistema_${idx}`);
+	const outroCampo = div.querySelector(`#outrocampo_${idx}`);
+	const outroInput = div.querySelector(`input[name="sistema_outro_${idx}"]`);
 
-		const toggleOutroCampo = () => {
-			if (selectElement.value === 'Outro' || (selectElement.value === '' && outroInput.value)) {
-				outroCampo.style.display = 'block';
-			} else {
-				outroCampo.style.display = 'none';
-			}
-		};
-
-		selectElement.addEventListener('change', toggleOutroCampo);
-		toggleOutroCampo(); 
-
-		if (dados.sistema) {
-			renderizarFormularioCapitulo(idx);
+	const toggleOutroCampo = () => {
+		if (selectElement.value.toUpperCase() === 'OUTRO' || (selectElement.value === '' && outroInput.value)) {
+			outroCampo.style.display = 'block';
+		} else {
+			outroCampo.style.display = 'none';
 		}
+	};
+
+	selectElement.addEventListener('change', toggleOutroCampo);
+	toggleOutroCampo(); 
+
+	if (dados.sistema) {
+		renderizarFormularioCapitulo(idx);
 	}
+}
 
 function toggleModuloDedicadoPrincipal(index) {
 	const radio = document.querySelector(`input[name="modulo_dedicado_${index}"]:checked`);
@@ -830,15 +800,15 @@ function adicionarSistema() {
 }
 
 function moverSistema(direcao) {
-     if (sistemasData.length < 2) return; 
-     const newIndex = paginaAtual + direcao;
-     if (newIndex < 0 || newIndex >= sistemasData.length) return;
-		 salvarDadosSistema(paginaAtual);
-		 [sistemasData[paginaAtual], sistemasData[newIndex]] = [sistemasData[newIndex], sistemasData[paginaAtual]];
-		 paginaAtual = newIndex;
-		 renderizarPaginacao();
-		 renderizarSistema(paginaAtual);
- }
+	if (sistemasData.length < 2) return; 
+	const newIndex = paginaAtual + direcao;
+	if (newIndex < 0 || newIndex >= sistemasData.length) return;
+	salvarDadosSistema(paginaAtual);
+	[sistemasData[paginaAtual], sistemasData[newIndex]] = [sistemasData[newIndex], sistemasData[paginaAtual]];
+	paginaAtual = newIndex;
+	renderizarPaginacao();
+	renderizarSistema(paginaAtual);
+}
 
 function removerUltimoSistema() {
 	if (sistemasData.length === 0) return; 
@@ -912,46 +882,45 @@ function renderizarPaginacao() {
 }
 
 function salvarDadosSistema(index) {
-    if (index < 0 || index >= sistemasData.length) return;
+	if (index < 0 || index >= sistemasData.length) return;
 
-    const systemDiv = document.querySelector(`#sistemas-container .system-block`);
-    if (!systemDiv) return;
+	const systemDiv = document.querySelector(`#sistemas-container .system-block`);
+	if (!systemDiv) return;
 
-    const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
-    if (!selectElement) return;
+	const selectElement = systemDiv.querySelector(`select[name="sistema_${index}"]`);
+	if (!selectElement) return;
 
-    const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
-    const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
-    const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
+	const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
+	const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
+	const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
 
-    const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
-    const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
-    
-    const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
-    
-    const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
-    const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
+	const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
+	const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
+	const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
 
-    sistemasData[index] = {
-        caixas: caixasExistentes,
-        paginas: paginasExistentes,
-        sistema: sistemaValor,
-        transferencia: transferenciaValue,
-        idtransf: getVal(`#idtransf_${index}`),
-        paginasprev: getVal(`input[name="paginasprev_${index}"]`),
-        tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
-        modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
-        tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
-        modulo: getVal(`input[name="modulo_${index}"]`),
-        nomematerial: getVal(`input[name="nomematerial_${index}"]`),
-        codmodulo: getHtml(`#codmodulo_${index}`),
-        codconectores: getVal(`textarea[name="codconectores_${index}"]`),
-        pagloc: getHtml(`#pagloc_${index}`),
-        pagcon: getHtml(`#pagcon_${index}`),
-        pagdiag: getHtml(`#pagdiag_${index}`)
-    };
-    
-    renderizarPaginacao();
+	const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
+	const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
+
+	sistemasData[index] = {
+		caixas: caixasExistentes,
+		paginas: paginasExistentes,
+		sistema: sistemaValor,
+		transferencia: transferenciaValue,
+		idtransf: getVal(`#idtransf_${index}`),
+		paginasprev: getVal(`input[name="paginasprev_${index}"]`),
+		tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
+		modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
+		tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
+		modulo: getVal(`input[name="modulo_${index}"]`),
+		nomematerial: getVal(`input[name="nomematerial_${index}"]`),
+		codmodulo: getHtml(`#codmodulo_${index}`),
+		codconectores: getVal(`textarea[name="codconectores_${index}"]`),
+		pagloc: getHtml(`#pagloc_${index}`),
+		pagcon: getHtml(`#pagcon_${index}`),
+		pagdiag: getHtml(`#pagdiag_${index}`)
+	};
+
+	renderizarPaginacao();
 }
 
 function renderizarPaginacaoVeiculosAplicaveis() {
@@ -986,7 +955,6 @@ function mostrarPaginaVeiculoAplicavel(index) {
 function criarNovoVeiculoAplicavel() {
 	veiculosAplicaveisData.push({
 		dadosGerais: {},
-		itensSerie: {},
 		sistemas: []
 	});
 	veiculoAplicavelAtual = veiculosAplicaveisData.length - 1;
@@ -1135,228 +1103,4 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
 	setupDragAndDrop(`comentarios_aplicaveis_${veiculoIndex}`);
 	setupEditableContent(`comentarios_aplicaveis_${veiculoIndex}`);
-}
-
-function getCaretPosition(element) {
-	const selection = window.getSelection();
-	if (selection.rangeCount > 0) {
-		const range = selection.getRangeAt(0);
-		if (element.contains(range.commonAncestorContainer)) {
-			return range;
-		}
-	}
-	return null;
-}
-
-function insertAtCursor(element, content) {
-	const selection = window.getSelection();
-	const range = getCaretPosition(element);
-	
-	if (range) {
-		range.deleteContents();
-		range.insertNode(content);
-		range.collapse(false);
-		selection.removeAllRanges();
-		selection.addRange(range);
-	} else {
-		element.appendChild(content);
-	}
-}
-
-function criarMiniatura(dataUrl, maxWidth = 150, maxHeight = 100) {
-	return new Promise((resolve) => {
-		const img = new Image();
-		img.onload = () => {
-			const canvas = document.createElement('canvas');
-			const ctx = canvas.getContext('2d');
-			
-			let { width, height } = img;
-			if (width > maxWidth) {
-				height = (height * maxWidth) / width;
-				width = maxWidth;
-			}
-			if (height > maxHeight) {
-				width = (width * maxHeight) / height;
-				height = maxHeight;
-			}
-			
-			canvas.width = width;
-			canvas.height = height;
-			
-			ctx.drawImage(img, 0, 0, width, height);
-			
-			const thumbnailDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-			resolve(thumbnailDataUrl);
-		};
-		img.src = dataUrl;
-	});
-}
-
-async function processarArquivo(element, file) {
-	const reader = new FileReader();
-	reader.onload = async (readerEvent) => {
-		const dataUrl = readerEvent.target.result;
-		let content;
-		
-		if (file.type && file.type.startsWith('image/')) {
-			const thumbnailDataUrl = await criarMiniatura(dataUrl);
-			
-			const imgContainer = document.createElement('div');
-			imgContainer.className = 'image-container';
-			imgContainer.style.display = 'inline-block';
-			imgContainer.style.marginTop = '5px';
-			imgContainer.style.marginBottom = '5px';
-			
-			const img = document.createElement('img');
-			img.src = thumbnailDataUrl;
-			img.style.maxWidth = '150px';
-			img.style.maxHeight = '100px';
-			img.style.display = 'block';
-			img.style.border = '1px solid #ccc';
-			img.style.borderRadius = '4px';
-			img.style.cursor = 'pointer';
-			img.title = `Clique para ver em tamanho real: ${file.name}`;
-			
-			img.setAttribute('data-original-image', dataUrl);
-			img.setAttribute('data-filename', file.name || 'imagem');
-			img.setAttribute('data-mime', file.type);
-			
-			img.addEventListener('click', () => {
-				const modal = document.createElement('div');
-				modal.style.position = 'fixed';
-				modal.style.top = '0';
-				modal.style.left = '0';
-				modal.style.width = '100%';
-				modal.style.height = '100%';
-				modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-				modal.style.display = 'flex';
-				modal.style.justifyContent = 'center';
-				modal.style.alignItems = 'center';
-				modal.style.zIndex = '10000';
-				modal.style.cursor = 'pointer';
-				
-				const modalImg = document.createElement('img');
-				modalImg.src = dataUrl;
-				modalImg.style.maxWidth = '90%';
-				modalImg.style.maxHeight = '90%';
-				modalImg.style.objectFit = 'contain';
-				
-				modal.appendChild(modalImg);
-				document.body.appendChild(modal);
-				
-				modal.addEventListener('click', () => {
-					document.body.removeChild(modal);
-				});
-			});
-			
-			imgContainer.appendChild(img);
-			content = imgContainer;
-		} else {
-			const link = document.createElement('a');
-			link.href = dataUrl;
-			link.target = '_blank';
-			link.download = file.name || 'anexo';
-			link.textContent = file.name || 'anexo';
-			link.style.display = 'inline-block';
-			link.style.marginTop = '5px';
-			link.className = 'attachment';
-			link.setAttribute('data-filename', file.name || 'anexo');
-			if (file.type) link.setAttribute('data-mime', file.type);
-			link.contentEditable = 'false';
-			content = link;
-		}
-		
-		insertAtCursor(element, content);
-		
-		const br = document.createElement('br');
-		insertAtCursor(element, br);
-		
-		if (element.oninput) {
-			element.oninput();
-		}
-	};
-	reader.readAsDataURL(file);
-}
-
-function setupDragAndDrop(elementId) {
-	const element = document.getElementById(elementId);
-	if (!element) return;
-
-	element.addEventListener('dragover', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		element.classList.add('drag-over');
-	});
-
-	element.addEventListener('dragleave', (e) => {
-		e.stopPropagation();
-		element.classList.remove('drag-over');
-	});
-
-	element.addEventListener('drop', (e) => {
-		e.preventDefault();
-		e.stopPropagation();
-		element.classList.remove('drag-over');
-
-		const files = e.dataTransfer.files;
-		if (files && files.length > 0) {
-			for (let i = 0; i < files.length; i++) {
-				processarArquivo(element, files[i]);
-			}
-		}
-	});
-}
-
-function abrirSeletorArquivo(elementId) {
-	const fileInput = document.getElementById(`file_${elementId}`);
-	if (fileInput) {
-		fileInput.click();
-	}
-}
-
-function processarArquivosSelecionados(elementId, files) {
-	const element = document.getElementById(elementId);
-	if (!element || !files) return;
-	
-	element.focus();
-	
-	for (let i = 0; i < files.length; i++) {
-		processarArquivo(element, files[i]);
-	}
-	
-	const fileInput = document.getElementById(`file_${elementId}`);
-	if (fileInput) {
-		fileInput.value = '';
-	}
-}
-
-function salvarDadosComentarios() {
-}
-
-function updateEditablePlaceholder(element) {
-	if (!element) return;
-	
-	const hasContent = element.innerHTML.trim() !== '';
-	if (hasContent) {
-		element.classList.remove('empty');
-	} else {
-		element.classList.add('empty');
-	}
-}
-
-function autoResizeEditableContent(element) {
-	if (!element) return;
-	
-	element.style.height = 'auto';
-	
-	const scrollHeight = element.scrollHeight;
-	const minHeight = parseInt(window.getComputedStyle(element).minHeight, 10) || 120;
-	const newHeight = Math.max(scrollHeight, minHeight);
-	
-	element.style.height = newHeight + 'px';
-}
-
-function getChapterFolderName(veiculo, sistema, capTitulo) {
-	const sistemaIndex = sistema && veiculo.sistemas ? veiculo.sistemas.indexOf(sistema) + 1 : 1;
-	return `Capítulo ${sistemaIndex} - ${capTitulo}`;
 }
