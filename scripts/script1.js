@@ -683,7 +683,7 @@ function renderizarSistema(index) {
 		</select>
 		<div id="outrocampo_${idx}" style="display:none; margin-top: 5px;">
 			<label>Especifique o título:</label>
-			<input type="text" name="sistema_outro_${idx}" value="${isOutro ? dados.sistema : ''}" onchange="salvarDadosSistema(${idx})">
+			<input type="text" name="sistema_outro_${idx}" value="${isOutro ? dados.sistema : ''}" oninput="salvarDadosSistema(${idx})" onchange="salvarDadosSistema(${idx})">
 		</div>
 		<div id="formulario-capitulo_${idx}"></div>
 	`;
@@ -891,7 +891,9 @@ function salvarDadosSistema(index) {
 	if (!selectElement) return;
 
 	const outroInputEl = systemDiv.querySelector(`input[name="sistema_outro_${index}"]`);
-	const sistemaValor = selectElement.value === 'Outro' ? (outroInputEl ? outroInputEl.value : '') : selectElement.value;
+	const sistemaValor = selectElement.value.toUpperCase() === 'OUTRO' 
+		? (outroInputEl && outroInputEl.value.trim() !== '' ? outroInputEl.value : 'OUTRO') 
+		: selectElement.value;
 	const transferenciaValue = systemDiv.querySelector(`input[name="transferencia_${index}"]:checked`)?.value;
 
 	const getVal = (sel) => systemDiv.querySelector(sel)?.value || '';
