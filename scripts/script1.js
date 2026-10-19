@@ -490,19 +490,27 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 	container.innerHTML = "";
 	if (!valor) return;
 
-	const standardSystems = ['Airbag', 'Ar-condicionado', 'Central de Carroceria', 'Central Multimídia', 'Freio ABS', 'Freio EBS', 'Freio de Estacionamento Eletrônico', 'Injeção Eletrônica', 'Injeção Eletrônica e Transmissão', 'Painel de Instrumentos', 'Rádio', 'Redes de Comunicação', 'Tração 4x4', 'Transmissão Automática'];
+	const valorUpper = valor.toUpperCase();
+
+	const isCaixasForm = valorUpper === "FUSÍVEIS E RELÉS";
+	const isPaginasForm = [
+		"ALIMENTAÇÃO POSITIVA", 
+		"CONECTORES DE PEITO", 
+		"CARGA E PARTIDA", 
+		"SISTEMA DE CARGA E PARTIDA",
+		"CAIXA DE FUSÍVEIS DO INTERIOR", 
+		"CAIXA DE FUSÍVEIS DO MOTOR", 
+		"CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+		"CAIXA DE FUSÍVEIS DA BATERIA"
+	].includes(valorUpper);
 
 	if (!dados.modulo_dedicado) {
-		if (standardSystems.includes(valor) || dados.pagloc || dados.pagcon || dados.pagdiag || dados.modulo) {
+		if (!isCaixasForm && !isPaginasForm) {
 			dados.modulo_dedicado = 'sim';
 		} else {
 			dados.modulo_dedicado = 'nao';
 		}
 	}
-
-	const isCaixasForm = valor === "Fusíveis e Relés";
-	const isPaginasForm = valor === "Alimentação Positiva" || valor === "Conectores de Peito" || valor === "Sistema de Carga e Partida";
-	const isIluminacaoForm = valor === "Iluminação";
 
 	const commonTransferHtml = `
 		<div class="checkbox-block">
@@ -584,22 +592,8 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 		container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
 		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 	} else {
-		let extraTypeHtml = '';
-		if (isIluminacaoForm) {
-			extraTypeHtml = `
-				<div class="checkbox-blockk"></div>
-				<label class="checkbox-title">TIPO:</label>
-				<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="interna" ${dados.tipo_iluminacao === 'interna' || !dados.tipo_iluminacao ? 'checked' : ''}> INTERNA</label>
-					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="externa" ${dados.tipo_iluminacao === 'externa' ? 'checked' : ''}> EXTERNA</label>
-					<label><input type="radio" name="tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="ambos" ${dados.tipo_iluminacao === 'ambos' ? 'checked' : ''}> AMBOS</label>
-				</div>
-			`;
-		}
-
 		container.innerHTML = `
 			${commonTransferHtml}
-			${extraTypeHtml}
 			<div class="checkbox-blockk"></div>
 			<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
 			<div class="checkbox-inline" onchange="toggleModuloDedicadoAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
