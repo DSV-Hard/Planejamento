@@ -8,7 +8,7 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link rel="stylesheet" href="style.css">  <!-- CHAMADA DOS ESTILOS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body style="background-color: #f5fff5;">
     <div id="cabecalho">
@@ -17,7 +17,6 @@
     </div>
     <div id="main-frame">
 	
-	<!-- STREAMING_CHUNK:Wrapping action and navigation buttons into sticky top container... -->
 	<!-- CONTAINER FIXO NO TOPO DA TELA (STICKY HEADER) -->
 	<div id="sticky-action-bar" style="position: sticky; top: 10px; z-index: 1000; background-color: rgba(255, 255, 255, 0.96); backdrop-filter: blur(8px); padding: 14px 15px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; margin-bottom: 20px;">
 		<div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
@@ -124,19 +123,6 @@
 				</div>
 			</div>
 			
-			<!-- LEGENDA DAS DIFICULDADES 
-					<fieldset style="background-color: #F8F8F8">
-					<legend style="text-align: center; font-size: 20px; color: #4472c4;">LEGENDA:</legend>
-					<label>OPÇÃO "UMA":</label>• Para cards de ETAPA 1 e/ou que serão concluídos em apenas uma sprint.
-					<label>OPÇÃO "DUAS":</label>• Para cards que serão concluídos em duas sprints, com muitos capítulos e aplicações.
-					<div class="checkbox-blockk"></div>
-			<label style="color: red; text-align: center; font-size: 20px">ATENÇÃO:</label>
-			<label style="color: red; text-align: center;">O preenchimento de "Dificuldade" nas opções "UMA" e "DUAS" resultará em erro no PDF! Selecione apenas uma das opções para preenchimento.</label>
-					</fieldset>
-			
-			
-			<div class="checkbox-blockk"></div> -->
-			
 			<!-- Bloco para quando seleciona UMA parte -->
 			<div id="card-parte-unica-container">
 				<div class="card-details-block">
@@ -144,6 +130,7 @@
 					<label style="text-align: center; font-size: 20px; margin-top: 50px;">DIFICULDADE:</label>
 					<select id="dificuldade_unica">
 						<option value="">Selecione a dificuldade</option>
+						<option value="Aplicação M">APLICAÇÃO M (x 0.50)</option>
 						<option value="Fácil">FÁCIL (x 0.70)</option>
 						<option value="Médio">MÉDIO (x 1.00)</option>
 						<option value="Difícil">DIFÍCIL (x 1.30)</option>
@@ -162,12 +149,14 @@
 					<label>DUAS:</label>• Para cards que serão concluídos em duas sprints, com muitos capítulos e aplicações.
 					
 					<fieldset style="background-color: white">
+					<!--
 					<label style="color: red; text-align: center; font-size: 25px;">ATENÇÃO:</label>
 					<label style="color: red; text-align: center; margin-bottom: 15px;">O preenchimento de "Dificuldade" nas opções "UMA" e "DUAS" resultará em erro no PDF! Selecione apenas uma das opções para preenchimento.</label>
 					</fieldset>
-					
 					<div class="checkbox-blockk"></div>
-					<label style="font-size: 20px; margin-top: 30px;">DIFICULDADE:</label>
+					-->
+					<label style="font-size: 20px; text-align: center; margin-top: 5px;">DIFICULDADE:</label>
+					<label>APLICAÇÃO M: </label>• Nova injeção por conta de novas leis de emissões, com transferência completa de carroceria.
 					<label>FÁCIL: </label>• ETAPA 1 com transferências fáceis.
 					<label>MÉDIO: </label>• ETAPA 1 padrão.
 					<label>DIFÍCIL: </label>• ETAPA 1 com material faltando/divergindo/difícil de interpretar.
@@ -175,6 +164,7 @@
 					<label>CARROCERIA MÉDIO: </label>• Carroceria completa padrão.
 					<label>CARROCERIA DIFÍCIL: </label>• (Ainda não foi utilizado) Em caso de dificuldade extrema, conversar com Head para discutir a melhor opção.
 					</fieldset>
+					
 				</div>
 			</div>
 			
@@ -253,16 +243,6 @@
 			</fieldset>
 		</div>
 		</div>
-
-   <!-- <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
-       <input type="file" id="jsonFileInput" style="display:none" onchange="carregarDeJSON(this)">
-       <button class="orange-button" onclick="document.getElementById('jsonFileInput').click()">📥 Carregar</button>
-       <button class="orange-button" onclick="salvarComoJSON()">💾 Salvar JSON</button>
-       <button class="orange-button" onclick="abrirModalDivisaoPDF()">📄 Gerar PDF/JSON</button>
-       <button class="orange-button" onclick="https://dsv-hard.github.io/Planejamento/raptar/index.html">RAPTOR PDF</button>
-		<button class="orange-button" onclick="https://raptor-drie.streamlit.app/">RAPTOR REVISOR</button>
-   </div>
-   -->
 
     <div id="validation-modal" class="modal-overlay" style="display: none;">
         <div class="modal-content">
