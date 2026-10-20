@@ -916,6 +916,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 	
 	const getMultiplicadorPrincipal = (dificuldade) => {
 		switch (dificuldade) {
+			case "Aplicação M": return 0.50;
 			case "Fácil": return 0.70;
 			case "Médio": return 1.00;
 			case "Difícil": return 1.30;
