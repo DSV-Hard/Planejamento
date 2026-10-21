@@ -25,9 +25,10 @@
             color: var(--text-dark);
             line-height: 1.6;
             padding: 20px;
+            transition: background-color 0.3s ease;
         }
 
-        /* Sobrescrita cirúrgica para tornar as setas verticais laranjas e apenas triângulos puros */
+		/* Sobrescrita cirúrgica para tornar as setas verticais laranjas e apenas triângulos puros */
         .arrow-btn {
             color: var(--orange-main) !important;
             background: transparent !important;
@@ -41,7 +42,7 @@
             display: inline-flex !important;
             align-items: center;
             justify-content: center;
-            width: 40px !important; /* Largura estendida para zona de clique perfeita */
+            width: 32px !important;
             height: 22px !important;
             transition: color 0.2s, transform 0.1s;
         }
@@ -305,24 +306,26 @@
         /* Opções Tristate S / O / - Estilizados */
         .tristate-options {
             display: flex;
-            gap: 5px;
+            gap: 4px;
             background: #e0e0e0;
             padding: 3px;
             border-radius: 20px;
             user-select: none;
+            width: 110px;
+            justify-content: center;
         }
 
         .tristate-btn {
             border: none;
             background: transparent;
-            padding: 5px 14px;
-            font-size: 0.85em;
+            padding: 4px 10px;
+            font-size: 0.82em;
             font-weight: 700;
             border-radius: 15px;
             cursor: pointer;
             transition: all 0.15s;
             color: #666;
-            min-width: 38px;
+            min-width: 30px;
             text-align: center;
         }
 
@@ -504,25 +507,6 @@
             from { transform: translateY(100%); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-		
-		* Setas de Reordenação de Outros Itens (Mestre) */
-        .arrow-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: var(--primary-green);
-            padding: 1px;
-            font-size: 1.1em;
-            line-height: 1;
-            transition: color 0.2s, transform 0.1s;
-        }
-        .arrow-btn:hover {
-            color: var(--orange-main);
-            transform: scale(1.25);
-        }
-        .arrow-btn:active {
-            transform: scale(0.9);
-        }
 
         /* Setas de Reordenação Horizontal dos Veículos Aplicáveis */
         .arrow-btn-lr {
@@ -541,4 +525,408 @@
         }
         .arrow-btn-lr:active:not(:disabled) {
             transform: scale(0.9);
+        }
+
+        /* Card Unificado de Itens (Simples e Múltiplos) com Alinhamento Colunar Perfeito */
+        .item-card-unified {
+            display: flex;
+            flex-direction: column;
+            background-color: var(--gray-light);
+            border: 1px solid var(--gray-border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            gap: 8px;
+        }
+
+        .item-card-unified:hover {
+            border-color: #c8e6c9;
+            background-color: #f7fcf7;
+        }
+
+        .item-card-main-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .item-arrows-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            width: 32px;
+        }
+
+        .item-inputs-col {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            min-width: 180px;
+            align-items: center;
+        }
+
+        .item-tristate-col {
+            width: 115px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .item-actions-col {
+            width: 80px;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .sub-option-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            background-color: #ffffff;
+            border: 1px solid var(--gray-border);
+            border-radius: 6px;
+            padding: 4px 8px;
+            margin-bottom: 5px;
+        }
+
+        .icon-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid var(--gray-border);
+            background-color: #ffffff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.9em;
+            color: var(--text-muted);
+        }
+
+        .icon-action-btn:hover {
+            border-color: var(--orange-main);
+            color: var(--orange-main);
+            transform: scale(1.05);
+        }
+
+        .icon-action-btn.btn-trash:hover {
+            border-color: #d32f2f;
+            color: #d32f2f;
+        }
+
+        /* ==========================================================================
+           TEMA AMARELO CLARO PARA VEÍCULOS APLICÁVEIS
+           ========================================================================== */
+        body.theme-aplicaveis {
+            background-color: #fffde7; /* Amarelo bem clarinho */
+        }
+
+        /* Hover e sombras nos cards cinzas dos itens (fixos e customizados) quando no tema aplicáveis */
+        body.theme-aplicaveis .item-row-card:hover,
+        #tab-aplicaveis .item-row-card:hover {
+            border-color: #ffd54f;
+            background-color: #fffde7;
+            box-shadow: 0 4px 14px rgba(255, 193, 7, 0.28);
+        }
+
+        body.theme-aplicaveis .item-card-unified:hover,
+        #tab-aplicaveis .item-card-unified:hover {
+            border-color: #ffd54f;
+            background-color: #fffde7;
+            box-shadow: 0 4px 14px rgba(255, 193, 7, 0.28);
+        }
+
+        /* Cabeçalho do Card de Veículo Aplicável */
+        body.theme-aplicaveis .veiculo-card-header,
+        #tab-aplicaveis .veiculo-card-header {
+            background-color: #fffde7;
+            border-bottom: 1.5px solid #ffe082;
+        }
+
+        /* Caixa e campo destinado ao nome do veículo aplicável com sombra e borda amarela */
+        .veiculo-nome-wrapper {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            background-color: #ffffff;
+            border: 1.5px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 6px 12px;
+            transition: all 0.2s ease;
+        }
+
+        body.theme-aplicaveis .veiculo-nome-wrapper:hover,
+        #tab-aplicaveis .veiculo-nome-wrapper:hover,
+        body.theme-aplicaveis .veiculo-nome-wrapper:focus-within,
+        #tab-aplicaveis .veiculo-nome-wrapper:focus-within {
+            border-color: #fbc02d;
+            box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.28);
+        }
+
+        body.theme-aplicaveis .form-control:focus,
+        #tab-aplicaveis .form-control:focus {
+            border-color: #fbc02d;
+            box-shadow: 0 0 0 3px rgba(251, 192, 45, 0.28);
+        }
+
+        /* Modal de Confirmação */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            backdrop-filter: blur(3px);
+            animation: modalFadeIn 0.2s ease-out;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-box {
+            background: #ffffff;
+            border-radius: 12px;
+            max-width: 480px;
+            width: 90%;
+            padding: 26px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            animation: modalPopIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            border-top: 5px solid var(--orange-main);
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes modalPopIn {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-icon {
+            font-size: 2.8em;
+            color: var(--orange-main);
+            margin-bottom: 12px;
+        }
+
+        .modal-title {
+            font-size: 1.25em;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+
+        .modal-msg {
+            font-size: 0.95em;
+            color: #444;
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn-sim {
+            background-color: var(--primary-green);
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 24px;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 6px rgba(46, 125, 50, 0.3);
+        }
+
+        .modal-btn-sim:hover {
+            background-color: #1b5e20;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.4);
+        }
+
+        .modal-btn-nao {
+            background-color: #f1f3f1;
+            color: #555;
+            border: 1px solid var(--gray-border);
+            border-radius: 6px;
+            padding: 10px 24px;
+            font-size: 0.95em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-btn-nao:hover {
+            background-color: #e0e0e0;
+            color: #222;
+        }
+
+        /* ==========================================================================
+           BLOCO DIDÁTICO DE LEGENDAS (Conforme Mockup)
+           ========================================================================== */
+        .legendas-box {
+            background-color: var(--gray-light);
+            border: 1px solid var(--gray-border);
+            border-radius: 8px;
+            padding: 10px 16px;
+            margin-bottom: 20px;
+        }
+
+        .legendas-title {
+            font-size: 0.78em;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .legendas-items {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .legenda-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85em;
+            color: #444444;
+            font-weight: 500;
+        }
+
+        .badge-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .badge-circle.s {
+            background-color: var(--badge-s);
+        }
+
+        .badge-circle.o {
+            background-color: var(--badge-o);
+        }
+
+        .badge-circle.n {
+            background-color: var(--badge-n);
+        }
+
+        /* ==========================================================================
+           CARDS DE SELEÇÃO DE VEÍCULO DOADOR (Copiar Sistemas)
+           ========================================================================== */
+        .veiculos-doadores-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 280px;
+            overflow-y: auto;
+            margin: 15px 0 20px 0;
+            padding: 4px;
+        }
+
+        .veiculo-doador-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: var(--gray-light);
+            border: 1.5px solid var(--gray-border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .veiculo-doador-card:hover {
+            border-color: var(--orange-main);
+            background-color: #fff9f0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(245, 124, 0, 0.15);
+        }
+
+        .veiculo-doador-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1em;
+            flex-shrink: 0;
+        }
+
+        .veiculo-doador-icon.principal {
+            background-color: #e8f5e9;
+            color: var(--primary-green);
+        }
+
+        .veiculo-doador-icon.aplicavel {
+            background-color: #fff3e0;
+            color: var(--orange-main);
+        }
+
+        .veiculo-doador-nome {
+            font-size: 0.95em;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .veiculo-doador-tag {
+            font-size: 0.72em;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            letter-spacing: 0.4px;
+            display: inline-block;
+        }
+
+        .veiculo-doador-tag.principal {
+            background-color: #e8f5e9;
+            color: var(--primary-green);
+        }
+
+        .veiculo-doador-tag.aplicavel {
+            background-color: #fff3e0;
+            color: var(--orange-hover);
         }
