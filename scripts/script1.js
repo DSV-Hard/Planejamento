@@ -104,12 +104,12 @@ function setupEditableContent(elementId) {
 				if (text.match(pathRegex)) {
 					newContent = text.replace(pathRegex, (path) => {
 						const sanitized = path.trim();
-						return `<a href="${sanitized}" title="${sanitized}" target="_blank" style="color: green;">PASTA</a>`;
+						return `<a href="${sanitized}" title="${sanitized}" target="_blank" contenteditable="false" style="color: green; cursor: pointer; text-decoration: underline;">PASTA</a>`;
 					});
 				} else if (text.match(urlRegex)) {
 					newContent = text.replace(urlRegex, (url) => {
 						const fullUrl = url.startsWith('http') ? url : `http://${url}`;
-						return `<a href="${fullUrl}" title="${fullUrl}" target="_blank" style="color: blue;">LINK</a>`;
+						return `<a href="${fullUrl}" title="${fullUrl}" target="_blank" contenteditable="false" style="color: blue; cursor: pointer; text-decoration: underline;">LINK</a>`;
 					});
 				}
 
