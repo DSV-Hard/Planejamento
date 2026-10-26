@@ -67,6 +67,7 @@ async function processarArquivo(element, file) {
 			imgContainer.style.display = 'inline-block';
 			imgContainer.style.marginTop = '5px';
 			imgContainer.style.marginBottom = '5px';
+			imgContainer.contentEditable = 'false';
 			
 			const img = document.createElement('img');
 			img.src = thumbnailDataUrl;
@@ -76,39 +77,11 @@ async function processarArquivo(element, file) {
 			img.style.border = '1px solid #ccc';
 			img.style.borderRadius = '4px';
 			img.style.cursor = 'pointer';
-			img.title = `Clique para ver em tamanho real: ${file.name}`;
+			img.title = `Clique para ver em tamanho real: ${file.name || 'imagem'}`;
 			
 			img.setAttribute('data-original-image', dataUrl);
 			img.setAttribute('data-filename', file.name || 'imagem');
 			img.setAttribute('data-mime', file.type);
-			
-			img.addEventListener('click', () => {
-				const modal = document.createElement('div');
-				modal.style.position = 'fixed';
-				modal.style.top = '0';
-				modal.style.left = '0';
-				modal.style.width = '100%';
-				modal.style.height = '100%';
-				modal.style.backgroundColor = 'rgba(0,0,0,0.8)';
-				modal.style.display = 'flex';
-				modal.style.justifyContent = 'center';
-				modal.style.alignItems = 'center';
-				modal.style.zIndex = '10000';
-				modal.style.cursor = 'pointer';
-				
-				const modalImg = document.createElement('img');
-				modalImg.src = dataUrl;
-				modalImg.style.maxWidth = '90%';
-				modalImg.style.maxHeight = '90%';
-				modalImg.style.objectFit = 'contain';
-				
-				modal.appendChild(modalImg);
-				document.body.appendChild(modal);
-				
-				modal.addEventListener('click', () => {
-					document.body.removeChild(modal);
-				});
-			});
 			
 			imgContainer.appendChild(img);
 			content = imgContainer;
@@ -221,3 +194,278 @@ function getChapterFolderName(veiculo, sistema, capTitulo) {
 	const sistemaIndex = sistema && veiculo.sistemas ? veiculo.sistemas.indexOf(sistema) + 1 : 1;
 	return `Capítulo ${sistemaIndex} - ${capTitulo}`;
 }
+
+// =========================================================================
+// MODAIS DE VISUALIZAÇÃO INTERATIVA: LINK / PASTA E IMAGENS ORIGINAIS
+// =========================================================================
+
+function fecharModaisVisualizacao() {
+	const overlayLink = document.getElementById('preview-link-modal-overlay');
+	if (overlayLink) overlayLink.remove();
+	const overlayImg = document.getElementById('preview-image-modal-overlay');
+	if (overlayImg) overlayImg.remove();
+}
+
+function abrirModalVisualizacaoLink(urlOuPath, tipoTexto = '') {
+	fecharModaisVisualizacao();
+
+	const isPath = /^[a-zA-Z]:\\|^\\\\/.test(urlOuPath.trim());
+	const titulo = isPath ? '📁 Caminho da Pasta' : '🔗 Visualizar Link';
+	const urlFormatada = isPath ? urlOuPath : (urlOuPath.startsWith('http') ? urlOuPath : `http://${urlOuPath}`);
+
+	const overlay = document.createElement('div');
+	overlay.id = 'preview-link-modal-overlay';
+	overlay.className = 'modal-overlay';
+	overlay.style.position = 'fixed';
+	overlay.style.top = '0';
+	overlay.style.left = '0';
+	overlay.style.width = '100vw';
+	overlay.style.height = '100vh';
+	overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.65)';
+	overlay.style.backdropFilter = 'blur(3px)';
+	overlay.style.display = 'flex';
+	overlay.style.justifyContent = 'center';
+	overlay.style.alignItems = 'center';
+	overlay.style.zIndex = '100000';
+
+	const modal = document.createElement('div');
+	modal.className = 'modal-content';
+	modal.style.backgroundColor = '#fff';
+	modal.style.padding = '25px 30px';
+	modal.style.borderRadius = '12px';
+	modal.style.boxShadow = '0 10px 30px rgba(0,0,0,0.3)';
+	modal.style.maxWidth = '550px';
+	modal.style.width = '90%';
+	modal.style.boxSizing = 'border-box';
+	modal.style.textAlign = 'left';
+
+	modal.innerHTML = `
+		<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+			<h3 style="margin: 0; color: #333; font-size: 1.25em;">${titulo}</h3>
+			<button type="button" id="btn-fechar-link-x" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #888; line-height: 1;">&times;</button>
+		</div>
+		<p style="font-size: 0.9em; color: #666; margin-top: 0; margin-bottom: 8px;">Conteúdo colado no formulário:</p>
+		<div style="background-color: #f7f9fa; border: 1px solid #d1d5db; border-radius: 6px; padding: 12px; font-family: Consolas, monospace; font-size: 13px; color: #1f2937; word-break: break-all; max-height: 180px; overflow-y: auto; user-select: all; line-height: 1.4;">${urlOuPath}</div>
+		<div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+			${!isPath ? `<button type="button" id="btn-abrir-link-url" class="orange-button" style="padding: 8px 16px;">🌐 Abrir no Navegador</button>` : ''}
+			<button type="button" id="btn-copiar-link-url" class="orange-button" style="padding: 8px 16px;">📋 Copiar</button>
+			<button type="button" id="btn-fechar-link-url" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 5px; cursor: pointer; font-size: 14px;">Fechar</button>
+		</div>
+	`;
+
+	overlay.appendChild(modal);
+	document.body.appendChild(overlay);
+
+	const fechar = () => {
+		fecharModaisVisualizacao();
+	};
+
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) fechar();
+	});
+
+	modal.querySelector('#btn-fechar-link-x').onclick = fechar;
+	modal.querySelector('#btn-fechar-link-url').onclick = fechar;
+
+	const btnAbrir = modal.querySelector('#btn-abrir-link-url');
+	if (btnAbrir) {
+		btnAbrir.onclick = () => {
+			window.open(urlFormatada, '_blank');
+		};
+	}
+
+	const btnCopiar = modal.querySelector('#btn-copiar-link-url');
+	btnCopiar.onclick = () => {
+		copiarTextoParaClipboard(urlOuPath, btnCopiar);
+	};
+
+	const onKeyDown = (e) => {
+		if (e.key === 'Escape') {
+			fechar();
+			document.removeEventListener('keydown', onKeyDown);
+		}
+	};
+	document.addEventListener('keydown', onKeyDown);
+}
+
+function abrirModalVisualizacaoImagem(srcOriginal, nomeArquivo = 'Imagem') {
+	fecharModaisVisualizacao();
+
+	const overlay = document.createElement('div');
+	overlay.id = 'preview-image-modal-overlay';
+	overlay.style.position = 'fixed';
+	overlay.style.top = '0';
+	overlay.style.left = '0';
+	overlay.style.width = '100vw';
+	overlay.style.height = '100vh';
+	overlay.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+	overlay.style.backdropFilter = 'blur(4px)';
+	overlay.style.display = 'flex';
+	overlay.style.flexDirection = 'column';
+	overlay.style.justifyContent = 'center';
+	overlay.style.alignItems = 'center';
+	overlay.style.zIndex = '100000';
+	overlay.style.padding = '20px';
+	overlay.style.boxSizing = 'border-box';
+
+	const header = document.createElement('div');
+	header.style.display = 'flex';
+	header.style.justifyContent = 'space-between';
+	header.style.alignItems = 'center';
+	header.style.maxWidth = '92vw';
+	header.style.width = '100%';
+	header.style.marginBottom = '10px';
+	header.style.color = '#fff';
+
+	const title = document.createElement('span');
+	title.textContent = nomeArquivo;
+	title.style.fontSize = '14px';
+	title.style.opacity = '0.9';
+	title.style.textOverflow = 'ellipsis';
+	title.style.overflow = 'hidden';
+	title.style.whiteSpace = 'nowrap';
+
+	const closeBtn = document.createElement('button');
+	closeBtn.innerHTML = '&times;';
+	closeBtn.style.background = 'none';
+	closeBtn.style.border = 'none';
+	closeBtn.style.color = '#fff';
+	closeBtn.style.fontSize = '30px';
+	closeBtn.style.cursor = 'pointer';
+	closeBtn.style.padding = '0 8px';
+	closeBtn.style.lineHeight = '1';
+
+	header.appendChild(title);
+	header.appendChild(closeBtn);
+
+	const img = document.createElement('img');
+	img.src = srcOriginal;
+	img.style.maxWidth = '92vw';
+	img.style.maxHeight = '80vh';
+	img.style.objectFit = 'contain';
+	img.style.borderRadius = '6px';
+	img.style.boxShadow = '0 8px 30px rgba(0,0,0,0.6)';
+	img.style.backgroundColor = '#fff';
+
+	const footer = document.createElement('div');
+	footer.style.display = 'flex';
+	footer.style.gap = '10px';
+	footer.style.marginTop = '14px';
+
+	const btnAbrirAba = document.createElement('button');
+	btnAbrirAba.className = 'orange-button';
+	btnAbrirAba.style.padding = '6px 14px';
+	btnAbrirAba.style.fontSize = '13px';
+	btnAbrirAba.textContent = '🔍 Abrir em Nova Aba';
+	btnAbrirAba.onclick = () => {
+		const novaJanela = window.open();
+		if (novaJanela) {
+			novaJanela.document.write(`<img src="${srcOriginal}" style="max-width:100%; height:auto;" alt="Imagem">`);
+		}
+	};
+
+	const btnFechar = document.createElement('button');
+	btnFechar.style.padding = '6px 14px';
+	btnFechar.style.fontSize = '13px';
+	btnFechar.style.border = '1px solid #666';
+	btnFechar.style.backgroundColor = '#333';
+	btnFechar.style.color = '#fff';
+	btnFechar.style.borderRadius = '5px';
+	btnFechar.style.cursor = 'pointer';
+	btnFechar.textContent = 'Fechar';
+
+	footer.appendChild(btnAbrirAba);
+	footer.appendChild(btnFechar);
+
+	overlay.appendChild(header);
+	overlay.appendChild(img);
+	overlay.appendChild(footer);
+	document.body.appendChild(overlay);
+
+	const fechar = () => {
+		fecharModaisVisualizacao();
+	};
+
+	closeBtn.onclick = fechar;
+	btnFechar.onclick = fechar;
+	overlay.addEventListener('click', (e) => {
+		if (e.target === overlay) fechar();
+	});
+
+	const onKeyDown = (e) => {
+		if (e.key === 'Escape') {
+			fechar();
+			document.removeEventListener('keydown', onKeyDown);
+		}
+	};
+	document.addEventListener('keydown', onKeyDown);
+}
+
+function copiarTextoParaClipboard(texto, btnElement) {
+	const feedback = () => {
+		if (btnElement) {
+			const textoOriginal = btnElement.textContent;
+			btnElement.textContent = '✓ Copiado!';
+			btnElement.style.backgroundColor = '#28a745';
+			btnElement.style.color = '#fff';
+			setTimeout(() => {
+				btnElement.textContent = textoOriginal;
+				btnElement.style.backgroundColor = '';
+				btnElement.style.color = '';
+			}, 2000);
+		}
+	};
+
+	if (navigator.clipboard && navigator.clipboard.writeText) {
+		navigator.clipboard.writeText(texto).then(feedback).catch(() => fallbackCopiar(texto, feedback));
+	} else {
+		fallbackCopiar(texto, feedback);
+	}
+}
+
+function fallbackCopiar(texto, callback) {
+	const textarea = document.createElement('textarea');
+	textarea.value = texto;
+	textarea.style.position = 'fixed';
+	textarea.style.left = '-9999px';
+	document.body.appendChild(textarea);
+	textarea.select();
+	try {
+		document.execCommand('copy');
+		if (callback) callback();
+	} catch (err) {
+		alert('Não foi possível copiar automaticamente. Selecione o texto e use Ctrl+C.');
+	}
+	document.body.removeChild(textarea);
+}
+
+// Listener global com delegação de eventos para miniaturas de imagem e links nos campos editáveis
+document.addEventListener('click', (e) => {
+	// 1. Miniatura de imagem
+	const imgEl = e.target.closest('img');
+	if (imgEl) {
+		if (imgEl.closest('#cabecalho') || imgEl.id === 'logo') {
+			return;
+		}
+		if (imgEl.hasAttribute('data-original-image') || imgEl.closest('.editable-content') || imgEl.closest('.image-container')) {
+			e.preventDefault();
+			e.stopPropagation();
+			const originalSrc = imgEl.getAttribute('data-original-image') || imgEl.src;
+			const filename = imgEl.getAttribute('data-filename') || imgEl.alt || 'Imagem';
+			abrirModalVisualizacaoImagem(originalSrc, filename);
+			return;
+		}
+	}
+
+	// 2. Links ("LINK", "PASTA", anexos ou links dentro de .editable-content)
+	const linkEl = e.target.closest('a');
+	if (linkEl && (linkEl.closest('.editable-content') || ['LINK', 'PASTA'].includes(linkEl.textContent.trim()) || linkEl.classList.contains('attachment'))) {
+		const href = linkEl.getAttribute('href') || linkEl.getAttribute('title') || '';
+		if (href && !href.startsWith('data:')) {
+			e.preventDefault();
+			e.stopPropagation();
+			abrirModalVisualizacaoLink(href, linkEl.textContent.trim());
+			return;
+		}
+	}
+});
