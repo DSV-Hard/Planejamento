@@ -62,7 +62,8 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppParte1
 			},
 			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte1)),
-			incluirInfoGerais: true
+			incluirInfoGerais: true,
+			dadosFormularioCompleto: dadosCompletos
 		});
 
 		partsToGenerate.push({
@@ -74,7 +75,8 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppParte2
 			},
 			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte2)),
-			incluirInfoGerais: true
+			incluirInfoGerais: true,
+			dadosFormularioCompleto: dadosCompletos
 		});
 	} else {
 		const pppTotal = (dataPrincipalOriginal.sistemas || []).reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
@@ -87,7 +89,8 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppTotal
 			},
 			dataAplicaveis: dataAplicaveisOriginal,
-			incluirInfoGerais: true
+			incluirInfoGerais: true,
+			dadosFormularioCompleto: dadosCompletos
 		});
 	}
 
@@ -160,7 +163,7 @@ function desconverterHtmlParaRelatorio(htmlString) {
 }
 
 function abrirJanelaImpressaoHtml(partData) {
-	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais } = partData;
+	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais, dadosFormularioCompleto } = partData;
 
 	let nomeBase = 'Planejamento';
 	if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
@@ -1125,8 +1128,8 @@ function abrirJanelaImpressaoHtml(partData) {
 			PLANEJAMENTO (com Comentador)
 		</div>
 		<div class="toolbar-print-right">
-			<button class="btn-html" onclick="salvarComoArquivoHTML()" title="Salvar este relatório como arquivo HTML (com o comentador ativo)">💾 Salvar HTML</button>
-			<button class="btn-print" onclick="window.print()" title="Salvar como PDF ou Imprimir">🖨️ Salvar PDF</button>
+			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório como arquivo HTML e faz o download automático do JSON do formulário">💾 Salvar HTML+JSON</button>
+			<button class="btn-print" onclick="salvarPDFEJson()" title="Abre a janela de impressão em PDF e faz o download automático do JSON do formulário">🖨️ Salvar PDF+JSON</button>
 		</div>
 	</div>
 
@@ -1472,9 +1475,59 @@ function abrirJanelaImpressaoHtml(partData) {
 		</div>
 	</div>
 
+	<script id="dados-formulario-planejamento" type="application/json">
+${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicaveis: dataAplicaveis }).replace(/<\/script/gi, '<\\/script')}
+	</script>
+
 	<script>
 		let comentariosArmazenados = {};
 		const chaveArmazenamentoLocal = 'planejamento_cmt_' + encodeURIComponent((document.title || 'padrao').trim());
+
+		function salvarJSONPlanejamento() {
+			const scriptEl = document.getElementById('dados-formulario-planejamento');
+			if (!scriptEl) return;
+			try {
+				const data = JSON.parse(scriptEl.textContent.trim());
+				const dataStr = JSON.stringify(data, null, 2);
+				const blob = new Blob([dataStr], { type: "application/json" });
+				const url = URL.createObjectURL(blob);
+				const a = document.createElement("a");
+				a.href = url;
+				let nomeArquivo = "planejamento.json";
+				if (data.principal && data.principal.veiculo && data.principal.veiculo.includes('>')) {
+					const partes = data.principal.veiculo.split('>');
+					if (partes.length >= 5) {
+						const ano = partes[1].trim();
+						const modelo = partes[3].trim();
+						const motor = partes[4].trim();
+						nomeArquivo = \`Planejamento - \${ano} \${modelo} \${motor}.json\`;
+					}
+				} else if (data.principal && data.principal.veiculo) {
+					nomeArquivo = \`Planejamento - \${data.principal.veiculo}.json\`;
+				}
+				a.download = nomeArquivo;
+				document.body.appendChild(a);
+				a.click();
+				document.body.removeChild(a);
+				setTimeout(() => URL.revokeObjectURL(url), 1000);
+			} catch(e) {
+				console.error('Erro ao salvar JSON:', e);
+			}
+		}
+
+		function salvarComoHTMLEJson() {
+			salvarComoArquivoHTML();
+			setTimeout(() => {
+				salvarJSONPlanejamento();
+			}, 300);
+		}
+
+		function salvarPDFEJson() {
+			salvarJSONPlanejamento();
+			setTimeout(() => {
+				window.print();
+			}, 300);
+		}
 
 		function formatarDataHora() {
 			const agora = new Date();
@@ -2169,12 +2222,13 @@ function abrirJanelaImpressaoHtml(partData) {
 			}
 			const btnHtml = docClone.querySelector('.btn-html');
 			if (btnHtml) {
-				btnHtml.textContent = '💾 Salvar HTML';
-				btnHtml.setAttribute('title', 'Salva novamente este arquivo com todas as anotações atualizadas');
+				btnHtml.textContent = '💾 Salvar HTML+JSON';
+				btnHtml.setAttribute('title', 'Salva novamente este arquivo com todas as anotações atualizadas e baixa o JSON');
 			}
 			const btnPrint = docClone.querySelector('.btn-print');
 			if (btnPrint) {
-				btnPrint.textContent = '🖨️ Salvar PDF';
+				btnPrint.textContent = '🖨️ Salvar PDF+JSON';
+				btnPrint.setAttribute('title', 'Salva como PDF ou Imprime e baixa o JSON');
 			}
 
 			// Embute script JSON de dados salvos
