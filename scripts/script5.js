@@ -1,12 +1,3 @@
-// =========================================================================
-// SCRIPT 5 - NOVO MOTOR DE GERAÇÃO DE PDF VIA IMPRESSÃO HTML NATIVA
-// - Desconverte miniaturas para imagens originais em tamanho real e nítido
-// - Cada endereço de pasta sai em sua própria linha (bloco) em verde itálico
-// - Links de sites mantêm a palavra "LINK" em azul discreto e clicável
-// - Veículo Principal: Títulos de capítulos grifados em VERDE (#d4ffd6)
-// - Veículos Aplicáveis: Títulos de capítulos grifados em AMARELO (#fae743)
-//   e com todos os formulários/campos completos idênticos ao script4.js
-// =========================================================================
 
 function gerarPDFHtmlPrint(options = null) {
 	const erros = validarFormularioGlobal();
