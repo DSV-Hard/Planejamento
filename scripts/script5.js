@@ -136,6 +136,9 @@ function desconverterHtmlParaRelatorio(htmlString) {
 			// Cada endereço de pasta sai em sua própria linha (bloco) separada
 			const div = document.createElement('div');
 			div.className = 'path-text-block';
+			div.setAttribute('data-caminho', href);
+			div.setAttribute('onclick', 'copiarCaminho(this)');
+			div.setAttribute('title', 'Clique para copiar o endereço da pasta');
 			div.textContent = href; // Caminho real por extenso
 			a.replaceWith(div);
 		} else if (isUrl) {
@@ -273,27 +276,45 @@ function abrirJanelaImpressaoHtml(partData) {
 		.toolbar-print {
 			position: sticky;
 			top: 0;
-			background: #333;
+			background: #23272f;
 			color: #fff;
-			padding: 10px 15px;
+			padding: 10px 18px;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
 			z-index: 9999;
-			box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+			box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+			font-family: Arial, sans-serif;
+		}
+		.toolbar-print .btn-group {
+			display: flex;
+			gap: 10px;
 		}
 		.toolbar-print button {
-			background: #f0ad4e;
-			color: #fff;
 			border: none;
 			padding: 8px 18px;
-			font-size: 14px;
+			font-size: 13px;
 			font-weight: bold;
 			border-radius: 5px;
 			cursor: pointer;
+			transition: background 0.2s, transform 0.1s;
 		}
-		.toolbar-print button:hover {
-			background: #ec971f;
+		.toolbar-print button:active {
+			transform: scale(0.98);
+		}
+		.btn-html {
+			background: #28a745;
+			color: #fff;
+		}
+		.btn-html:hover {
+			background: #218838;
+		}
+		.btn-print {
+			background: #007bff;
+			color: #fff;
+		}
+		.btn-print:hover {
+			background: #0069d9;
 		}
 		.document-container {
 			max-width: 210mm;
@@ -370,6 +391,14 @@ function abrirJanelaImpressaoHtml(partData) {
 			display: block;
 			margin: 4px 0 4px 12px;
 			line-height: 1.4;
+			cursor: pointer;
+			border-radius: 4px;
+			padding: 2px 4px;
+			transition: background-color 0.15s;
+		}
+		.path-text-block:hover {
+			background-color: #eafbee;
+			text-decoration: underline;
 		}
 		.path-text {
 			color: #008000 !important;
@@ -380,6 +409,14 @@ function abrirJanelaImpressaoHtml(partData) {
 			display: block;
 			margin: 4px 0 4px 12px;
 			line-height: 1.4;
+			cursor: pointer;
+			border-radius: 4px;
+			padding: 2px 4px;
+			transition: background-color 0.15s;
+		}
+		.path-text:hover {
+			background-color: #eafbee;
+			text-decoration: underline;
 		}
 		/* LINKS WEB: palavra "LINK" em azul itálico sublinhado */
 		.url-text {
@@ -460,8 +497,11 @@ function abrirJanelaImpressaoHtml(partData) {
 </head>
 <body>
 	<div class="toolbar-print no-print">
-		<span>Visualização de Impressão HTML (Pressione Ctrl+P ou clique ao lado para salvar em PDF)</span>
-		<button onclick="window.print()">🖨️ Salvar como PDF / Imprimir</button>
+		<span>Visualização de Relatório HTML / Impressão</span>
+		<div class="btn-group">
+			<button class="btn-html" onclick="salvarComoArquivoHTML()" title="Salvar como arquivo HTML (abre no navegador, links clicáveis e cópia perfeita de endereços)">💾 Salvar como HTML</button>
+			<button class="btn-print" onclick="window.print()" title="Salvar como PDF ou Imprimir">🖨️ Salvar como PDF / Imprimir</button>
+		</div>
 	</div>
 
 	<div class="document-container">
@@ -497,7 +537,7 @@ function abrirJanelaImpressaoHtml(partData) {
 		<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dataPrincipal.idfusiveis || 'N/A'}</span></div>
 
 		<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-		<div class="path-text">${dataPrincipal.pasta || 'N/A'}</div>
+		<div class="path-text" data-caminho="${dataPrincipal.pasta || ''}" onclick="copiarCaminho(this)" title="Clique para copiar o endereço da pasta">${dataPrincipal.pasta || 'N/A'}</div>
 
 		<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
 		${desconverterHtmlParaRelatorio(dataPrincipal.comentarios)}
@@ -615,7 +655,7 @@ function abrirJanelaImpressaoHtml(partData) {
 				<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dadosGerais.idfusiveis || 'N/A'}</span></div>
 				
 				<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-				<div class="path-text">${dadosGerais.pasta || 'N/A'}</div>
+				<div class="path-text" data-caminho="${dadosGerais.pasta || ''}" onclick="copiarCaminho(this)" title="Clique para copiar o endereço da pasta">${dadosGerais.pasta || 'N/A'}</div>
 				
 				<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
 				${desconverterHtmlParaRelatorio(dadosGerais.comentarios)}
@@ -755,6 +795,43 @@ function abrirJanelaImpressaoHtml(partData) {
 	html += `
 		</div> <!-- fim avoid-break -->
 	</div> <!-- fim document-container -->
+
+	<script>
+		function salvarComoArquivoHTML() {
+			const docClone = document.documentElement.cloneNode(true);
+			const htmlContent = '<!DOCTYPE html>\\n' + docClone.outerHTML;
+			const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			const docTitle = document.title ? document.title.replace(/[\\\\/:*?\"<>|]/g, '').trim() : 'Planejamento';
+			a.download = (docTitle || 'Planejamento') + '.html';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
+		}
+
+		function copiarCaminho(elemento) {
+			const texto = elemento.getAttribute('data-caminho') || elemento.innerText.trim();
+			if (!texto || texto === 'N/A') return;
+			navigator.clipboard.writeText(texto).then(() => {
+				const bgOriginal = elemento.style.backgroundColor;
+				elemento.style.backgroundColor = '#bbf7d0';
+				const msg = document.createElement('span');
+				msg.className = 'no-print';
+				msg.style.cssText = 'margin-left: 8px; font-size: 9pt; color: #15803d; font-weight: bold; font-style: normal; text-decoration: none;';
+				msg.textContent = '✓ Copiado!';
+				elemento.appendChild(msg);
+				setTimeout(() => {
+					elemento.style.backgroundColor = bgOriginal;
+					msg.remove();
+				}, 1200);
+			}).catch(err => {
+				console.error('Falha ao copiar:', err);
+			});
+		}
+	<\/script>
 </body>
 </html>`;
 
