@@ -137,7 +137,7 @@ function desconverterHtmlParaRelatorio(htmlString) {
 			const div = document.createElement('div');
 			div.className = 'path-text-block';
 			div.setAttribute('data-caminho', href);
-			div.setAttribute('onclick', 'copiarCaminho(this)');
+			div.setAttribute('onclick', 'copiarCaminho(this, event)');
 			div.setAttribute('title', 'Clique para copiar o endereço da pasta');
 			div.textContent = href; // Caminho real por extenso
 			a.replaceWith(div);
@@ -266,24 +266,52 @@ function abrirJanelaImpressaoHtml(partData) {
 			font-family: Arial, Helvetica, sans-serif;
 			font-size: 11pt;
 			color: #111;
-			background-color: #fff;
+			background-color: #f1f5f9;
 			margin: 0;
 			padding: 0;
 			line-height: 1.45;
 			-webkit-print-color-adjust: exact !important;
 			print-color-adjust: exact !important;
 		}
+		/* MODO PREVIEW NA JANELA DO SISTEMA: Totalmente limpo e centralizado como antes */
+		body.modo-preview {
+			background-color: #ffffff;
+		}
+		body.modo-preview .workspace-wrapper {
+			min-width: 0 !important;
+			padding: 15px 0 !important;
+			display: block !important;
+		}
+		body.modo-preview .document-container {
+			max-width: 210mm !important;
+			width: 100% !important;
+			min-width: 0 !important;
+			margin: 0 auto !important;
+			padding: 20px 0 !important;
+			box-shadow: none !important;
+			border-radius: 0 !important;
+		}
+		body.modo-preview .btn-comment-trigger,
+		body.modo-preview .comment-box-aside,
+		body.modo-preview #camada-comentarios,
+		body.modo-preview #badge-contador-comentarios {
+			display: none !important;
+		}
+		body.modo-preview .commentable-row:hover,
+		body.modo-preview .commentable-row.has-comment {
+			background-color: transparent !important;
+		}
 		.toolbar-print {
 			position: sticky;
 			top: 0;
-			background: #23272f;
+			background: #1e293b;
 			color: #fff;
-			padding: 10px 18px;
+			padding: 10px 24px;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
 			z-index: 9999;
-			box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+			box-shadow: 0 2px 10px rgba(0,0,0,0.25);
 			font-family: Arial, sans-serif;
 		}
 		.toolbar-print .btn-group {
@@ -303,23 +331,176 @@ function abrirJanelaImpressaoHtml(partData) {
 			transform: scale(0.98);
 		}
 		.btn-html {
-			background: #28a745;
+			background: #10b981;
 			color: #fff;
 		}
 		.btn-html:hover {
-			background: #218838;
+			background: #059669;
 		}
 		.btn-print {
-			background: #007bff;
+			background: #3b82f6;
 			color: #fff;
 		}
 		.btn-print:hover {
-			background: #0069d9;
+			background: #2563eb;
+		}
+		.badge-comentarios-top {
+			background: #334155;
+			color: #fef08a;
+			padding: 4px 12px;
+			border-radius: 12px;
+			font-size: 12px;
+			font-weight: bold;
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+		}
+		.workspace-wrapper {
+			display: flex;
+			justify-content: flex-start;
+			padding: 25px 25px 80px 35px;
+			box-sizing: border-box;
+			min-width: 1220px;
 		}
 		.document-container {
-			max-width: 210mm;
-			margin: 0 auto;
-			padding: 15px 0;
+			width: 210mm;
+			min-width: 210mm;
+			background: #ffffff;
+			padding: 35px 45px;
+			border-radius: 6px;
+			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+			position: relative;
+			box-sizing: border-box;
+			margin-left: max(10px, calc(50vw - 640px));
+		}
+
+		/* ELEMENTOS COMENTÁVEIS NA LINHA */
+		.commentable-row {
+			position: relative;
+			border-radius: 4px;
+			transition: background-color 0.15s;
+		}
+		.commentable-row:hover {
+			background-color: rgba(254, 240, 138, 0.22);
+		}
+		.commentable-row.has-comment {
+			background-color: rgba(254, 240, 138, 0.35);
+		}
+		.commentable-row.focused-target {
+			background-color: rgba(254, 240, 138, 0.55) !important;
+			outline: 2px dashed #f59e0b;
+			outline-offset: 2px;
+		}
+
+		/* BOTÃO 💬 NO FINAL DA LINHA */
+		.btn-comment-trigger {
+			position: absolute;
+			right: -28px;
+			top: 50%;
+			transform: translateY(-50%);
+			width: 22px;
+			height: 22px;
+			background: #f8fafc;
+			border: 1px solid #cbd5e1;
+			border-radius: 50%;
+			cursor: pointer;
+			font-size: 11px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			opacity: 0;
+			transition: opacity 0.2s, background-color 0.2s, transform 0.1s;
+			z-index: 20;
+			padding: 0;
+			color: #475569;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		.commentable-row:hover .btn-comment-trigger,
+		.commentable-row.has-comment .btn-comment-trigger {
+			opacity: 0.95;
+		}
+		.commentable-row.has-comment .btn-comment-trigger {
+			background: #fef08a;
+			border-color: #eab308;
+			color: #713f12;
+			font-weight: bold;
+		}
+		.btn-comment-trigger:hover {
+			opacity: 1 !important;
+			background: #e2e8f0;
+			transform: translateY(-50%) scale(1.15);
+		}
+		.commentable-row.has-comment .btn-comment-trigger:hover {
+			background: #fde047;
+		}
+
+		/* CARD DO COMENTÁRIO FIXO NA LATERAL DIREITA, ALINHADO À LINHA */
+		.comment-box-aside {
+			position: absolute;
+			left: calc(100% + 36px);
+			width: 310px;
+			background: #ffffff;
+			border: 1px solid #cbd5e1;
+			border-left: 4px solid #f59e0b; /* Amarelo: pendente */
+			box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+			border-radius: 6px;
+			padding: 10px 12px;
+			z-index: 40;
+			font-size: 9.5pt;
+			line-height: 1.4;
+			color: #1e293b;
+			text-align: left;
+			box-sizing: border-box;
+			transition: box-shadow 0.2s, border-color 0.2s, z-index 0.1s;
+		}
+		.comment-box-aside:hover, .comment-box-aside.focused-card {
+			z-index: 60;
+			box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+		}
+		/* Indicador de seta apontando para a linha */
+		.comment-box-aside::before {
+			content: "";
+			position: absolute;
+			left: -8px;
+			top: 12px;
+			width: 0;
+			height: 0;
+			border-top: 6px solid transparent;
+			border-bottom: 6px solid transparent;
+			border-right: 8px solid #f59e0b;
+		}
+		.comment-box-aside.status-resolvido {
+			border-left-color: #10b981; /* Verde: resolvido */
+			background: #f8fafc;
+			opacity: 0.9;
+		}
+		.comment-box-aside.status-resolvido::before {
+			border-right-color: #10b981;
+		}
+
+		/* Status badge dentro do comentário */
+		.btn-status-toggle {
+			border: none;
+			padding: 2px 7px;
+			border-radius: 10px;
+			font-size: 8pt;
+			font-weight: bold;
+			cursor: pointer;
+			transition: background 0.15s;
+		}
+		.btn-status-toggle.pendente {
+			background: #fef3c7;
+			color: #92400e;
+		}
+		.btn-status-toggle.pendente:hover {
+			background: #fde68a;
+		}
+		.btn-status-toggle.resolvido {
+			background: #dcfce7;
+			color: #166534;
+		}
+		.btn-status-toggle.resolvido:hover {
+			background: #bbf7d0;
 		}
 		.doc-title {
 			text-align: center;
@@ -488,23 +669,48 @@ function abrirJanelaImpressaoHtml(partData) {
 			.no-print {
 				display: none !important;
 			}
+			body {
+				background-color: #fff !important;
+			}
+			.workspace-wrapper {
+				padding: 0 !important;
+				min-width: 0 !important;
+				display: block !important;
+			}
 			.document-container {
-				max-width: 100%;
-				padding: 0;
+				width: 100% !important;
+				min-width: 0 !important;
+				max-width: 100% !important;
+				padding: 0 !important;
+				box-shadow: none !important;
+				border-radius: 0 !important;
+				margin: 0 !important;
+			}
+			.commentable-row {
+				background-color: transparent !important;
+				outline: none !important;
+			}
+			.comment-box-aside, .btn-comment-trigger {
+				display: none !important;
 			}
 		}
 	</style>
 </head>
-<body>
+<body class="modo-preview">
 	<div class="toolbar-print no-print">
-		<span>Visualização de Relatório HTML / Impressão</span>
+		<div style="display: flex; align-items: center; gap: 14px;">
+			<span id="titulo-barra-relatorio" style="font-weight: bold; font-size: 14px; letter-spacing: 0.3px;">Visualização de Relatório HTML / Impressão</span>
+			<span id="badge-contador-comentarios" class="badge-comentarios-top">💬 0 anotações</span>
+		</div>
 		<div class="btn-group">
-			<button class="btn-html" onclick="salvarComoArquivoHTML()" title="Salvar como arquivo HTML (abre no navegador, links clicáveis e cópia perfeita de endereços)">💾 Salvar como HTML</button>
+			<button class="btn-html" onclick="salvarComoArquivoHTML()" title="Salvar este relatório como arquivo HTML (ativa o comentador no arquivo baixado)">💾 Salvar como HTML</button>
 			<button class="btn-print" onclick="window.print()" title="Salvar como PDF ou Imprimir">🖨️ Salvar como PDF / Imprimir</button>
 		</div>
 	</div>
 
-	<div class="document-container">
+	<div class="workspace-wrapper">
+		<div class="document-container" id="document-container">
+			<div id="camada-comentarios" class="no-print"></div>
 `;
 
 	// 1. ÍNDICE RÁPIDO PARA APLICÁVEIS
@@ -537,7 +743,7 @@ function abrirJanelaImpressaoHtml(partData) {
 		<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dataPrincipal.idfusiveis || 'N/A'}</span></div>
 
 		<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-		<div class="path-text" data-caminho="${dataPrincipal.pasta || ''}" onclick="copiarCaminho(this)" title="Clique para copiar o endereço da pasta">${dataPrincipal.pasta || 'N/A'}</div>
+		<div class="path-text" data-caminho="${dataPrincipal.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dataPrincipal.pasta || 'N/A'}</div>
 
 		<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
 		${desconverterHtmlParaRelatorio(dataPrincipal.comentarios)}
@@ -655,7 +861,7 @@ function abrirJanelaImpressaoHtml(partData) {
 				<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dadosGerais.idfusiveis || 'N/A'}</span></div>
 				
 				<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-				<div class="path-text" data-caminho="${dadosGerais.pasta || ''}" onclick="copiarCaminho(this)" title="Clique para copiar o endereço da pasta">${dadosGerais.pasta || 'N/A'}</div>
+				<div class="path-text" data-caminho="${dadosGerais.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dadosGerais.pasta || 'N/A'}</div>
 				
 				<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
 				${desconverterHtmlParaRelatorio(dadosGerais.comentarios)}
@@ -795,10 +1001,370 @@ function abrirJanelaImpressaoHtml(partData) {
 	html += `
 		</div> <!-- fim avoid-break -->
 	</div> <!-- fim document-container -->
+</div> <!-- fim workspace-wrapper -->
 
 	<script>
+		let comentariosArmazenados = {};
+		const chaveArmazenamentoLocal = 'planejamento_cmt_' + encodeURIComponent((document.title || 'padrao').trim());
+
+		function formatarDataHora() {
+			const agora = new Date();
+			const d = String(agora.getDate()).padStart(2, '0');
+			const m = String(agora.getMonth() + 1).padStart(2, '0');
+			const h = String(agora.getHours()).padStart(2, '0');
+			const min = String(agora.getMinutes()).padStart(2, '0');
+			return \`\${d}/\${m} \${h}:\${min}\`;
+		}
+
+		function obterAutorSalvo() {
+			return localStorage.getItem('planejamento_autor_comentador') || '';
+		}
+
+		function salvarAutorPadrao(nome) {
+			if (nome && nome.trim()) {
+				localStorage.setItem('planejamento_autor_comentador', nome.trim());
+			}
+		}
+
+		function inicializarSistemaComentarios() {
+			// SE ESTIVER EM MODO PREVIEW NA JANELA DO SISTEMA: NÃO EXECUTA NADA (mantém a tela 100% limpa como antes)
+			if (document.body.classList.contains('modo-preview')) {
+				return;
+			}
+
+			const seletores = [
+				'.info-row',
+				'.sub-header',
+				'.path-text',
+				'.path-text-block',
+				'.highlight-tag',
+				'.highlight-tag-yellow',
+				'.relatorio-img-container',
+				'.rich-content-box > p',
+				'.rich-content-box > div',
+				'.rich-content-box > table',
+				'.card-data-table tr'
+			];
+
+			let contador = 1;
+			const elementos = document.querySelectorAll(seletores.join(', '));
+			elementos.forEach(el => {
+				if (!el.classList.contains('commentable-row')) {
+					el.classList.add('commentable-row');
+					if (!el.id) {
+						el.id = 'cmt-alvo-' + contador++;
+					}
+
+					// Remove se já existisse algum botão antigo
+					const btnAntigo = el.querySelector('.btn-comment-trigger');
+					if (btnAntigo) btnAntigo.remove();
+
+					const btn = document.createElement('button');
+					btn.className = 'btn-comment-trigger no-print';
+					btn.type = 'button';
+					btn.title = 'Adicionar anotação / dúvida nesta linha';
+					btn.innerHTML = '💬';
+					btn.setAttribute('onclick', "iniciarEdicaoComentario('" + el.id + "', event);");
+					el.appendChild(btn);
+
+					el.addEventListener('mouseenter', () => {
+						const card = document.getElementById('card-cmt-' + el.id);
+						if (card) card.classList.add('focused-card');
+					});
+					el.addEventListener('mouseleave', () => {
+						const card = document.getElementById('card-cmt-' + el.id);
+						if (card) card.classList.remove('focused-card');
+					});
+				}
+			});
+
+			carregarComentariosSalvos();
+			window.addEventListener('resize', ajustarPosicoesComentarios);
+		}
+
+		function carregarComentariosSalvos() {
+			// 1. Tenta ler do script JSON embutido no HTML
+			const scriptJson = document.getElementById('dados-comentarios-salvos');
+			if (scriptJson && scriptJson.textContent.trim()) {
+				try {
+					comentariosArmazenados = JSON.parse(scriptJson.textContent.trim());
+				} catch(e) {
+					console.error('Erro ao ler comentários embutidos:', e);
+				}
+			}
+
+			// 2. Mescla com dados do localStorage (mais recentes se houver)
+			try {
+				const locais = localStorage.getItem(chaveArmazenamentoLocal);
+				if (locais) {
+					const parsed = JSON.parse(locais);
+					comentariosArmazenados = { ...comentariosArmazenados, ...parsed };
+				}
+			} catch(e) {}
+
+			// Renderiza todos
+			for (const targetId in comentariosArmazenados) {
+				const cmt = comentariosArmazenados[targetId];
+				if (cmt && cmt.texto) {
+					renderizarCardComentario(targetId, cmt);
+				}
+			}
+
+			atualizarContadorComentarios();
+			setTimeout(ajustarPosicoesComentarios, 100);
+		}
+
+		function renderizarCardComentario(targetId, dados) {
+			const camada = document.getElementById('camada-comentarios');
+			const target = document.getElementById(targetId);
+			if (!camada || !target) return;
+
+			target.classList.add('has-comment');
+
+			let card = document.getElementById('card-cmt-' + targetId);
+			if (!card) {
+				card = document.createElement('div');
+				card.id = 'card-cmt-' + targetId;
+				card.className = 'comment-box-aside no-print';
+				card.setAttribute('data-target-id', targetId);
+				camada.appendChild(card);
+
+				card.addEventListener('mouseenter', () => {
+					target.classList.add('focused-target');
+				});
+				card.addEventListener('mouseleave', () => {
+					target.classList.remove('focused-target');
+				});
+			}
+
+			const isResolvido = (dados.status === 'resolvido');
+			card.className = 'comment-box-aside no-print' + (isResolvido ? ' status-resolvido' : '');
+
+			card.innerHTML = \`
+				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
+					<div>
+						<div style="font-weight: bold; font-size: 10pt; color: #0f172a;">\${dados.autor || 'Desenvolvedor'}</div>
+						<div style="font-size: 8pt; color: #64748b;">\${dados.data || ''}</div>
+					</div>
+					<button class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="alternarStatusComentario('\${targetId}')" title="Clique para alternar status">
+						\${isResolvido ? '🟢 Resolvido' : '🟡 Pendente'}
+					</button>
+				</div>
+				<div style="font-size: 9.5pt; color: #334155; margin: 8px 0; word-break: break-word; white-space: pre-wrap;">\${dados.texto}</div>
+				<div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 6px; font-size: 8.5pt;">
+					<button onclick="iniciarEdicaoComentario('\${targetId}')" style="background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; font-size: 8.5pt;">✏️ Editar</button>
+					<button onclick="excluirComentario('\${targetId}')" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0; font-size: 8.5pt;">🗑️ Excluir</button>
+				</div>
+			\`;
+		}
+
+		function iniciarEdicaoComentario(targetId, event) {
+			if (event) {
+				event.stopPropagation();
+				event.preventDefault();
+			}
+			const camada = document.getElementById('camada-comentarios');
+			const target = document.getElementById(targetId);
+			if (!camada || !target) return;
+
+			let card = document.getElementById('card-cmt-' + targetId);
+			if (!card) {
+				card = document.createElement('div');
+				card.id = 'card-cmt-' + targetId;
+				card.className = 'comment-box-aside no-print';
+				card.setAttribute('data-target-id', targetId);
+				camada.appendChild(card);
+			}
+
+			const existente = comentariosArmazenados[targetId] || {};
+			const autorAtual = existente.autor || obterAutorSalvo() || '';
+			const textoAtual = existente.texto || '';
+
+			card.className = 'comment-box-aside no-print focused-card';
+			card.innerHTML = \`
+				<div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 6px; color: #b45309;">💬 Anotação / Dúvida</div>
+				<input type="text" id="input-autor-\${targetId}" placeholder="Seu nome (ex: Gustavo)" value="\${autorAtual}" style="width: 100%; box-sizing: border-box; padding: 5px 8px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt;">
+				<textarea id="input-texto-\${targetId}" placeholder="Digite sua dúvida ou observação aqui..." rows="3" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt; resize: vertical;">\${textoAtual}</textarea>
+				<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+					<button type="button" onclick="cancelarEdicaoComentario('\${targetId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">Cancelar</button>
+					<button type="button" onclick="salvarComentario('\${targetId}')" style="background: #2563eb; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 8.5pt; font-weight: bold;">Salvar</button>
+				</div>
+			\`;
+
+			ajustarPosicoesComentarios();
+			const textarea = document.getElementById('input-texto-' + targetId);
+			if (textarea) textarea.focus();
+		}
+
+		function salvarComentario(targetId) {
+			const inputAutor = document.getElementById('input-autor-' + targetId);
+			const inputTexto = document.getElementById('input-texto-' + targetId);
+			if (!inputTexto) return;
+
+			const texto = inputTexto.value.trim();
+			if (!texto) {
+				alert('Por favor, digite o texto da anotação.');
+				return;
+			}
+
+			const autor = (inputAutor && inputAutor.value.trim()) ? inputAutor.value.trim() : 'Desenvolvedor';
+			salvarAutorPadrao(autor);
+
+			const statusAnterior = (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].status) || 'pendente';
+			const dataAnterior = (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].data) || formatarDataHora();
+
+			comentariosArmazenados[targetId] = {
+				autor: autor,
+				data: dataAnterior,
+				texto: texto,
+				status: statusAnterior
+			};
+
+			try {
+				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
+			} catch(e) {}
+
+			renderizarCardComentario(targetId, comentariosArmazenados[targetId]);
+			ajustarPosicoesComentarios();
+			atualizarContadorComentarios();
+		}
+
+		function cancelarEdicaoComentario(targetId) {
+			const existente = comentariosArmazenados[targetId];
+			if (existente && existente.texto) {
+				renderizarCardComentario(targetId, existente);
+			} else {
+				const card = document.getElementById('card-cmt-' + targetId);
+				if (card) card.remove();
+			}
+			ajustarPosicoesComentarios();
+		}
+
+		function alternarStatusComentario(targetId) {
+			const cmt = comentariosArmazenados[targetId];
+			if (!cmt) return;
+
+			cmt.status = (cmt.status === 'resolvido') ? 'pendente' : 'resolvido';
+			try {
+				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
+			} catch(e) {}
+
+			renderizarCardComentario(targetId, cmt);
+			atualizarContadorComentarios();
+		}
+
+		function excluirComentario(targetId) {
+			if (!confirm('Deseja excluir esta anotação?')) return;
+
+			delete comentariosArmazenados[targetId];
+			try {
+				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
+			} catch(e) {}
+
+			const card = document.getElementById('card-cmt-' + targetId);
+			if (card) card.remove();
+
+			const target = document.getElementById(targetId);
+			if (target) target.classList.remove('has-comment');
+
+			ajustarPosicoesComentarios();
+			atualizarContadorComentarios();
+		}
+
+		function atualizarContadorComentarios() {
+			const badge = document.getElementById('badge-contador-comentarios');
+			if (!badge) return;
+
+			const total = Object.keys(comentariosArmazenados).length;
+			let pendentes = 0;
+			for (const id in comentariosArmazenados) {
+				if (comentariosArmazenados[id].status !== 'resolvido') pendentes++;
+			}
+
+			if (total === 0) {
+				badge.textContent = '💬 0 anotações';
+				badge.style.color = '#94a3b8';
+			} else if (pendentes === 0) {
+				badge.textContent = \`💬 \${total} anotações (todas resolvidas! ✓)\`;
+				badge.style.color = '#86efac';
+			} else {
+				badge.textContent = \`💬 \${total} anotações (\${pendentes} pendente\${pendentes > 1 ? 's' : ''})\`;
+				badge.style.color = '#fef08a';
+			}
+		}
+
+		function ajustarPosicoesComentarios() {
+			const cards = Array.from(document.querySelectorAll('.comment-box-aside'))
+				.filter(card => {
+					const targetId = card.getAttribute('data-target-id');
+					return document.getElementById(targetId) !== null;
+				})
+				.sort((a, b) => {
+					const targetA = document.getElementById(a.getAttribute('data-target-id'));
+					const targetB = document.getElementById(b.getAttribute('data-target-id'));
+					return (targetA ? targetA.offsetTop : 0) - (targetB ? targetB.offsetTop : 0);
+				});
+
+			let proximoTopMinimo = 0;
+			cards.forEach(card => {
+				const target = document.getElementById(card.getAttribute('data-target-id'));
+				if (!target) return;
+
+				const targetTop = target.offsetTop;
+				const topFinal = Math.max(targetTop - 2, proximoTopMinimo);
+				card.style.top = topFinal + 'px';
+				proximoTopMinimo = topFinal + card.offsetHeight + 14; // espaço entre cards próximos
+			});
+		}
+
 		function salvarComoArquivoHTML() {
+			// Clona o documento para exportação limpa
 			const docClone = document.documentElement.cloneNode(true);
+			const cloneBody = docClone.querySelector('body');
+			if (cloneBody) {
+				// No arquivo baixado, o modo-preview é removido para que o comentador seja ativo!
+				cloneBody.classList.remove('modo-preview');
+			}
+
+			// Atualiza textos da barra no arquivo baixado
+			const tituloBarra = docClone.querySelector('#titulo-barra-relatorio');
+			if (tituloBarra) {
+				tituloBarra.textContent = '📄 Planejamento com Comentador';
+			}
+			const btnHtml = docClone.querySelector('.btn-html');
+			if (btnHtml) {
+				btnHtml.textContent = '💾 Salvar Alterações (HTML)';
+				btnHtml.setAttribute('title', 'Salva novamente este arquivo com todas as anotações atualizadas');
+			}
+
+			// Embute script JSON de dados salvos
+			let scriptJson = docClone.querySelector('#dados-comentarios-salvos');
+			if (!scriptJson) {
+				scriptJson = document.createElement('script');
+				scriptJson.id = 'dados-comentarios-salvos';
+				scriptJson.type = 'application/json';
+				cloneBody.appendChild(scriptJson);
+			}
+			scriptJson.textContent = JSON.stringify(comentariosArmazenados || {});
+
+			// Limpa caixas em modo de edição não salvas
+			docClone.querySelectorAll('.comment-box-aside').forEach(box => {
+				const targetId = box.getAttribute('data-target-id');
+				if (!comentariosArmazenados[targetId]) {
+					box.remove();
+				}
+			});
+
+			// Limpa botões e classes adicionadas dinamicamente para que o arquivo baixado inicialize 100% fresco e funcional
+			docClone.querySelectorAll('.btn-comment-trigger').forEach(b => b.remove());
+			docClone.querySelectorAll('.commentable-row').forEach(r => {
+				r.classList.remove('commentable-row', 'focused-target');
+				const tid = r.id;
+				if (!comentariosArmazenados[tid]) {
+					r.classList.remove('has-comment');
+				}
+			});
+
 			const htmlContent = '<!DOCTYPE html>\\n' + docClone.outerHTML;
 			const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
 			const url = URL.createObjectURL(blob);
@@ -812,7 +1378,10 @@ function abrirJanelaImpressaoHtml(partData) {
 			setTimeout(() => URL.revokeObjectURL(url), 1000);
 		}
 
-		function copiarCaminho(elemento) {
+		function copiarCaminho(elemento, event) {
+			if (event && event.target && event.target.closest('.btn-comment-trigger')) {
+				return;
+			}
 			const texto = elemento.getAttribute('data-caminho') || elemento.innerText.trim();
 			if (!texto || texto === 'N/A') return;
 			navigator.clipboard.writeText(texto).then(() => {
@@ -830,6 +1399,12 @@ function abrirJanelaImpressaoHtml(partData) {
 			}).catch(err => {
 				console.error('Falha ao copiar:', err);
 			});
+		}
+
+		// Inicializa o sistema ao carregar a página
+		document.addEventListener('DOMContentLoaded', inicializarSistemaComentarios);
+		if (document.readyState === 'complete' || document.readyState === 'interactive') {
+			setTimeout(inicializarSistemaComentarios, 50);
 		}
 	<\/script>
 </body>
