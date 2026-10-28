@@ -224,6 +224,8 @@ function desconverterHtmlParaRelatorio(htmlString) {
 		return '<p style="font-style: italic; color: #555; margin: 4px 0 8px 12px;">Nenhum conteúdo informado.</p>';
 	}
 
+	htmlString = htmlString.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
 	const tempDiv = document.createElement('div');
 	tempDiv.innerHTML = htmlString;
 
@@ -1151,11 +1153,25 @@ function abrirJanelaImpressaoHtml(partData) {
 			display: inline-block;
 			margin: 4px 0;
 		}
+		.path-text-block {
+			color: #15803d;
+			font-style: italic;
+			cursor: pointer;
+			display: block;
+			margin: 4px 0;
+			word-break: break-all;
+			white-space: normal;
+		}
 		.rich-content-box {
 			margin-left: 12px;
 			margin-top: 2px;
 			margin-bottom: 8px;
 			line-height: 1.5;
+			white-space: pre-wrap;
+			word-break: break-word;
+		}
+		.rich-content-box table {
+			white-space: normal;
 		}
 		/* IMAGENS: exibidas grandes em tamanho real/nítido */
 		.relatorio-img {
@@ -1342,7 +1358,7 @@ function abrirJanelaImpressaoHtml(partData) {
 				<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
 				<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
 				<div class="sub-header">- Códigos de Conectores:</div>
-				<div style="margin-left: 12px; margin-bottom: 6px;">${sistema.codconectores || 'N/A'}</div>
+				<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
 				<div class="sub-header">- Código de Peça / Link:</div>
 				${desconverterHtmlParaRelatorio(sistema.codmodulo)}
 				`;
@@ -1467,7 +1483,7 @@ function abrirJanelaImpressaoHtml(partData) {
 						<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
 						<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
 						<div class="sub-header">- Códigos de Conectores:</div>
-						<div style="margin-left: 12px; margin-bottom: 6px;">${sistema.codconectores || 'N/A'}</div>
+						<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
 						<div class="sub-header">- Código de Peça / Link:</div>
 						${desconverterHtmlParaRelatorio(sistema.codmodulo)}
 						`;
@@ -1708,6 +1724,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				'.highlight-tag',
 				'.highlight-tag-yellow',
 				'.relatorio-img-container',
+				'.rich-content-box',
 				'.rich-content-box > p',
 				'.rich-content-box > div',
 				'.chassi-texto-bloco',
@@ -1770,6 +1787,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				'.highlight-tag',
 				'.highlight-tag-yellow',
 				'.relatorio-img-container',
+				'.rich-content-box',
 				'.rich-content-box > p',
 				'.rich-content-box > div',
 				'.rich-content-box > table',
