@@ -1031,11 +1031,15 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 }
 
 function abrirModalDivisaoPDF() {
-	const dataPrincipal = coletarDadosFormulario().principal;
-	if (dataPrincipal.qtd_partes === 'duas') {
-		abrirModalSelecaoCapitulos();
+	if (typeof gerarPDFHtmlPrint === 'function') {
+		gerarPDFHtmlPrint();
 	} else {
-		gerarPDF(null);
+		const dataPrincipal = coletarDadosFormulario().principal;
+		if (dataPrincipal.qtd_partes === 'duas') {
+			abrirModalSelecaoCapitulos();
+		} else {
+			gerarPDF(null);
+		}
 	}
 }
 
@@ -1129,10 +1133,17 @@ document.addEventListener('DOMContentLoaded', (event) => {
 			const indicesVeiculosParte1 = Array.from(checkboxesVeh).map(cb => parseInt(cb.getAttribute('data-veiculo-index'), 10));
 			
 			fecharModalSelecaoCapitulos();
-			gerarPDF({
-				sistemasParte2: sistemasSelecionadosParaParte2,
-				indicesVeiculosParte1: indicesVeiculosParte1
-			}); 
+			if (typeof gerarPDFHtmlPrint === 'function') {
+				gerarPDFHtmlPrint({
+					sistemasParte2: sistemasSelecionadosParaParte2,
+					indicesVeiculosParte1: indicesVeiculosParte1
+				});
+			} else {
+				gerarPDF({
+					sistemasParte2: sistemasSelecionadosParaParte2,
+					indicesVeiculosParte1: indicesVeiculosParte1
+				}); 
+			} 
 		});
 	} else {
 		console.error("Erro: Botões do modal 'chapterSelectionModal' (confirmSelection, cancelSelection) não encontrados.");
