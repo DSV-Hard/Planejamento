@@ -487,11 +487,11 @@ function abrirJanelaImpressaoHtml(partData) {
 			background-color: transparent !important;
 		}
 
-		/* DOCUMENT CONTAINER NO MODO SALVO: FOCADO À ESQUERDA COM ESPAÇAMENTO LATERAL INTERNO */
+		/* DOCUMENT CONTAINER NO MODO SALVO: CENTRALIZADO NA TELA COM ESPAÇAMENTO LATERAL INTERNO */
 		.workspace-wrapper {
 			display: flex;
-			justify-content: flex-start; /* Focado à esquerda no navegador para não sobrepor comentários */
-			padding: 25px 25px 80px 45px;
+			justify-content: center; /* Centralizado na tela para monitores widescreen / duplos */
+			padding: 25px 25px 80px 25px;
 			box-sizing: border-box;
 			min-width: 1250px;
 			position: relative;
@@ -506,7 +506,7 @@ function abrirJanelaImpressaoHtml(partData) {
 			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
 			position: relative;
 			box-sizing: border-box;
-			margin: 0;
+			margin: 0 auto;
 		}
 
 		/* ELEMENTOS COMENTÁVEIS NA LINHA */
