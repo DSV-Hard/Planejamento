@@ -8,6 +8,115 @@
 //   e com todos os formulários/campos completos idênticos ao script4.js
 // =========================================================================
 
+function fecharModalSelecaoCapitulos() {
+	const modal = document.getElementById('chapterSelectionModal');
+	if (modal) modal.style.display = 'none';
+}
+
+function abrirModalSelecaoCapitulosHtmlPrint() {
+	const dados = coletarDadosFormulario();
+	const dataPrincipal = dados.principal;
+	const sistemas = dataPrincipal.sistemas || [];
+	
+	const checkboxesDiv = document.getElementById('capitulos-checkboxes');
+	const confirmBtn = document.getElementById('confirmSelection');
+	const cancelBtn = document.getElementById('cancelSelection');
+	const modal = document.getElementById('chapterSelectionModal');
+
+	if (checkboxesDiv) {
+		checkboxesDiv.innerHTML = '';
+		if (!sistemas || sistemas.length === 0) {
+			checkboxesDiv.innerHTML = '<p style="text-align: center; color: #f44336; font-weight: bold;">NENHUM CAPÍTULO ENCONTRADO. O relatório será gerado em parte única.</p>';
+			if (confirmBtn) confirmBtn.textContent = 'GERAR RELATÓRIO ÚNICO';
+		} else {
+			if (confirmBtn) confirmBtn.textContent = 'OK';
+			sistemas.forEach((sistema, index) => {
+				const label = document.createElement('label');
+				label.style.display = 'block';
+				label.style.marginBottom = '5px';
+				label.style.cursor = 'pointer';
+				label.innerHTML = `<input type="checkbox" data-index="${index}" data-nome="${sistema.sistema || ''}" value="${sistema.sistema || ''}"> ${sistema.sistema || 'Sem título'}`;
+				checkboxesDiv.appendChild(label);
+			});
+		}
+	}
+
+	const aplicaveis = dados.aplicaveis || [];
+	const veiculosDiv = document.getElementById('veiculos-aplicaveis-checkboxes');
+	if (veiculosDiv) {
+		veiculosDiv.innerHTML = '';
+		if (!aplicaveis || aplicaveis.length === 0) {
+			veiculosDiv.innerHTML = '<p style="text-align: center; color: #999;">Nenhum veículo aplicável...</p>';
+		} else {
+			aplicaveis.forEach((veiculo, index) => {
+				const label = document.createElement('label');
+				label.style.display = 'block';
+				label.style.marginBottom = '5px';
+				label.style.cursor = 'pointer';
+				const veiculoRef = (typeof extrairTooltipVeiculo === 'function' ? extrairTooltipVeiculo(veiculo.dadosGerais?.veiculo) : '') || `Veículo ${index + 1}`;
+				label.innerHTML = `<input type="checkbox" data-veiculo-index="${index}" value="${index}"> Aplicável #${index + 1} - <span style="font-size: 0.85em;"><i>${veiculoRef}</i></span>`;
+				veiculosDiv.appendChild(label);
+			});
+		}
+	}
+
+	// Remove listeners anteriores clonando os botões
+	if (confirmBtn) {
+		const novoConfirmBtn = confirmBtn.cloneNode(true);
+		confirmBtn.parentNode.replaceChild(novoConfirmBtn, confirmBtn);
+		novoConfirmBtn.addEventListener('click', () => {
+			const dadosAtuais = coletarDadosFormulario();
+			const todosSistemas = dadosAtuais.principal.sistemas || [];
+			
+			if (!todosSistemas || todosSistemas.length === 0) {
+				fecharModalSelecaoCapitulos();
+				gerarPDFHtmlPrint(null);
+				return;
+			}
+
+			const checkboxesCap = document.querySelectorAll('#capitulos-checkboxes input[type="checkbox"]:checked');
+			const sistemasSelecionadosParaParte2 = [];
+			checkboxesCap.forEach(checkbox => {
+				const nomeSistema = checkbox.getAttribute('data-nome');
+				const sistemaEncontrado = todosSistemas.find(s => s.sistema === nomeSistema);
+				if (sistemaEncontrado) {
+					sistemasSelecionadosParaParte2.push(sistemaEncontrado);
+				}
+			});
+
+			const checkboxesVeh = document.querySelectorAll('#veiculos-aplicaveis-checkboxes input[type="checkbox"]:checked');
+			const indicesVeiculosParte1 = Array.from(checkboxesVeh).map(cb => parseInt(cb.getAttribute('data-veiculo-index'), 10));
+			
+			fecharModalSelecaoCapitulos();
+			gerarPDFHtmlPrint({
+				sistemasParte2: sistemasSelecionadosParaParte2,
+				indicesVeiculosParte1: indicesVeiculosParte1
+			});
+		});
+	}
+
+	if (cancelBtn) {
+		const novoCancelBtn = cancelBtn.cloneNode(true);
+		cancelBtn.parentNode.replaceChild(novoCancelBtn, cancelBtn);
+		novoCancelBtn.addEventListener('click', fecharModalSelecaoCapitulos);
+	}
+
+	if (modal) {
+		modal.style.display = 'flex';
+		modal.onclick = (e) => {
+			if (e.target === modal) {
+				fecharModalSelecaoCapitulos();
+			}
+		};
+	}
+}
+
+window.abrirModalDivisaoPDF = function() {
+	gerarPDFHtmlPrint();
+};
+window.abrirModalSelecaoCapitulos = abrirModalSelecaoCapitulosHtmlPrint;
+window.fecharModalSelecaoCapitulos = fecharModalSelecaoCapitulos;
+
 function gerarPDFHtmlPrint(options = null) {
 	const erros = validarFormularioGlobal();
 	if (erros.length > 0) {
@@ -30,6 +139,13 @@ function gerarPDFHtmlPrint(options = null) {
 	const dataAplicaveisOriginal = dadosCompletos.aplicaveis;
 
 	const qtdPartes = dataPrincipalOriginal.qtd_partes || 'uma';
+
+	// SE FOR EM DUAS PARTES E NÃO TIVER OPÇÕES DE DIVISÃO, ABRE O MODAL DE SELEÇÃO:
+	if (qtdPartes === 'duas' && !options) {
+		abrirModalSelecaoCapitulosHtmlPrint();
+		return;
+	}
+
 	let sistemasParte2 = [];
 	let indicesVeiculosParte1 = [];
 
@@ -1125,7 +1241,7 @@ function abrirJanelaImpressaoHtml(partData) {
 			<span id="badge-contador-comentarios" class="badge-comentarios-top" onclick="alternarPainelAcrobat()" title="Clique para abrir/fechar o índice de anotações">💬 0 anotações</span>
 		</div>
 		<div class="toolbar-print-center" id="titulo-barra-relatorio">
-			PLANEJAMENTO (com Comentador)
+			PLANEJAMENTO${sufixoTitulo ? ` ${sufixoTitulo.trim()}` : ''} (com Comentador)
 		</div>
 		<div class="toolbar-print-right">
 			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório como arquivo HTML e faz o download automático do JSON do formulário">💾 Salvar HTML+JSON</button>
@@ -2215,10 +2331,11 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				btnAbrirIndiceClone.style.display = 'flex';
 			}
 
-			// Atualiza textos da barra no arquivo baixado
+			// Atualiza textos da barra no arquivo baixado preservando a parte (Parte 1 / Parte 2) se houver
+			const tituloBarraOriginal = document.getElementById('titulo-barra-relatorio');
 			const tituloBarra = docClone.querySelector('#titulo-barra-relatorio');
-			if (tituloBarra) {
-				tituloBarra.textContent = 'PLANEJAMENTO (com Comentador)';
+			if (tituloBarra && tituloBarraOriginal) {
+				tituloBarra.textContent = tituloBarraOriginal.textContent.trim();
 			}
 			const btnHtml = docClone.querySelector('.btn-html');
 			if (btnHtml) {
