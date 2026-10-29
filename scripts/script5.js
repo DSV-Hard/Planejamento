@@ -799,7 +799,7 @@ function abrirJanelaImpressaoHtml(config) {
 			top: 0;
 			background: #1e293b;
 			color: #ffffff;
-			padding: 10px 20px;
+			padding: 8px 20px;
 			display: flex;
 			justify-content: space-between;
 			align-items: center;
@@ -807,30 +807,28 @@ function abrirJanelaImpressaoHtml(config) {
 			z-index: 9999;
 			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 			font-family: Arial, sans-serif;
+			min-height: 50px;
 		}
 		.toolbar-print-left {
 			display: flex;
 			align-items: center;
 			justify-content: flex-start;
 			gap: 8px;
-			flex-shrink: 0;
+			flex: 1;
 		}
 		.toolbar-print-center {
-			font-size: 11pt;
-			font-weight: bold;
-			text-align: center;
-			flex: 1;
-			white-space: nowrap;
-			overflow: hidden;
-			text-overflow: ellipsis;
-			padding: 0 10px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 10px;
+			flex-shrink: 0;
 		}
 		.toolbar-print-right {
 			display: flex;
 			align-items: center;
 			justify-content: flex-end;
-			gap: 8px;
-			flex-shrink: 0;
+			gap: 10px;
+			flex: 1;
 		}
 		.parte-tabs-container {
 			display: inline-flex;
@@ -862,46 +860,32 @@ function abrirJanelaImpressaoHtml(config) {
 			color: #ffffff !important;
 			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
 		}
-		.btn-caneta-top {
+		.btn-tool-top {
 			background: #334155;
 			color: #ffffff;
 			border: 1px solid #475569;
-			padding: 5px 12px;
-			border-radius: 12px;
-			font-size: 12px;
+			padding: 5px 11px;
+			border-radius: 8px;
+			font-size: 13.5px;
 			font-weight: bold;
 			display: inline-flex;
 			align-items: center;
-			gap: 6px;
+			justify-content: center;
 			cursor: pointer;
 			transition: all 0.2s ease;
 		}
-		.btn-caneta-top:hover {
+		.btn-tool-top:hover {
 			background: #475569;
 		}
-		.btn-caneta-top.ativo {
+		.btn-tool-top.ativo {
 			background: #dc2626 !important;
 			color: #ffffff !important;
 			border-color: #b91c1c !important;
 			box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
 		}
-		.toolbar-print-center {
-			text-align: center;
-			font-weight: bold;
-			font-size: 15px;
-			letter-spacing: 0.5px;
-			color: #ffffff;
-			white-space: nowrap;
-		}
-		.toolbar-print-right {
-			display: flex;
-			justify-content: flex-end;
-			align-items: center;
-			gap: 12px;
-		}
 		.toolbar-print button {
 			border: none;
-			padding: 8px 18px;
+			padding: 8px 16px;
 			font-size: 13px;
 			font-weight: bold;
 			border-radius: 5px;
@@ -946,13 +930,15 @@ function abrirJanelaImpressaoHtml(config) {
 		}
 
 		/* MODO RELATÓRIO PREVIEW:
-		   - Na aba RELATÓRIO inicial: sem aba Anotações, sem caneta, sem comentários.
+		   - Na aba RELATÓRIO inicial: sem aba Anotações, sem caneta, sem quadrado, sem grifar, sem comentários.
 		   - O Índice (📑 Índice) e os botões de PARTE 1 / PARTE 2 permanecem 100% ativos!
 		*/
 		body.modo-relatorio-preview #btn-abrir-painel-acrobat,
 		body.modo-relatorio-preview #painel-acrobat,
 		body.modo-relatorio-preview #badge-contador-comentarios,
 		body.modo-relatorio-preview #btn-toggle-caneta,
+		body.modo-relatorio-preview #btn-toggle-quadrado,
+		body.modo-relatorio-preview #btn-toggle-grifar,
 		body.modo-relatorio-preview .btn-comentario-flutuante,
 		body.modo-relatorio-preview .comment-box-aside,
 		body.modo-relatorio-preview .camada-rabiscos-svg {
@@ -1115,6 +1101,22 @@ function abrirJanelaImpressaoHtml(config) {
 			cursor: pointer;
 			transition: stroke 0.15s, opacity 0.2s, filter 0.15s;
 		}
+		.traco-rabisco.forma-grifo {
+			pointer-events: all;
+			fill: rgba(239, 68, 68, 0.35) !important;
+			stroke: rgba(220, 38, 38, 0.5) !important;
+			stroke-width: 1px !important;
+			mix-blend-mode: multiply;
+		}
+		.traco-rabisco.forma-grifo:hover {
+			fill: rgba(239, 68, 68, 0.52) !important;
+			stroke: #dc2626 !important;
+			filter: drop-shadow(0 0 4px rgba(220, 38, 38, 0.6));
+		}
+		.traco-rabisco.forma-grifo.status-resolvido {
+			fill: rgba(34, 197, 94, 0.25) !important;
+			stroke: rgba(34, 197, 94, 0.6) !important;
+		}
 		.traco-rabisco:hover {
 			stroke: #b91c1c !important;
 			filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.7));
@@ -1123,7 +1125,7 @@ function abrirJanelaImpressaoHtml(config) {
 			opacity: 0.45;
 			stroke-dasharray: 6 3;
 		}
-		path.pulse-target {
+		path.pulse-target, rect.pulse-target {
 			stroke: #f59e0b !important;
 			stroke-width: 9 !important;
 			filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
@@ -1685,7 +1687,7 @@ function abrirJanelaImpressaoHtml(config) {
 				background-color: transparent !important;
 				outline: none !important;
 			}
-			.comment-box-aside, .btn-comment-trigger, .btn-comentario-flutuante, #btn-comentario-flutuante, .painel-acrobat, #btn-abrir-painel-acrobat, .painel-indice, #btn-abrir-painel-indice, #btn-toggle-caneta, .parte-tabs-container {
+			.comment-box-aside, .btn-comment-trigger, .btn-comentario-flutuante, #btn-comentario-flutuante, .painel-acrobat, #btn-abrir-painel-acrobat, .painel-indice, #btn-abrir-painel-indice, #btn-toggle-caneta, #btn-toggle-quadrado, #btn-toggle-grifar, .btn-tool-top, .parte-tabs-container {
 				display: none !important;
 			}
 			.camada-rabiscos-svg {
@@ -1704,15 +1706,16 @@ function abrirJanelaImpressaoHtml(config) {
 				<button type="button" id="btn-tab-parte-2" class="btn-parte-tab" onclick="mudarParteAtiva(2)" title="Visualizar Relatório da Parte 2">PARTE 2</button>
 			</div>
 			` : ''}
-			<span id="badge-contador-comentarios" class="badge-comentarios-top" onclick="alternarPainelAcrobat()" title="Clique para abrir/fechar o índice de anotações">💬 0 anotações</span>
-			<button id="btn-toggle-caneta" class="btn-caneta-top" type="button" onclick="alternarModoCaneta()" title="Ativar modo caneta para rabiscar livremente na página (Vermelho 5pt)">🖊️ Caneta</button>
 		</div>
-		<div class="toolbar-print-center" id="titulo-barra-relatorio">
-			${parte1.tituloDocumento}
+		<div class="toolbar-print-center">
+			<span id="badge-contador-comentarios" class="badge-comentarios-top" onclick="alternarPainelAcrobat()" title="Clique para abrir/fechar o painel de anotações">💬 0 anotações</span>
+			<button id="btn-toggle-caneta" class="btn-tool-top" type="button" onclick="alternarModoCaneta()" title="Rabisco Livre (Caneta Vermelha 5pt)">🖊️</button>
+			<button id="btn-toggle-quadrado" class="btn-tool-top" type="button" onclick="alternarModoQuadrado()" title="Desenhar Retângulo / Quadrado (Clique e arraste na página)">⬜</button>
+			<button id="btn-toggle-grifar" class="btn-tool-top" type="button" onclick="alternarModoGrifar()" title="Grifar Texto (Marca-texto Vermelho Claro - Clique e arraste sobre o texto)">🖍️</button>
 		</div>
 		<div class="toolbar-print-right">
-			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório como arquivo HTML e faz o download automático do JSON do formulário">💾 Salvar HTML+JSON</button>
-			<button class="btn-print" onclick="salvarPDFEJson()" title="Abre a janela de impressão em PDF e faz o download automático do JSON do formulário">🖨️ Salvar PDF+JSON</button>
+			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório integrado em arquivo HTML e faz o download automático do JSON">💾 HTML+JSON</button>
+			<button class="btn-print" onclick="salvarPDFEJson()" title="Abre a janela de impressão em PDF e faz o download automático do JSON">🖨️ PDF+JSON</button>
 		</div>
 	</div>
 
@@ -1924,11 +1927,21 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				cloneBody.classList.remove('modo-relatorio-preview', 'modo-preview', 'modo-caneta-ativo');
 			}
 
-			// Reseta botão de caneta no clone
+			// Reseta botões de ferramentas de desenho no clone
 			const btnCanetaClone = docClone.querySelector('#btn-toggle-caneta');
 			if (btnCanetaClone) {
 				btnCanetaClone.classList.remove('ativo');
-				btnCanetaClone.innerHTML = '🖊️ Caneta';
+				btnCanetaClone.innerHTML = '🖊️';
+			}
+			const btnQuadClone = docClone.querySelector('#btn-toggle-quadrado');
+			if (btnQuadClone) {
+				btnQuadClone.classList.remove('ativo');
+				btnQuadClone.innerHTML = '⬜';
+			}
+			const btnGrifClone = docClone.querySelector('#btn-toggle-grifar');
+			if (btnGrifClone) {
+				btnGrifClone.classList.remove('ativo');
+				btnGrifClone.innerHTML = '🖍️';
 			}
 
 			// Garante que os painéis iniciem recolhidos e com os botões visíveis
@@ -2082,27 +2095,88 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		let alturaMouseAtual = 60;
 		let cardEmEdicaoId = null;
 		let modoCanetaAtivo = false;
+		let modoQuadradoAtivo = false;
+		let modoGrifarAtivo = false;
 		let desenhandoAtual = false;
+		let pontoInicial = { x: 0, y: 0 };
 		let pontosAtuais = [];
 		let caminhoAtualEl = null;
 
 		function alternarModoCaneta() {
 			modoCanetaAtivo = !modoCanetaAtivo;
-			const btn = document.getElementById('btn-toggle-caneta');
-			const btnFlutuante = obterBtnFlutuanteAtivo();
 			if (modoCanetaAtivo) {
-				document.body.classList.add('modo-caneta-ativo');
-				if (btn) {
-					btn.classList.add('ativo');
-					btn.innerHTML = '🖊️ Caneta (Ativa)';
+				modoQuadradoAtivo = false;
+				modoGrifarAtivo = false;
+			}
+			atualizarClassesModosDesenho();
+		}
+
+		function alternarModoQuadrado() {
+			modoQuadradoAtivo = !modoQuadradoAtivo;
+			if (modoQuadradoAtivo) {
+				modoCanetaAtivo = false;
+				modoGrifarAtivo = false;
+			}
+			atualizarClassesModosDesenho();
+		}
+
+		function alternarModoGrifar() {
+			modoGrifarAtivo = !modoGrifarAtivo;
+			if (modoGrifarAtivo) {
+				modoCanetaAtivo = false;
+				modoQuadradoAtivo = false;
+			}
+			atualizarClassesModosDesenho();
+		}
+
+		function desativarModosDesenho() {
+			modoCanetaAtivo = false;
+			modoQuadradoAtivo = false;
+			modoGrifarAtivo = false;
+			atualizarClassesModosDesenho();
+		}
+
+		function atualizarClassesModosDesenho() {
+			const btnCaneta = document.getElementById('btn-toggle-caneta');
+			const btnQuadrado = document.getElementById('btn-toggle-quadrado');
+			const btnGrifar = document.getElementById('btn-toggle-grifar');
+			const btnFlutuante = obterBtnFlutuanteAtivo();
+
+			if (btnCaneta) {
+				if (modoCanetaAtivo) {
+					btnCaneta.classList.add('ativo');
+					btnCaneta.title = 'Caneta Ativa (Clique para desativar)';
+				} else {
+					btnCaneta.classList.remove('ativo');
+					btnCaneta.title = 'Rabisco Livre (Caneta Vermelha 5pt)';
 				}
+			}
+
+			if (btnQuadrado) {
+				if (modoQuadradoAtivo) {
+					btnQuadrado.classList.add('ativo');
+					btnQuadrado.title = 'Quadrado Ativo (Clique e arraste na página)';
+				} else {
+					btnQuadrado.classList.remove('ativo');
+					btnQuadrado.title = 'Desenhar Retângulo / Quadrado (Clique e arraste)';
+				}
+			}
+
+			if (btnGrifar) {
+				if (modoGrifarAtivo) {
+					btnGrifar.classList.add('ativo');
+					btnGrifar.title = 'Grifador Ativo (Clique e arraste sobre o texto)';
+				} else {
+					btnGrifar.classList.remove('ativo');
+					btnGrifar.title = 'Grifar Texto (Marca-texto Vermelho Claro)';
+				}
+			}
+
+			if (modoCanetaAtivo || modoQuadradoAtivo || modoGrifarAtivo) {
+				document.body.classList.add('modo-caneta-ativo');
 				if (btnFlutuante) btnFlutuante.classList.remove('ativo');
 			} else {
 				document.body.classList.remove('modo-caneta-ativo');
-				if (btn) {
-					btn.classList.remove('ativo');
-					btn.innerHTML = '🖊️ Caneta';
-				}
 			}
 		}
 
@@ -2120,32 +2194,70 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		}
 
 		function iniciarDesenho(e) {
-			if (!modoCanetaAtivo) return;
-			if (e.target && e.target.closest && (e.target.closest('#btn-toggle-caneta') || e.target.closest('.toolbar-print') || e.target.closest('.painel-acrobat') || e.target.closest('.painel-indice'))) return;
+			if (!modoCanetaAtivo && !modoQuadradoAtivo && !modoGrifarAtivo) return;
+			if (e.target && e.target.closest && (e.target.closest('#btn-toggle-caneta') || e.target.closest('#btn-toggle-quadrado') || e.target.closest('#btn-toggle-grifar') || e.target.closest('.toolbar-print') || e.target.closest('.painel-acrobat') || e.target.closest('.painel-indice'))) return;
 
 			let svgEl = (e.currentTarget && e.currentTarget.tagName && e.currentTarget.tagName.toLowerCase() === 'svg') ? e.currentTarget : obterSvgAtivo();
 			if (!svgEl) return;
 
 			desenhandoAtual = true;
 			const coords = obterCoordenadasSVG(e);
-			pontosAtuais = [coords];
+			pontoInicial = coords;
 
-			const rabiscoId = 'rabisco-p' + parteAtiva + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
-			caminhoAtualEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-			caminhoAtualEl.setAttribute('id', rabiscoId);
-			caminhoAtualEl.setAttribute('class', 'traco-rabisco');
-			caminhoAtualEl.setAttribute('stroke', '#dc2626');
-			caminhoAtualEl.setAttribute('stroke-width', '6.67');
-			caminhoAtualEl.setAttribute('stroke-linecap', 'round');
-			caminhoAtualEl.setAttribute('stroke-linejoin', 'round');
-			caminhoAtualEl.setAttribute('fill', 'none');
-			caminhoAtualEl.setAttribute('d', \`M \${coords.x} \${coords.y} L \${coords.x + 0.1} \${coords.y + 0.1}\`);
-			caminhoAtualEl.onclick = function(ev) {
-				ev.stopPropagation();
-				irParaComentario(rabiscoId);
-			};
+			if (modoCanetaAtivo) {
+				pontosAtuais = [coords];
+				const rabiscoId = 'rabisco-p' + parteAtiva + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+				caminhoAtualEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				caminhoAtualEl.setAttribute('id', rabiscoId);
+				caminhoAtualEl.setAttribute('class', 'traco-rabisco');
+				caminhoAtualEl.setAttribute('stroke', '#dc2626');
+				caminhoAtualEl.setAttribute('stroke-width', '6.67');
+				caminhoAtualEl.setAttribute('stroke-linecap', 'round');
+				caminhoAtualEl.setAttribute('stroke-linejoin', 'round');
+				caminhoAtualEl.setAttribute('fill', 'none');
+				caminhoAtualEl.setAttribute('d', \`M \${coords.x} \${coords.y} L \${coords.x + 0.1} \${coords.y + 0.1}\`);
+				caminhoAtualEl.onclick = function(ev) {
+					ev.stopPropagation();
+					irParaComentario(rabiscoId);
+				};
+				svgEl.appendChild(caminhoAtualEl);
+			} else if (modoQuadradoAtivo) {
+				const formaId = 'forma-p' + parteAtiva + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+				caminhoAtualEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				caminhoAtualEl.setAttribute('id', formaId);
+				caminhoAtualEl.setAttribute('class', 'traco-rabisco forma-retangulo');
+				caminhoAtualEl.setAttribute('stroke', '#dc2626');
+				caminhoAtualEl.setAttribute('stroke-width', '6.67');
+				caminhoAtualEl.setAttribute('fill', 'transparent');
+				caminhoAtualEl.setAttribute('x', coords.x);
+				caminhoAtualEl.setAttribute('y', coords.y);
+				caminhoAtualEl.setAttribute('width', '1');
+				caminhoAtualEl.setAttribute('height', '1');
+				caminhoAtualEl.setAttribute('rx', '2');
+				caminhoAtualEl.setAttribute('ry', '2');
+				caminhoAtualEl.onclick = function(ev) {
+					ev.stopPropagation();
+					irParaComentario(formaId);
+				};
+				svgEl.appendChild(caminhoAtualEl);
+			} else if (modoGrifarAtivo) {
+				const formaId = 'grifo-p' + parteAtiva + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+				caminhoAtualEl = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+				caminhoAtualEl.setAttribute('id', formaId);
+				caminhoAtualEl.setAttribute('class', 'traco-rabisco forma-grifo');
+				caminhoAtualEl.setAttribute('x', coords.x);
+				caminhoAtualEl.setAttribute('y', coords.y);
+				caminhoAtualEl.setAttribute('width', '1');
+				caminhoAtualEl.setAttribute('height', '1');
+				caminhoAtualEl.setAttribute('rx', '3');
+				caminhoAtualEl.setAttribute('ry', '3');
+				caminhoAtualEl.onclick = function(ev) {
+					ev.stopPropagation();
+					irParaComentario(formaId);
+				};
+				svgEl.appendChild(caminhoAtualEl);
+			}
 
-			svgEl.appendChild(caminhoAtualEl);
 			if (e.type === 'touchstart' && e.preventDefault) e.preventDefault();
 		}
 
@@ -2154,37 +2266,102 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			if (e.type === 'touchmove' && e.preventDefault) e.preventDefault();
 
 			const coords = obterCoordenadasSVG(e);
-			pontosAtuais.push(coords);
 
-			let d = \`M \${pontosAtuais[0].x} \${pontosAtuais[0].y}\`;
-			for (let i = 1; i < pontosAtuais.length; i++) {
-				d += \` L \${pontosAtuais[i].x} \${pontosAtuais[i].y}\`;
+			if (modoCanetaAtivo) {
+				pontosAtuais.push(coords);
+				let d = \`M \${pontosAtuais[0].x} \${pontosAtuais[0].y}\`;
+				for (let i = 1; i < pontosAtuais.length; i++) {
+					d += \` L \${pontosAtuais[i].x} \${pontosAtuais[i].y}\`;
+				}
+				caminhoAtualEl.setAttribute('d', d);
+			} else if (modoQuadradoAtivo || modoGrifarAtivo) {
+				const x = Math.min(pontoInicial.x, coords.x);
+				const y = Math.min(pontoInicial.y, coords.y);
+				const width = Math.max(1, Math.abs(coords.x - pontoInicial.x));
+				const height = Math.max(1, Math.abs(coords.y - pontoInicial.y));
+				caminhoAtualEl.setAttribute('x', x);
+				caminhoAtualEl.setAttribute('y', y);
+				caminhoAtualEl.setAttribute('width', width);
+				caminhoAtualEl.setAttribute('height', height);
 			}
-			caminhoAtualEl.setAttribute('d', d);
 		}
 
 		function finalizarDesenho(e) {
 			if (!desenhandoAtual || !caminhoAtualEl) return;
 			desenhandoAtual = false;
 
-			const rabiscoId = caminhoAtualEl.id;
+			const targetId = caminhoAtualEl.id;
 			const svgEl = (caminhoAtualEl && caminhoAtualEl.ownerSVGElement) || obterSvgAtivo();
 			const svgRect = svgEl ? svgEl.getBoundingClientRect() : { top: 0 };
 			const pathRect = caminhoAtualEl.getBoundingClientRect();
 			const boundingTop = Math.max(0, Math.round(pathRect.top - svgRect.top));
-			const dStr = caminhoAtualEl.getAttribute('d');
 
-			comentariosArmazenados[rabiscoId] = {
-				tipo: 'desenho',
-				parte: parteAtiva,
-				pathId: rabiscoId,
-				d: dStr,
-				boundingTop: boundingTop,
-				autor: obterAutorSalvo() || 'Desenvolvedor',
-				data: formatarDataHora(),
-				texto: '',
-				status: 'pendente'
-			};
+			if (modoCanetaAtivo) {
+				const dStr = caminhoAtualEl.getAttribute('d');
+				comentariosArmazenados[targetId] = {
+					tipo: 'desenho',
+					parte: parteAtiva,
+					pathId: targetId,
+					d: dStr,
+					boundingTop: boundingTop,
+					autor: obterAutorSalvo() || 'Desenvolvedor',
+					data: formatarDataHora(),
+					texto: '',
+					status: 'pendente'
+				};
+			} else if (modoQuadradoAtivo) {
+				const x = parseFloat(caminhoAtualEl.getAttribute('x')) || 0;
+				const y = parseFloat(caminhoAtualEl.getAttribute('y')) || 0;
+				const width = parseFloat(caminhoAtualEl.getAttribute('width')) || 1;
+				const height = parseFloat(caminhoAtualEl.getAttribute('height')) || 1;
+
+				if (width < 4 && height < 4) {
+					caminhoAtualEl.remove();
+					caminhoAtualEl = null;
+					return;
+				}
+
+				comentariosArmazenados[targetId] = {
+					tipo: 'retangulo',
+					parte: parteAtiva,
+					formaId: targetId,
+					x: x,
+					y: y,
+					width: width,
+					height: height,
+					boundingTop: boundingTop,
+					autor: obterAutorSalvo() || 'Desenvolvedor',
+					data: formatarDataHora(),
+					texto: '',
+					status: 'pendente'
+				};
+			} else if (modoGrifarAtivo) {
+				const x = parseFloat(caminhoAtualEl.getAttribute('x')) || 0;
+				const y = parseFloat(caminhoAtualEl.getAttribute('y')) || 0;
+				const width = parseFloat(caminhoAtualEl.getAttribute('width')) || 1;
+				const height = parseFloat(caminhoAtualEl.getAttribute('height')) || 1;
+
+				if (width < 4 && height < 4) {
+					caminhoAtualEl.remove();
+					caminhoAtualEl = null;
+					return;
+				}
+
+				comentariosArmazenados[targetId] = {
+					tipo: 'grifo',
+					parte: parteAtiva,
+					formaId: targetId,
+					x: x,
+					y: y,
+					width: width,
+					height: height,
+					boundingTop: boundingTop,
+					autor: obterAutorSalvo() || 'Desenvolvedor',
+					data: formatarDataHora(),
+					texto: '',
+					status: 'pendente'
+				};
+			}
 
 			try {
 				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
@@ -2193,9 +2370,9 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			atualizarContadorComentarios();
 			renderizarPainelAcrobat();
 
-			// Delay pequeno para não conflitar com click de encerramento do mouse
+			// Delay para abrir edição e desativar modo desenho
 			setTimeout(() => {
-				iniciarEdicaoComentario(rabiscoId, null);
+				iniciarEdicaoComentario(targetId, null);
 			}, 120);
 
 			pontosAtuais = [];
@@ -2208,12 +2385,12 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				if (!svgEl) return;
 
 				svgEl.addEventListener('mousedown', (e) => {
-					if (!modoCanetaAtivo) return;
+					if (!modoCanetaAtivo && !modoQuadradoAtivo && !modoGrifarAtivo) return;
 					iniciarDesenho(e);
 				});
 
 				svgEl.addEventListener('touchstart', (e) => {
-					if (!modoCanetaAtivo) return;
+					if (!modoCanetaAtivo && !modoQuadradoAtivo && !modoGrifarAtivo) return;
 					iniciarDesenho(e);
 				}, { passive: false });
 			});
@@ -2242,7 +2419,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		function iniciarSeguidorMouse() {
 			document.addEventListener('mousemove', (e) => {
 				const btnFlutuante = obterBtnFlutuanteAtivo();
-				if (modoCanetaAtivo) {
+				if (modoCanetaAtivo || modoQuadradoAtivo || modoGrifarAtivo) {
 					if (btnFlutuante) btnFlutuante.classList.remove('ativo');
 					return;
 				}
@@ -2405,7 +2582,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			for (const targetId in comentariosArmazenados) {
 				const cmt = comentariosArmazenados[targetId];
 				const pNum = cmt.parte || (targetId.includes('-p2-') ? 2 : 1);
-				const svgEl = document.getElementById('camada-rabiscos-' + pNum);
+				const svgEl = document.getElementById('camada-rabiscos-' + pNum) || document.getElementById('camada-rabiscos') || document.getElementById('camada-rabiscos-1');
 				if (cmt && (cmt.tipo === 'desenho' || targetId.startsWith('rabisco-'))) {
 					let path = document.getElementById(targetId);
 					if (!path && cmt.d && svgEl) {
@@ -2431,8 +2608,61 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 							path.classList.remove('status-resolvido');
 						}
 					}
+				} else if (cmt && (cmt.tipo === 'retangulo' || targetId.startsWith('forma-'))) {
+					let rect = document.getElementById(targetId);
+					if (!rect && cmt.width && cmt.height && svgEl) {
+						rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+						rect.setAttribute('id', targetId);
+						rect.setAttribute('class', 'traco-rabisco forma-retangulo');
+						rect.setAttribute('stroke', '#dc2626');
+						rect.setAttribute('stroke-width', '6.67');
+						rect.setAttribute('fill', 'transparent');
+						rect.setAttribute('x', cmt.x);
+						rect.setAttribute('y', cmt.y);
+						rect.setAttribute('width', cmt.width);
+						rect.setAttribute('height', cmt.height);
+						rect.setAttribute('rx', '2');
+						rect.setAttribute('ry', '2');
+						svgEl.appendChild(rect);
+					}
+					if (rect) {
+						rect.onclick = function(e) {
+							e.stopPropagation();
+							irParaComentario(targetId);
+						};
+						if (cmt.status === 'resolvido' || cmt.status === 'concluido') {
+							rect.classList.add('status-resolvido');
+						} else {
+							rect.classList.remove('status-resolvido');
+						}
+					}
+				} else if (cmt && (cmt.tipo === 'grifo' || targetId.startsWith('grifo-'))) {
+					let rect = document.getElementById(targetId);
+					if (!rect && cmt.width && cmt.height && svgEl) {
+						rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+						rect.setAttribute('id', targetId);
+						rect.setAttribute('class', 'traco-rabisco forma-grifo');
+						rect.setAttribute('x', cmt.x);
+						rect.setAttribute('y', cmt.y);
+						rect.setAttribute('width', cmt.width);
+						rect.setAttribute('height', cmt.height);
+						rect.setAttribute('rx', '3');
+						rect.setAttribute('ry', '3');
+						svgEl.appendChild(rect);
+					}
+					if (rect) {
+						rect.onclick = function(e) {
+							e.stopPropagation();
+							irParaComentario(targetId);
+						};
+						if (cmt.status === 'resolvido' || cmt.status === 'concluido') {
+							rect.classList.add('status-resolvido');
+						} else {
+							rect.classList.remove('status-resolvido');
+						}
+					}
 				}
-				if (cmt && (cmt.texto || cmt.tipo === 'desenho')) {
+				if (cmt && (cmt.texto || cmt.tipo === 'desenho' || cmt.tipo === 'retangulo' || cmt.tipo === 'grifo' || targetId.startsWith('rabisco-') || targetId.startsWith('forma-') || targetId.startsWith('grifo-'))) {
 					renderizarCardComentario(targetId, cmt);
 				}
 			}
@@ -2478,13 +2708,26 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 
 			const isResolvido = (dados.status === 'resolvido' || dados.status === 'concluido');
 			const isDesenho = (dados.tipo === 'desenho' || targetId.startsWith('rabisco-'));
-			card.className = 'comment-box-aside no-print' + (isDesenho ? ' card-desenho' : '') + (isResolvido ? ' status-resolvido' : '');
+			const isRetangulo = (dados.tipo === 'retangulo' || targetId.startsWith('forma-'));
+			const isGrifo = (dados.tipo === 'grifo' || targetId.startsWith('grifo-'));
+			const isVisual = isDesenho || isRetangulo || isGrifo;
+
+			let tagTipo = '';
+			if (isDesenho) {
+				tagTipo = '<span style="color: #dc2626; font-weight: bold; margin-left: 4px;">(🖊️ Rabisco)</span>';
+			} else if (isRetangulo) {
+				tagTipo = '<span style="color: #dc2626; font-weight: bold; margin-left: 4px;">(⬜ Retângulo)</span>';
+			} else if (isGrifo) {
+				tagTipo = '<span style="color: #dc2626; font-weight: bold; margin-left: 4px;">(🖍️ Grifo)</span>';
+			}
+
+			card.className = 'comment-box-aside no-print' + (isVisual ? ' card-desenho' : '') + (isResolvido ? ' status-resolvido' : '');
 
 			card.innerHTML = \`
 				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
 					<div>
 						<div style="font-weight: bold; font-size: 10pt; color: #0f172a;">\${dados.autor || 'Desenvolvedor'}</div>
-						<div style="font-size: 8pt; color: #64748b;">\${dados.data || ''} \${isDesenho ? '<span style="color: #dc2626; font-weight: bold; margin-left: 4px;">(🖊️ Rabisco)</span>' : ''}</div>
+						<div style="font-size: 8pt; color: #64748b;">\${dados.data || ''} \${tagTipo}</div>
 					</div>
 					<button type="button" class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="event.stopPropagation(); alternarStatusComentario('\${targetId}')" title="Clique para alternar status (Pendente / Concluído)">
 						\${isResolvido ? '🟢 Concluído' : '🟡 Pendente'}
@@ -2506,10 +2749,8 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			// Bloqueia auto-save global por alguns ms para prevenir fechamento acidental por clique fantasma
 			window._bloquearAutoSaveTimestamp = Date.now() + 500;
 
-			// Se a caneta estiver ativa, desativa temporariamente para permitir clicar e digitar normalmente
-			if (modoCanetaAtivo) {
-				alternarModoCaneta();
-			}
+			// Desativa qualquer modo de desenho para que o mouse volte ao cursor normal
+			desativarModosDesenho();
 
 			if (cardEmEdicaoId && cardEmEdicaoId !== targetId) {
 				salvarComentario(cardEmEdicaoId, true /* autoSave */);
@@ -2539,6 +2780,37 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 					target.setAttribute('d', existente.d);
 					svgEl.appendChild(target);
 				}
+			} else if (!target && (existente.tipo === 'retangulo' || targetId.startsWith('forma-'))) {
+				const svgEl = document.getElementById('camada-rabiscos-' + parteCmt) || obterSvgAtivo();
+				if (svgEl && existente.width && existente.height) {
+					target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+					target.setAttribute('id', targetId);
+					target.setAttribute('class', 'traco-rabisco forma-retangulo');
+					target.setAttribute('stroke', '#dc2626');
+					target.setAttribute('stroke-width', '6.67');
+					target.setAttribute('fill', 'transparent');
+					target.setAttribute('x', existente.x);
+					target.setAttribute('y', existente.y);
+					target.setAttribute('width', existente.width);
+					target.setAttribute('height', existente.height);
+					target.setAttribute('rx', '2');
+					target.setAttribute('ry', '2');
+					svgEl.appendChild(target);
+				}
+			} else if (!target && (existente.tipo === 'grifo' || targetId.startsWith('grifo-'))) {
+				const svgEl = document.getElementById('camada-rabiscos-' + parteCmt) || obterSvgAtivo();
+				if (svgEl && existente.width && existente.height) {
+					target = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+					target.setAttribute('id', targetId);
+					target.setAttribute('class', 'traco-rabisco forma-grifo');
+					target.setAttribute('x', existente.x);
+					target.setAttribute('y', existente.y);
+					target.setAttribute('width', existente.width);
+					target.setAttribute('height', existente.height);
+					target.setAttribute('rx', '3');
+					target.setAttribute('ry', '3');
+					svgEl.appendChild(target);
+				}
 			}
 
 			let card = document.getElementById('card-cmt-' + targetId);
@@ -2558,16 +2830,37 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			}
 
 			const isDesenho = (existente.tipo === 'desenho' || targetId.startsWith('rabisco-'));
+			const isRetangulo = (existente.tipo === 'retangulo' || targetId.startsWith('forma-'));
+			const isGrifo = (existente.tipo === 'grifo' || targetId.startsWith('grifo-'));
+			const isVisual = isDesenho || isRetangulo || isGrifo;
+
+			let tituloEdicao = '💬 Anotação / Dúvida';
+			let corTitulo = '#b45309';
+			let placeholderTexto = 'Digite sua dúvida ou observação aqui...';
+			if (isDesenho) {
+				tituloEdicao = '🖊️ Anotação do Rabisco';
+				corTitulo = '#dc2626';
+				placeholderTexto = 'Digite sua anotação sobre este rabisco...';
+			} else if (isRetangulo) {
+				tituloEdicao = '⬜ Anotação do Retângulo';
+				corTitulo = '#dc2626';
+				placeholderTexto = 'Digite sua anotação sobre esta área demarcada...';
+			} else if (isGrifo) {
+				tituloEdicao = '🖍️ Anotação do Texto Grifado';
+				corTitulo = '#dc2626';
+				placeholderTexto = 'Digite sua anotação sobre o trecho grifado...';
+			}
+
 			if (card) {
-				card.className = 'comment-box-aside no-print focused-card' + (isDesenho ? ' card-desenho' : '');
+				card.className = 'comment-box-aside no-print focused-card' + (isVisual ? ' card-desenho' : '');
 				card.onclick = function(e) { e.stopPropagation(); };
 				card.onmousedown = function(e) { e.stopPropagation(); };
 				card.innerHTML = \`
-					<div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 6px; color: \${isDesenho ? '#dc2626' : '#b45309'};">
-						\${isDesenho ? '🖊️ Anotação do Rabisco' : '💬 Anotação / Dúvida'}
+					<div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 6px; color: \${corTitulo};">
+						\${tituloEdicao}
 					</div>
 					<input type="text" id="input-autor-\${targetId}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" placeholder="Seu nome (ex: Gustavo)" value="\${autorAtual}" style="width: 100%; box-sizing: border-box; padding: 5px 8px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt;">
-					<textarea id="input-texto-\${targetId}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" placeholder="\${isDesenho ? 'Digite sua anotação sobre este rabisco...' : 'Digite sua dúvida ou observação aqui...'}" rows="3" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt; resize: vertical;">\${textoAtual}</textarea>
+					<textarea id="input-texto-\${targetId}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" placeholder="\${placeholderTexto}" rows="3" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt; resize: vertical;">\${textoAtual}</textarea>
 					<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
 						<button type="button" onclick="event.stopPropagation(); cancelarEdicaoComentario('\${targetId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">Cancelar</button>
 						<button type="button" onclick="event.stopPropagation(); salvarComentario('\${targetId}')" style="background: #2563eb; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 8.5pt; font-weight: bold;">Salvar</button>
@@ -2602,17 +2895,36 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			const statusAnterior = existente.status || 'pendente';
 			const dataAnterior = existente.data || formatarDataHora();
 			const isDesenho = targetId.startsWith('rabisco-') || (existente.tipo === 'desenho');
-			const pathEl = isDesenho ? document.getElementById(targetId) : null;
-			const pathD = pathEl ? pathEl.getAttribute('d') : (existente.d || '');
+			const isRetangulo = targetId.startsWith('forma-') || (existente.tipo === 'retangulo');
+			const isGrifo = targetId.startsWith('grifo-') || (existente.tipo === 'grifo');
+			const isForma = isRetangulo || isGrifo;
+			const pathEl = (isDesenho || isForma) ? document.getElementById(targetId) : null;
+			const pathD = pathEl && isDesenho ? pathEl.getAttribute('d') : (existente.d || '');
+			const rectX = pathEl && isForma ? parseFloat(pathEl.getAttribute('x')) : (existente.x || 0);
+			const rectY = pathEl && isForma ? parseFloat(pathEl.getAttribute('y')) : (existente.y || 0);
+			const rectW = pathEl && isForma ? parseFloat(pathEl.getAttribute('width')) : (existente.width || 0);
+			const rectH = pathEl && isForma ? parseFloat(pathEl.getAttribute('height')) : (existente.height || 0);
+
 			const svgEl = document.getElementById('camada-rabiscos-' + parteOriginal) || document.getElementById('camada-rabiscos') || obterSvgAtivo();
 			const svgRect = svgEl ? svgEl.getBoundingClientRect() : { top: 0 };
 			const boundingTop = (pathEl && svgEl) ? Math.max(0, Math.round(pathEl.getBoundingClientRect().top - svgRect.top)) : (existente.boundingTop || 0);
 
+			let tipoFinal = 'texto';
+			if (isDesenho) tipoFinal = 'desenho';
+			else if (isRetangulo) tipoFinal = 'retangulo';
+			else if (isGrifo) tipoFinal = 'grifo';
+			else if (existente.tipo) tipoFinal = existente.tipo;
+
 			comentariosArmazenados[targetId] = {
-				tipo: isDesenho ? 'desenho' : (existente.tipo || 'texto'),
+				tipo: tipoFinal,
 				parte: parteOriginal,
 				pathId: isDesenho ? targetId : undefined,
-				d: pathD,
+				formaId: isForma ? targetId : undefined,
+				d: isDesenho ? pathD : undefined,
+				x: isForma ? rectX : undefined,
+				y: isForma ? rectY : undefined,
+				width: isForma ? rectW : undefined,
+				height: isForma ? rectH : undefined,
 				boundingTop: boundingTop,
 				autor: autor,
 				data: dataAnterior,
@@ -2642,9 +2954,9 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			if (existente && existente.texto && existente.texto !== '(Nova anotação)' && existente.texto !== '(Sem anotação preenchida)') {
 				renderizarCardComentario(targetId, existente);
 			} else {
-				if (targetId.startsWith('rabisco-') || (existente && existente.tipo === 'desenho')) {
-					const pathEl = document.getElementById(targetId);
-					if (pathEl) pathEl.remove();
+				if (targetId.startsWith('rabisco-') || targetId.startsWith('forma-') || targetId.startsWith('grifo-') || (existente && (existente.tipo === 'desenho' || existente.tipo === 'retangulo' || existente.tipo === 'grifo'))) {
+					const el = document.getElementById(targetId);
+					if (el) el.remove();
 				}
 				delete comentariosArmazenados[targetId];
 				try {
@@ -2669,13 +2981,13 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
 			} catch(e) {}
 
-			// Se for traço de desenho, atualiza estilo visual na página
-			const pathEl = document.getElementById(targetId);
-			if (pathEl && (pathEl.tagName.toLowerCase() === 'path' || pathEl.classList.contains('traco-rabisco'))) {
+			// Se for traço de desenho ou forma de retângulo, atualiza estilo visual na página
+			const el = document.getElementById(targetId);
+			if (el && (el.tagName.toLowerCase() === 'path' || el.tagName.toLowerCase() === 'rect' || el.classList.contains('traco-rabisco'))) {
 				if (cmt.status === 'resolvido' || cmt.status === 'concluido') {
-					pathEl.classList.add('status-resolvido');
+					el.classList.add('status-resolvido');
 				} else {
-					pathEl.classList.remove('status-resolvido');
+					el.classList.remove('status-resolvido');
 				}
 			}
 
@@ -2691,9 +3003,9 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				cardEmEdicaoId = null;
 			}
 
-			if (targetId.startsWith('rabisco-') || (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].tipo === 'desenho')) {
-				const pathEl = document.getElementById(targetId);
-				if (pathEl) pathEl.remove();
+			if (targetId.startsWith('rabisco-') || targetId.startsWith('forma-') || targetId.startsWith('grifo-') || (comentariosArmazenados[targetId] && (comentariosArmazenados[targetId].tipo === 'desenho' || comentariosArmazenados[targetId].tipo === 'retangulo' || comentariosArmazenados[targetId].tipo === 'grifo'))) {
+				const el = document.getElementById(targetId);
+				if (el) el.remove();
 			}
 
 			delete comentariosArmazenados[targetId];
@@ -2832,8 +3144,16 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				const target = document.getElementById(item.id);
 				let secao = 'Elemento do Relatório';
 				const isDesenho = (item.id.startsWith('rabisco-') || cmt.tipo === 'desenho');
+				const isRetangulo = (item.id.startsWith('forma-') || cmt.tipo === 'retangulo');
+				const isGrifo = (item.id.startsWith('grifo-') || cmt.tipo === 'grifo');
+				const isVisual = isDesenho || isRetangulo || isGrifo;
+
 				if (isDesenho) {
 					secao = '🖊️ Rabisco / Desenho';
+				} else if (isRetangulo) {
+					secao = '⬜ Retângulo / Forma';
+				} else if (isGrifo) {
+					secao = '🖍️ Texto Grifado';
 				} else if (target) {
 					if (target.classList && target.classList.contains('relatorio-img-container')) {
 						secao = 'Imagem do Relatório';
@@ -2846,10 +3166,11 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				const badgeParte = (isSplitModo && cmt.parte) ? \`<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: bold; margin-left: 6px;">PARTE \${cmt.parte}</span>\` : '';
 
 				if (cardEmEdicaoId === item.id) {
+					const tituloSidebar = isDesenho ? '🖊️ Editando Rabisco' : (isRetangulo ? '⬜ Editando Retângulo' : (isGrifo ? '🖍️ Editando Texto Grifado' : '💬 Editando Anotação'));
 					htmlLista += \`
-						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isDesenho ? 'item-desenho' : ''} focused-card" style="border-left-color: #2563eb; background: #eff6ff;" onclick="event.stopPropagation()">
-							<div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 6px; color: \${isDesenho ? '#dc2626' : '#2563eb'};">
-								\${isDesenho ? '🖊️ Editando Rabisco' : '💬 Editando Anotação'}
+						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isVisual ? 'item-desenho' : ''} focused-card" style="border-left-color: #2563eb; background: #eff6ff;" onclick="event.stopPropagation()">
+							<div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 6px; color: \${isVisual ? '#dc2626' : '#2563eb'};">
+								\${tituloSidebar}
 							</div>
 							<input type="text" id="input-sidebar-autor-\${item.id}" placeholder="Seu nome" value="\${cmt.autor || ''}" style="width: 100%; box-sizing: border-box; padding: 4px 6px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
 							<textarea id="input-sidebar-texto-\${item.id}" placeholder="Digite sua anotação..." rows="3" style="width: 100%; box-sizing: border-box; padding: 5px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt; resize: vertical;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">\${(cmt.texto && cmt.texto !== '(Sem anotação preenchida)' && cmt.texto !== '(Nova anotação)') ? cmt.texto : ''}</textarea>
@@ -2861,7 +3182,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 					\`;
 				} else {
 					htmlLista += \`
-						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isResolvido ? 'resolvido' : ''} \${isDesenho ? 'item-desenho' : ''}" onclick="irParaComentario('\${item.id}')" ondblclick="event.stopPropagation(); iniciarEdicaoComentario('\${item.id}', event)">
+						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isResolvido ? 'resolvido' : ''} \${isVisual ? 'item-desenho' : ''}" onclick="irParaComentario('\${item.id}')" ondblclick="event.stopPropagation(); iniciarEdicaoComentario('\${item.id}', event)">
 							<div class="painel-acrobat-item-header">
 								<div>
 									<span class="painel-acrobat-item-autor">\${cmt.autor || 'Desenvolvedor'}</span>
