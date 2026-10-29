@@ -117,7 +117,89 @@ window.abrirModalDivisaoPDF = function() {
 window.abrirModalSelecaoCapitulos = abrirModalSelecaoCapitulosHtmlPrint;
 window.fecharModalSelecaoCapitulos = fecharModalSelecaoCapitulos;
 
-function gerarPDFHtmlPrint(options = null) {
+// Otimiza imagens embutidas pesadas no formulário completo para prevenir estouro de memória no navegador
+async function otimizarImagensDoFormularioCompleto(dadosCompletos) {
+	if (!dadosCompletos) return;
+	
+	const regexDataUrl = /data:image\/[^;]+;base64,[^"'\s<>]+/g;
+	const imagensPesadas = new Set();
+	const limiteTamanho = 350000; // ~260KB binário / 350KB Base64
+
+	function encontrarImagensPesadas(obj) {
+		if (typeof obj === 'string') {
+			if (obj.length > limiteTamanho) {
+				const matches = obj.match(regexDataUrl);
+				if (matches) {
+					matches.forEach(m => {
+						if (m.length > limiteTamanho) {
+							imagensPesadas.add(m);
+						}
+					});
+				}
+			}
+		} else if (Array.isArray(obj)) {
+			obj.forEach(encontrarImagensPesadas);
+		} else if (obj && typeof obj === 'object') {
+			for (const k of Object.keys(obj)) {
+				encontrarImagensPesadas(obj[k]);
+			}
+		}
+	}
+
+	encontrarImagensPesadas(dadosCompletos);
+
+	if (imagensPesadas.size === 0) return;
+
+	const mapaOtimizacoes = new Map();
+	for (const dataUrl of imagensPesadas) {
+		if (typeof otimizarImagemBase64 === 'function') {
+			const otimizada = await otimizarImagemBase64(dataUrl, 1920, 0.85);
+			if (otimizada && otimizada.length < dataUrl.length) {
+				mapaOtimizacoes.set(dataUrl, otimizada);
+			}
+		}
+	}
+
+	if (mapaOtimizacoes.size === 0) return;
+
+	function substituirImagens(obj) {
+		if (typeof obj === 'string') {
+			let res = obj;
+			mapaOtimizacoes.forEach((nova, antiga) => {
+				if (res.includes(antiga)) {
+					res = res.split(antiga).join(nova);
+				}
+			});
+			return res;
+		} else if (Array.isArray(obj)) {
+			for (let i = 0; i < obj.length; i++) {
+				obj[i] = substituirImagens(obj[i]);
+			}
+			return obj;
+		} else if (obj && typeof obj === 'object') {
+			for (const k of Object.keys(obj)) {
+				obj[k] = substituirImagens(obj[k]);
+			}
+			return obj;
+		}
+		return obj;
+	}
+
+	substituirImagens(dadosCompletos);
+
+	// Atualiza também os atributos data-original-image nos elementos editáveis do DOM para persistir no form
+	try {
+		const imgsDOM = document.querySelectorAll('img[data-original-image]');
+		imgsDOM.forEach(img => {
+			const srcAtual = img.getAttribute('data-original-image');
+			if (srcAtual && mapaOtimizacoes.has(srcAtual)) {
+				img.setAttribute('data-original-image', mapaOtimizacoes.get(srcAtual));
+			}
+		});
+	} catch (e) {}
+}
+
+async function gerarPDFHtmlPrint(options = null) {
 	const erros = validarFormularioGlobal();
 	if (erros.length > 0) {
 		const lista = document.getElementById('lista-campos-faltando');
@@ -145,6 +227,9 @@ function gerarPDFHtmlPrint(options = null) {
 		abrirModalSelecaoCapitulosHtmlPrint();
 		return;
 	}
+
+	// Otimiza quaisquer imagens pesadas existentes no formulário (fotos de câmera legadas, etc.)
+	await otimizarImagensDoFormularioCompleto(dadosCompletos);
 
 	let sistemasParte2 = [];
 	let indicesVeiculosParte1 = [];
@@ -178,8 +263,7 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppParte1
 			},
 			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte1)),
-			incluirInfoGerais: true,
-			dadosFormularioCompleto: dadosCompletos
+			incluirInfoGerais: true
 		});
 
 		partsToGenerate.push({
@@ -191,8 +275,7 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppParte2
 			},
 			dataAplicaveis: JSON.parse(JSON.stringify(veiculosParte2)),
-			incluirInfoGerais: true,
-			dadosFormularioCompleto: dadosCompletos
+			incluirInfoGerais: true
 		});
 	} else {
 		const pppTotal = (dataPrincipalOriginal.sistemas || []).reduce((total, s) => total + parseInt(s.paginasprev || 0, 10), 0);
@@ -205,8 +288,7 @@ function gerarPDFHtmlPrint(options = null) {
 				ppp_calculado: pppTotal
 			},
 			dataAplicaveis: dataAplicaveisOriginal,
-			incluirInfoGerais: true,
-			dadosFormularioCompleto: dadosCompletos
+			incluirInfoGerais: true
 		});
 	}
 
