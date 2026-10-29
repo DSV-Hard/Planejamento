@@ -53,13 +53,65 @@ function criarMiniatura(dataUrl, maxWidth = 150, maxHeight = 100) {
 	});
 }
 
+function otimizarImagemBase64(dataUrl, maxDim = 1920, qualidade = 0.85) {
+	return new Promise((resolve) => {
+		if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:image/')) {
+			resolve(dataUrl);
+			return;
+		}
+		// Se for SVG ou GIF (animações) ou se já for leve (< 350KB), não precisa recomprimir
+		if (dataUrl.startsWith('data:image/svg') || dataUrl.startsWith('data:image/gif') || dataUrl.length < 350000) {
+			resolve(dataUrl);
+			return;
+		}
+		const img = new Image();
+		img.onload = () => {
+			try {
+				let { width, height } = img;
+				// Se já cabe na dimensão e é razoavelmente leve, mantém
+				if (width <= maxDim && height <= maxDim && dataUrl.length < 600000) {
+					resolve(dataUrl);
+					return;
+				}
+				if (width > maxDim || height > maxDim) {
+					if (width > height) {
+						height = Math.round((height * maxDim) / width);
+						width = maxDim;
+					} else {
+						width = Math.round((width * maxDim) / height);
+						height = maxDim;
+					}
+				}
+				const canvas = document.createElement('canvas');
+				canvas.width = width;
+				canvas.height = height;
+				const ctx = canvas.getContext('2d');
+				// Preenche fundo branco caso seja PNG com transparência ao converter para JPEG
+				ctx.fillStyle = '#ffffff';
+				ctx.fillRect(0, 0, width, height);
+				ctx.drawImage(img, 0, 0, width, height);
+				
+				const otimizada = canvas.toDataURL('image/jpeg', qualidade);
+				resolve((otimizada && otimizada.length < dataUrl.length) ? otimizada : dataUrl);
+			} catch (err) {
+				console.warn('Erro ao otimizar imagem no canvas:', err);
+				resolve(dataUrl);
+			}
+		};
+		img.onerror = () => resolve(dataUrl);
+		img.src = dataUrl;
+	});
+}
+
 async function processarArquivo(element, file) {
 	const reader = new FileReader();
 	reader.onload = async (readerEvent) => {
-		const dataUrl = readerEvent.target.result;
+		let dataUrl = readerEvent.target.result;
 		let content;
 		
 		if (file.type && file.type.startsWith('image/')) {
+			// Otimiza a imagem original para web (max 1920px, JPEG 85%) antes de armazenar
+			dataUrl = await otimizarImagemBase64(dataUrl, 1920, 0.85);
 			const thumbnailDataUrl = await criarMiniatura(dataUrl);
 			
 			const imgContainer = document.createElement('div');
@@ -81,7 +133,7 @@ async function processarArquivo(element, file) {
 			
 			img.setAttribute('data-original-image', dataUrl);
 			img.setAttribute('data-filename', file.name || 'imagem');
-			img.setAttribute('data-mime', file.type);
+			img.setAttribute('data-mime', 'image/jpeg');
 			
 			imgContainer.appendChild(img);
 			content = imgContainer;
