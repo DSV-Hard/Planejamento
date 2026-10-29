@@ -210,8 +210,18 @@ function gerarPDFHtmlPrint(options = null) {
 		});
 	}
 
-	for (const part of partsToGenerate) {
-		abrirJanelaImpressaoHtml(part);
+	if (isSplit) {
+		abrirJanelaImpressaoHtml({
+			isSplit: true,
+			parts: partsToGenerate,
+			dadosFormularioCompleto: dadosCompletos
+		});
+	} else {
+		abrirJanelaImpressaoHtml({
+			isSplit: false,
+			parts: partsToGenerate,
+			dadosFormularioCompleto: dadosCompletos
+		});
 	}
 }
 
@@ -280,8 +290,8 @@ function desconverterHtmlParaRelatorio(htmlString) {
 	return `<div class="rich-content-box">${tempDiv.innerHTML}</div>`;
 }
 
-function abrirJanelaImpressaoHtml(partData) {
-	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais, dadosFormularioCompleto } = partData;
+function gerarDadosParteRelatorio(partData, parteNum = 1) {
+	const { prefixo, sufixoTitulo, dataPrincipal, dataAplicaveis, incluirInfoGerais } = partData;
 
 	let nomeBase = 'Planejamento';
 	if (dataPrincipal.veiculo && dataPrincipal.veiculo.includes('>')) {
@@ -392,14 +402,14 @@ function abrirJanelaImpressaoHtml(partData) {
 	const nomeVeiculoPrincipal = formatarVeiculoParaIndice(dataPrincipal.veiculo);
 	const qtdCapsPrincipal = (dataPrincipal.sistemas || []).length;
 	htmlIndiceLista += `
-		<div class="indice-secao-titulo" onclick="alternarGrupoIndice('principal')" title="Clique para expandir/recolher os capítulos">
+		<div class="indice-secao-titulo" onclick="alternarGrupoIndice('p${parteNum}-principal')" title="Clique para expandir/recolher os capítulos">
 			<span>VEÍCULO PRINCIPAL ${qtdCapsPrincipal > 0 ? `(${qtdCapsPrincipal})` : ''}</span>
-			<span id="seta-principal" class="indice-seta">▶</span>
+			<span id="seta-p${parteNum}-principal" class="indice-seta">▶</span>
 		</div>
-		<div class="indice-item indice-item-veiculo" onclick="irParaElementoIndice('secao-info-gerais-principal')" title="Ir para Informações Gerais">
+		<div class="indice-item indice-item-veiculo" onclick="irParaElementoIndice('p${parteNum}-secao-info-gerais-principal', ${parteNum})" title="Ir para Informações Gerais">
 			🚗 <span>${nomeVeiculoPrincipal}</span>
 		</div>
-		<div id="indice-caps-principal" class="indice-caps-container" style="display: none;">
+		<div id="indice-caps-p${parteNum}-principal" class="indice-caps-container" style="display: none;">
 	`;
 
 	if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
@@ -412,7 +422,7 @@ function abrirJanelaImpressaoHtml(partData) {
 				tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
 			}
 			htmlIndiceLista += `
-				<div class="indice-item" onclick="irParaElementoIndice('cap-principal-${idx + 1}')" title="Ir para ${tituloCapitulo}">
+				<div class="indice-item" onclick="irParaElementoIndice('p${parteNum}-cap-principal-${idx + 1}', ${parteNum})" title="Ir para ${tituloCapitulo}">
 					<span class="indice-badge-verde"></span>
 					<span>${tituloCapitulo}</span>
 				</div>
@@ -428,14 +438,14 @@ function abrirJanelaImpressaoHtml(partData) {
 			const nomeVeiculoAplicavel = formatarVeiculoParaIndice(dadosGerais.veiculo);
 			const qtdCapsAplicavel = (veiculo.sistemas || []).length;
 			htmlIndiceLista += `
-				<div class="indice-secao-titulo" onclick="alternarGrupoIndice('aplicavel-${vIndex + 1}')" title="Clique para expandir/recolher os capítulos" style="margin-top: 14px;">
+				<div class="indice-secao-titulo" onclick="alternarGrupoIndice('p${parteNum}-aplicavel-${vIndex + 1}')" title="Clique para expandir/recolher os capítulos" style="margin-top: 14px;">
 					<span>VEÍCULO APLICÁVEL ${vIndex + 1} ${qtdCapsAplicavel > 0 ? `(${qtdCapsAplicavel})` : ''}</span>
-					<span id="seta-aplicavel-${vIndex + 1}" class="indice-seta">▶</span>
+					<span id="seta-p${parteNum}-aplicavel-${vIndex + 1}" class="indice-seta">▶</span>
 				</div>
-				<div class="indice-item indice-item-veiculo" onclick="irParaElementoIndice('veiculo-aplicavel-${vIndex + 1}')" title="Ir para Veículo Aplicável ${vIndex + 1}">
+				<div class="indice-item indice-item-veiculo" onclick="irParaElementoIndice('p${parteNum}-veiculo-aplicavel-${vIndex + 1}', ${parteNum})" title="Ir para Veículo Aplicável ${vIndex + 1}">
 					🚗 <span>${nomeVeiculoAplicavel}</span>
 				</div>
-				<div id="indice-caps-aplicavel-${vIndex + 1}" class="indice-caps-container" style="display: none;">
+				<div id="indice-caps-p${parteNum}-aplicavel-${vIndex + 1}" class="indice-caps-container" style="display: none;">
 			`;
 			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
 				veiculo.sistemas.forEach((sistema, idx) => {
@@ -447,7 +457,7 @@ function abrirJanelaImpressaoHtml(partData) {
 						tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
 					}
 					htmlIndiceLista += `
-						<div class="indice-item" onclick="irParaElementoIndice('cap-aplicavel-${vIndex + 1}-${idx + 1}')" title="Ir para ${tituloCapitulo}">
+						<div class="indice-item" onclick="irParaElementoIndice('p${parteNum}-cap-aplicavel-${vIndex + 1}-${idx + 1}', ${parteNum})" title="Ir para ${tituloCapitulo}">
 							<span class="indice-badge-amarelo"></span>
 							<span>${tituloCapitulo}</span>
 						</div>
@@ -463,10 +473,301 @@ function abrirJanelaImpressaoHtml(partData) {
 		<div class="indice-secao-titulo" style="margin-top: 14px; cursor: default;">
 			<span>RESUMO FINAL</span>
 		</div>
-		<div class="indice-item" onclick="irParaElementoIndice('secao-dados-card')" title="Ir para Dados do Card" style="font-weight: bold; color: #1e293b;">
+		<div class="indice-item" onclick="irParaElementoIndice('p${parteNum}-secao-dados-card', ${parteNum})" title="Ir para Dados do Card" style="font-weight: bold; color: #1e293b;">
 			📊 <span>DADOS DO CARD</span>
 		</div>
 	`;
+
+	let corpoDoc = '';
+
+	// 1. ÍNDICE RÁPIDO PARA APLICÁVEIS
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		corpoDoc += `
+		<div class="indice-rapido avoid-break">
+			<div style="font-weight: bold; font-size: 11pt; margin-bottom: 6px;">ÍNDICE RÁPIDO (P/ APLICÁVEIS):</div>
+		`;
+		dataAplicaveis.forEach((veiculo, index) => {
+			const refText = veiculo.dadosGerais.veiculo || 'Sem referência';
+			corpoDoc += `<a href="#p${parteNum}-veiculo-aplicavel-${index + 1}">Veículo Aplicável #${index + 1} - ${refText}</a>`;
+		});
+		corpoDoc += `</div><hr class="separator" style="margin-top: 25px; margin-bottom: 30px;">`;
+	}
+
+	// 2. TÍTULO PRINCIPAL
+	corpoDoc += `
+		<div class="doc-title" style="margin-top: 15px;">PLANEJAMENTO - VEÍCULO PRINCIPAL${sufixoTitulo}</div>
+		${dataPrincipal.clickup ? `<div class="clickup-link">${dataPrincipal.clickup}</div>` : ''}
+	`;
+
+	// 3. INFORMAÇÕES GERAIS (VEÍCULO PRINCIPAL)
+	if (incluirInfoGerais) {
+		corpoDoc += `
+		<div id="p${parteNum}-secao-info-gerais-principal" class="section-header">INFORMAÇÕES GERAIS</div>
+		<div class="info-row"><span class="info-label">PLANEJADO POR:</span> <span class="info-val">${dataPrincipal.planejado_por || 'N/A'}</span></div>
+		<div class="sub-header">- VEÍCULO REFERÊNCIA:</div>
+		<div style="font-style: italic; font-size: 10pt; margin-left: 12px; margin-bottom: 6px;">${dataPrincipal.veiculo || 'N/A'}</div>
+		<div class="info-row"><span class="info-label">ID DIAGRAMAS:</span> <span class="info-val">${dataPrincipal.iddiagramas || 'N/A'}</span></div>
+		<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dataPrincipal.idfusiveis || 'N/A'}</span></div>
+
+		<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
+		<div class="path-text" data-caminho="${dataPrincipal.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dataPrincipal.pasta || 'N/A'}</div>
+
+		<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
+		${desconverterHtmlParaRelatorio(dataPrincipal.comentarios)}
+
+		<div class="info-row" style="margin-top: 10px;"><span class="info-label">ASSOCIAÇÃO / CHASSI:</span> <span class="info-val">${dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A')}</span></div>
+		${dataPrincipal.aplicacao_chassi_texto ? `<div class="chassi-texto-bloco" style="margin-left: 12px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.45;">${dataPrincipal.aplicacao_chassi_texto}</div>` : ''}
+
+		<div class="sub-header">- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:</div>
+		${desconverterHtmlParaRelatorio(dataPrincipal.ilustracao_texto || 'Nenhum pedido.')}
+
+		<div class="info-row" style="margin-top: 10px;"><span class="info-label">PESQUISA:</span> <span class="info-val">${dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não'}</span></div>
+		${dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto ? desconverterHtmlParaRelatorio(dataPrincipal.pesquisa_texto) : ''}
+		`;
+	}
+
+	// 4. SISTEMAS (CAPÍTULOS) DO VEÍCULO PRINCIPAL (GRIFADO EM VERDE #d4ffd6)
+	corpoDoc += `<div class="section-header" style="margin-top: 25px;">SISTEMAS</div>`;
+
+	if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
+		dataPrincipal.sistemas.forEach((sistema, idx) => {
+			let tituloCapitulo = (sistema.sistema || '').toUpperCase();
+			if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
+				const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
+				tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
+			} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
+				tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
+			}
+
+			let linhaTransferencia = '';
+			if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
+			else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
+			else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
+
+			const sysUpper = (sistema.sistema || '').toUpperCase();
+			const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
+			const isPaginasFixas = [
+				"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
+				"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
+				"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+				"CAIXA DE FUSÍVEIS DA BATERIA"
+			].includes(sysUpper);
+			const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
+
+			corpoDoc += `
+			<div class="avoid-break" style="margin-top: 15px;">
+				<div id="p${parteNum}-cap-principal-${idx + 1}" class="highlight-tag">${tituloCapitulo}</div>
+				${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
+				<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
+				${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
+			`;
+
+			if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
+				corpoDoc += `
+				<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
+				<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
+				<div class="sub-header">- Códigos de Conectores:</div>
+				<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
+				<div class="sub-header">- Código de Peça / Link:</div>
+				${desconverterHtmlParaRelatorio(sistema.codmodulo)}
+				`;
+			}
+
+			if (sistema.transferencia === 'modificar' && sistema.paginas_modificar && sistema.paginas_modificar.length > 0) {
+				corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- Páginas a Modificar:</div>`;
+				sistema.paginas_modificar.forEach(pm => {
+					corpoDoc += `
+					<div class="mod-box">
+						<div class="info-row"><span class="info-label">ID Página:</span> <span class="info-val">${pm.id || ''}</span></div>
+						<div class="info-row"><span class="info-label">Título da Página:</span> <span class="info-val">${pm.titulo || ''}</span></div>
+						<div class="info-row"><span class="info-label">O que modificar:</span> <span class="info-val">${pm.descricao || ''}</span></div>
+					</div>`;
+				});
+			} else {
+				if (isCaixasForm) {
+					corpoDoc += `
+					<div class="info-row"><span class="info-label">Tipo de Caixa:</span> <span class="info-val">${sistema.tipo_fusiveis || 'Simplificado'}</span></div>
+					<div class="sub-header">- Informações da Caixa de Fusíveis:</div>
+					${desconverterHtmlParaRelatorio(sistema.info_fusiveis)}
+					`;
+				} else if (sistema.tipo_layout === 'paginas') {
+					if (sistema.paginas && sistema.paginas.length > 0) {
+						sistema.paginas.forEach((pagina, pIdx) => {
+							const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
+							corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+							corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+						});
+					} else {
+						corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+					}
+				} else {
+					corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Localização:</div>`;
+					corpoDoc += desconverterHtmlParaRelatorio(sistema.pagloc);
+					corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Conectores:</div>`;
+					corpoDoc += desconverterHtmlParaRelatorio(sistema.pagcon);
+					corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Diagramas:</div>`;
+					corpoDoc += desconverterHtmlParaRelatorio(sistema.pagdiag);
+				}
+			}
+
+			corpoDoc += `</div>`; // fim avoid-break capítulo
+		});
+	} else {
+		corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhum sistema adicionado.</p>`;
+	}
+
+	// 5. VEÍCULOS APLICÁVEIS
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		corpoDoc += `<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">`;
+		dataAplicaveis.forEach((veiculo, vIndex) => {
+			const dadosGerais = veiculo.dadosGerais || {};
+			const refText = dadosGerais.veiculo || 'N/A';
+			corpoDoc += `
+			<div class="avoid-break" style="margin-top: 25px;">
+				<div id="p${parteNum}-veiculo-aplicavel-${vIndex + 1}" class="doc-title" style="font-size: 13pt; text-align: left; border-left: 4px solid #2563eb; padding-left: 8px; margin-bottom: 12px;">
+					VEÍCULO APLICÁVEL #${vIndex + 1}
+				</div>
+				<div class="info-row"><span class="info-label">VEÍCULO REFERÊNCIA:</span> <span class="info-val">${refText}</span></div>
+				<div class="info-row"><span class="info-label">PASTA DO VEÍCULO:</span></div>
+				<div class="path-text" data-caminho="${dadosGerais.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dadosGerais.pasta || 'N/A'}</div>
+				<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
+				${desconverterHtmlParaRelatorio(dadosGerais.comentarios)}
+				<div class="info-row" style="margin-top: 8px;"><span class="info-label">ASSOCIAÇÃO / CHASSI:</span> <span class="info-val">${dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A')}</span></div>
+				${dadosGerais.aplicacao_chassi_texto ? `<div class="chassi-texto-bloco" style="margin-left: 12px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.45;">${dadosGerais.aplicacao_chassi_texto}</div>` : ''}
+
+				<div class="section-header" style="margin-top: 20px; font-size: 10pt; background: #e0e7ff; color: #1e1b4b; padding: 4px 8px;">
+					SISTEMAS DO APLICÁVEL #${vIndex + 1}
+				</div>
+			`;
+
+			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
+				veiculo.sistemas.forEach((sistema, idx) => {
+					let tituloCapitulo = (sistema.sistema || '').toUpperCase();
+					if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
+						const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
+						tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
+					} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
+						tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
+					}
+
+					let linhaTransferencia = '';
+					if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
+					else if (sistema.transferencia === 'transferencia_principal') linhaTransferencia = `- Transferência do Principal`;
+					else if (sistema.transferencia === 'transferencia_outro') linhaTransferencia = `- Transferência de outro Aplicável`;
+					else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
+					else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
+
+					const sysUpper = (sistema.sistema || '').toUpperCase();
+					const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
+					const isPaginasFixas = [
+						"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
+						"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
+						"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
+						"CAIXA DE FUSÍVEIS DA BATERIA"
+					].includes(sysUpper);
+					const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
+
+					corpoDoc += `
+					<div class="avoid-break" style="margin-top: 15px;">
+						<div id="p${parteNum}-cap-aplicavel-${vIndex + 1}-${idx + 1}" class="highlight-tag-yellow">${tituloCapitulo}</div>
+						${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
+						<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
+						${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
+					`;
+
+					if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
+						corpoDoc += `
+						<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
+						<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
+						<div class="sub-header">- Códigos de Conectores:</div>
+						<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
+						<div class="sub-header">- Código de Peça / Link:</div>
+						${desconverterHtmlParaRelatorio(sistema.codmodulo)}
+						`;
+					}
+
+					if (isCaixasForm) {
+						corpoDoc += `
+						<div class="info-row"><span class="info-label">Tipo de Caixa:</span> <span class="info-val">${sistema.tipo_fusiveis || 'Simplificado'}</span></div>
+						<div class="sub-header">- Informações da Caixa de Fusíveis:</div>
+						${desconverterHtmlParaRelatorio(sistema.info_fusiveis)}
+						`;
+					} else if (sistema.tipo_layout === 'paginas') {
+						if (sistema.paginas && sistema.paginas.length > 0) {
+							sistema.paginas.forEach((pagina, pIdx) => {
+								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
+								corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+								corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+							});
+						} else {
+							corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+						}
+					} else {
+						corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Localização:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(sistema.pagloc);
+						corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Conectores:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(sistema.pagcon);
+						corpoDoc += `<div style="font-weight: bold; margin-top: 6px;">- Página de Diagramas:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(sistema.pagdiag);
+					}
+
+					corpoDoc += `</div>`; // fim avoid-break capítulo
+				});
+			} else {
+				corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhum sistema adicionado.</p>`;
+			}
+
+			corpoDoc += `</div>`; // fim avoid-break veículo
+			if (vIndex < dataAplicaveis.length - 1) {
+				corpoDoc += `<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">`;
+			}
+		});
+	}
+
+	// 6. DADOS DO CARD
+	corpoDoc += `
+	<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">
+	<div class="avoid-break" style="margin-top: 20px;">
+		<div id="p${parteNum}-secao-dados-card" class="section-header">DADOS DO CARD</div>
+		${(dataAplicaveis && dataAplicaveis.length > 0) ? `<div class="highlight-tag">VEÍCULO PRINCIPAL</div>` : ''}
+		<table class="card-data-table">
+			<tr><td style="font-weight: bold; width: 180px;">DIFICULDADE:</td><td>${dificuldadeExibir || 'Não informada'}</td></tr>
+			<tr><td style="font-weight: bold;">PPP (Total):</td><td>${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas} | Modificadas: ${somaModificadas}</td></tr>
+			<tr><td style="font-weight: bold;">ESTIMATIVA DE TEMPO:</td><td>${estimativaPrincipal} horas</td></tr>
+		</table>
+	`;
+
+	if (dataAplicaveis && dataAplicaveis.length > 0) {
+		corpoDoc += `
+		<div class="highlight-tag-yellow" style="margin-top: 15px;">VEÍCULOS APLICÁVEIS</div>
+		<table class="card-data-table">
+			<tr><td style="font-weight: bold; width: 180px;">DIFICULDADE (Aplicáveis):</td><td>${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}</td></tr>
+			<tr><td style="font-weight: bold;">PPA (Total):</td><td>${somaTotalAplicaveis} | Criadas: ${somaCriadasAplicaveis} | Transferidas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}</td></tr>
+			<tr><td style="font-weight: bold;">ESTIMATIVA DE TEMPO:</td><td>${estimativaAplicaveis} horas</td></tr>
+		</table>
+		`;
+	}
+
+	corpoDoc += `
+		</div> <!-- fim avoid-break -->
+	`;
+
+	return {
+		tituloDocumento,
+		sufixoTitulo,
+		htmlIndiceLista,
+		corpoDoc
+	};
+}
+
+function abrirJanelaImpressaoHtml(config) {
+	const isSplit = !!config.isSplit;
+	const parts = isSplit ? config.parts : (config.parts ? config.parts : [config]);
+	const dadosFormularioCompleto = config.dadosFormularioCompleto || (parts[0] && parts[0].dadosFormularioCompleto);
+
+	const parte1 = gerarDadosParteRelatorio(parts[0], 1);
+	const parte2 = isSplit ? gerarDadosParteRelatorio(parts[1], 2) : null;
+	const tituloDocumento = parte1.tituloDocumento;
 
 	let html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -498,10 +799,11 @@ function abrirJanelaImpressaoHtml(partData) {
 			top: 0;
 			background: #1e293b;
 			color: #ffffff;
-			padding: 10px 24px;
-			display: grid;
-			grid-template-columns: 1fr auto 1fr;
+			padding: 10px 20px;
+			display: flex;
+			justify-content: space-between;
 			align-items: center;
+			gap: 12px;
 			z-index: 9999;
 			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 			font-family: Arial, sans-serif;
@@ -510,6 +812,78 @@ function abrirJanelaImpressaoHtml(partData) {
 			display: flex;
 			align-items: center;
 			justify-content: flex-start;
+			gap: 8px;
+			flex-shrink: 0;
+		}
+		.toolbar-print-center {
+			font-size: 11pt;
+			font-weight: bold;
+			text-align: center;
+			flex: 1;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			padding: 0 10px;
+		}
+		.toolbar-print-right {
+			display: flex;
+			align-items: center;
+			justify-content: flex-end;
+			gap: 8px;
+			flex-shrink: 0;
+		}
+		.parte-tabs-container {
+			display: inline-flex;
+			align-items: center;
+			background: #0f172a;
+			padding: 3px;
+			border-radius: 8px;
+			border: 1px solid #475569;
+			margin-right: 4px;
+		}
+		.btn-parte-tab {
+			background: transparent;
+			color: #cbd5e1;
+			border: none;
+			padding: 6px 14px;
+			border-radius: 6px;
+			font-size: 12px;
+			font-weight: bold;
+			cursor: pointer;
+			transition: all 0.2s ease;
+			letter-spacing: 0.5px;
+		}
+		.btn-parte-tab:hover {
+			color: #ffffff;
+			background: rgba(255, 255, 255, 0.12);
+		}
+		.btn-parte-tab.ativo {
+			background: #2563eb !important;
+			color: #ffffff !important;
+			box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+		}
+		.btn-caneta-top {
+			background: #334155;
+			color: #ffffff;
+			border: 1px solid #475569;
+			padding: 5px 12px;
+			border-radius: 12px;
+			font-size: 12px;
+			font-weight: bold;
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			cursor: pointer;
+			transition: all 0.2s ease;
+		}
+		.btn-caneta-top:hover {
+			background: #475569;
+		}
+		.btn-caneta-top.ativo {
+			background: #dc2626 !important;
+			color: #ffffff !important;
+			border-color: #b91c1c !important;
+			box-shadow: 0 0 10px rgba(220, 38, 38, 0.6);
 		}
 		.toolbar-print-center {
 			text-align: center;
@@ -571,38 +945,23 @@ function abrirJanelaImpressaoHtml(partData) {
 			background: #475569;
 		}
 
-		/* MODO PREVIEW NA JANELA DO SISTEMA: Totalmente limpo e com espaçamento lateral elegante */
-		body.modo-preview {
-			background-color: #f1f5f9;
-		}
-		body.modo-preview .workspace-wrapper {
-			min-width: 0 !important;
-			padding: 25px 0 !important;
-			display: flex !important;
-			justify-content: center !important;
-		}
-		body.modo-preview .document-container {
-			max-width: 210mm !important;
-			width: 210mm !important;
-			min-width: 0 !important;
-			margin: 0 auto !important;
-			padding: 35px 45px !important; /* Espaçamento interno lateral preservado */
-			box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
-			border-radius: 6px !important;
-		}
-		body.modo-preview #btn-comentario-flutuante,
-		body.modo-preview .painel-acrobat,
-		body.modo-preview #btn-abrir-painel-acrobat,
-		body.modo-preview .painel-indice,
-		body.modo-preview #btn-abrir-painel-indice,
-		body.modo-preview .comment-box-aside,
-		body.modo-preview #camada-comentarios,
-		body.modo-preview #badge-contador-comentarios {
+		/* MODO RELATÓRIO PREVIEW:
+		   - Na aba RELATÓRIO inicial: sem aba Anotações, sem caneta, sem comentários.
+		   - O Índice (📑 Índice) e os botões de PARTE 1 / PARTE 2 permanecem 100% ativos!
+		*/
+		body.modo-relatorio-preview #btn-abrir-painel-acrobat,
+		body.modo-relatorio-preview #painel-acrobat,
+		body.modo-relatorio-preview #badge-contador-comentarios,
+		body.modo-relatorio-preview #btn-toggle-caneta,
+		body.modo-relatorio-preview .btn-comentario-flutuante,
+		body.modo-relatorio-preview .comment-box-aside,
+		body.modo-relatorio-preview .camada-rabiscos-svg {
 			display: none !important;
 		}
-		body.modo-preview .commentable-row:hover,
-		body.modo-preview .commentable-row.has-comment {
-			background-color: transparent !important;
+
+		/* MODO VISUALIZAÇÃO: CENTRALIZADO NA TELA COM ESPAÇAMENTO LATERAL INTERNO */
+		body {
+			background-color: #f1f5f9;
 		}
 
 		/* DOCUMENT CONTAINER NO MODO SALVO: CENTRALIZADO NA TELA COM ESPAÇAMENTO LATERAL INTERNO */
@@ -613,6 +972,11 @@ function abrirJanelaImpressaoHtml(partData) {
 			box-sizing: border-box;
 			min-width: 1250px;
 			position: relative;
+		}
+		.wrapper-parte {
+			width: 100%;
+			display: flex;
+			justify-content: center;
 		}
 		.document-container {
 			width: 210mm;
@@ -646,7 +1010,7 @@ function abrirJanelaImpressaoHtml(partData) {
 		}
 
 		/* BOTÃO DINÂMICO FLUTUANTE SEGUINDO O MOUSE PELO LADO DE FORA DA PÁGINA */
-		#btn-comentario-flutuante {
+		#btn-comentario-flutuante, .btn-comentario-flutuante {
 			position: absolute;
 			left: calc(100% + 10px); /* Encostado no lado de FORA da página */
 			top: 50px;
@@ -719,6 +1083,58 @@ function abrirJanelaImpressaoHtml(partData) {
 		}
 		.comment-box-aside.status-resolvido::before {
 			border-right-color: #10b981;
+		}
+		.comment-box-aside.card-desenho {
+			border-left-color: #dc2626;
+		}
+		.comment-box-aside.card-desenho::before {
+			border-right-color: #dc2626;
+		}
+
+		/* CAMADA DE RABISCOS VETORIAIS (SVG) */
+		.camada-rabiscos-svg {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			pointer-events: none;
+			z-index: 550;
+			overflow: visible;
+		}
+		.modo-caneta-ativo .camada-rabiscos-svg {
+			pointer-events: auto !important;
+			cursor: crosshair !important;
+		}
+		.modo-caneta-ativo #document-container {
+			user-select: none;
+			-webkit-user-select: none;
+		}
+		.traco-rabisco {
+			pointer-events: stroke;
+			cursor: pointer;
+			transition: stroke 0.15s, opacity 0.2s, filter 0.15s;
+		}
+		.traco-rabisco:hover {
+			stroke: #b91c1c !important;
+			filter: drop-shadow(0 0 5px rgba(220, 38, 38, 0.7));
+		}
+		.traco-rabisco.status-resolvido {
+			opacity: 0.45;
+			stroke-dasharray: 6 3;
+		}
+		path.pulse-target {
+			stroke: #f59e0b !important;
+			stroke-width: 9 !important;
+			filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8));
+			animation: pulseStrokeAnim 1.8s ease;
+		}
+		@keyframes pulseStrokeAnim {
+			0% { stroke: #dc2626; stroke-width: 6.67; }
+			30% { stroke: #f59e0b; stroke-width: 10; }
+			60% { stroke: #dc2626; stroke-width: 7; }
+			80% { stroke: #f59e0b; stroke-width: 9; }
+			100% { stroke: #dc2626; stroke-width: 6.67; }
 		}
 
 		/* Status badge dentro do comentário */
@@ -850,28 +1266,42 @@ function abrirJanelaImpressaoHtml(partData) {
 			overflow: hidden;
 			line-height: 1.35;
 		}
-		/* Botão na borda direita para reabrir painel quando recolhido */
+		.painel-acrobat-item.item-desenho {
+			border-left-color: #dc2626;
+		}
+		.painel-acrobat-item.item-desenho.resolvido {
+			border-left-color: #10b981;
+		}
+		.painel-acrobat-item.item-desenho .painel-acrobat-item-secao {
+			color: #dc2626;
+		}
+		body.modo-caneta-ativo .traco-rabisco {
+			cursor: crosshair !important;
+		}
+		/* Botão na borda direita para reabrir painel quando recolhido (centralizado verticalmente) */
 		#btn-abrir-painel-acrobat {
 			position: fixed;
 			right: 0;
-			top: 65px;
+			top: 50%;
+			transform: translateY(-50%);
 			background: #2563eb;
 			color: #ffffff;
 			border: none;
-			padding: 8px 12px 8px 10px;
+			padding: 10px 14px 10px 12px;
 			border-radius: 8px 0 0 8px;
-			box-shadow: -2px 2px 10px rgba(0, 0, 0, 0.15);
+			box-shadow: -2px 2px 12px rgba(0, 0, 0, 0.2);
 			font-size: 11pt;
 			font-weight: bold;
 			cursor: pointer;
-			z-index: 7999;
+			z-index: 8000;
 			display: flex;
 			align-items: center;
 			gap: 6px;
-			transition: background 0.15s;
+			transition: background 0.15s, transform 0.15s;
 		}
 		#btn-abrir-painel-acrobat:hover {
 			background: #1d4ed8;
+			transform: translateY(-50%) scale(1.04);
 		}
 
 		/* FILTROS DO PAINEL DE ANOTAÇÕES */
@@ -1012,28 +1442,30 @@ function abrirJanelaImpressaoHtml(partData) {
 			background: #eab308;
 			flex-shrink: 0;
 		}
-		/* Botão na borda esquerda para reabrir índice quando recolhido */
+		/* Botão na borda esquerda para reabrir índice quando recolhido (centralizado verticalmente) */
 		#btn-abrir-painel-indice {
 			position: fixed;
 			left: 0;
-			top: 65px;
+			top: 50%;
+			transform: translateY(-50%);
 			background: #334155;
 			color: #ffffff;
 			border: none;
-			padding: 8px 10px 8px 12px;
+			padding: 10px 12px 10px 14px;
 			border-radius: 0 8px 8px 0;
-			box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.15);
-			font-size: 10pt;
+			box-shadow: 2px 2px 12px rgba(0, 0, 0, 0.2);
+			font-size: 10.5pt;
 			font-weight: bold;
 			cursor: pointer;
-			z-index: 7999;
+			z-index: 8000;
 			display: flex;
 			align-items: center;
 			gap: 6px;
-			transition: background 0.15s;
+			transition: background 0.15s, transform 0.15s;
 		}
 		#btn-abrir-painel-indice:hover {
 			background: #1e293b;
+			transform: translateY(-50%) scale(1.04);
 		}
 		@keyframes pulseHighlight {
 			0% { background-color: #fef08a; }
@@ -1232,6 +1664,14 @@ function abrirJanelaImpressaoHtml(partData) {
 				min-width: 0 !important;
 				display: block !important;
 			}
+			.wrapper-parte {
+				display: block !important;
+				width: 100% !important;
+			}
+			#wrapper-parte-2 {
+				page-break-before: always !important;
+				break-before: page !important;
+			}
 			.document-container {
 				width: 100% !important;
 				min-width: 0 !important;
@@ -1245,19 +1685,30 @@ function abrirJanelaImpressaoHtml(partData) {
 				background-color: transparent !important;
 				outline: none !important;
 			}
-			.comment-box-aside, .btn-comment-trigger, #btn-comentario-flutuante, .painel-acrobat, #btn-abrir-painel-acrobat, .painel-indice, #btn-abrir-painel-indice {
+			.comment-box-aside, .btn-comment-trigger, .btn-comentario-flutuante, #btn-comentario-flutuante, .painel-acrobat, #btn-abrir-painel-acrobat, .painel-indice, #btn-abrir-painel-indice, #btn-toggle-caneta, .parte-tabs-container {
 				display: none !important;
+			}
+			.camada-rabiscos-svg {
+				display: block !important;
+				pointer-events: none !important;
 			}
 		}
 	</style>
 </head>
-<body class="modo-preview">
+<body class="modo-relatorio-preview">
 	<div class="toolbar-print no-print">
 		<div class="toolbar-print-left">
+			${isSplit ? `
+			<div class="parte-tabs-container">
+				<button type="button" id="btn-tab-parte-1" class="btn-parte-tab ativo" onclick="mudarParteAtiva(1)" title="Visualizar Relatório da Parte 1">PARTE 1</button>
+				<button type="button" id="btn-tab-parte-2" class="btn-parte-tab" onclick="mudarParteAtiva(2)" title="Visualizar Relatório da Parte 2">PARTE 2</button>
+			</div>
+			` : ''}
 			<span id="badge-contador-comentarios" class="badge-comentarios-top" onclick="alternarPainelAcrobat()" title="Clique para abrir/fechar o índice de anotações">💬 0 anotações</span>
+			<button id="btn-toggle-caneta" class="btn-caneta-top" type="button" onclick="alternarModoCaneta()" title="Ativar modo caneta para rabiscar livremente na página (Vermelho 5pt)">🖊️ Caneta</button>
 		</div>
 		<div class="toolbar-print-center" id="titulo-barra-relatorio">
-			PLANEJAMENTO${sufixoTitulo ? ` ${sufixoTitulo.trim()}` : ''} (com Comentador)
+			${parte1.tituloDocumento}
 		</div>
 		<div class="toolbar-print-right">
 			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório como arquivo HTML e faz o download automático do JSON do formulário">💾 Salvar HTML+JSON</button>
@@ -1266,301 +1717,28 @@ function abrirJanelaImpressaoHtml(partData) {
 	</div>
 
 	<div class="workspace-wrapper">
-		<div class="document-container" id="document-container">
-			<button id="btn-comentario-flutuante" class="no-print" type="button" title="Clique para adicionar comentário nesta altura">💬</button>
-			<div id="camada-comentarios" class="no-print"></div>
+		<div id="wrapper-parte-1" class="wrapper-parte">
+			<div class="document-container" id="document-container-1">
+				<button id="btn-comentario-flutuante-1" class="btn-comentario-flutuante no-print" type="button" title="Clique para adicionar comentário nesta altura">💬</button>
+				<div id="camada-comentarios-1" class="camada-comentarios no-print"></div>
+				<svg id="camada-rabiscos-1" class="camada-rabiscos-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+				${parte1.corpoDoc}
+			</div>
+		</div>
+		${isSplit ? `
+		<div id="wrapper-parte-2" class="wrapper-parte" style="display: none;">
+			<div class="document-container" id="document-container-2">
+				<button id="btn-comentario-flutuante-2" class="btn-comentario-flutuante no-print" type="button" title="Clique para adicionar comentário nesta altura">💬</button>
+				<div id="camada-comentarios-2" class="camada-comentarios no-print"></div>
+				<svg id="camada-rabiscos-2" class="camada-rabiscos-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+				${parte2.corpoDoc}
+			</div>
+		</div>
+		` : ''}
+	</div>
 `;
 
-	// 1. ÍNDICE RÁPIDO PARA APLICÁVEIS
-	if (dataAplicaveis && dataAplicaveis.length > 0) {
-		html += `
-		<div class="indice-rapido avoid-break">
-			<div style="font-weight: bold; font-size: 11pt; margin-bottom: 6px;">ÍNDICE RÁPIDO (P/ APLICÁVEIS):</div>
-		`;
-		dataAplicaveis.forEach((veiculo, index) => {
-			const refText = veiculo.dadosGerais.veiculo || 'Sem referência';
-			html += `<a href="#veiculo-aplicavel-${index + 1}">Veículo Aplicável #${index + 1} - ${refText}</a>`;
-		});
-		html += `</div><hr class="separator" style="margin-top: 25px; margin-bottom: 30px;">`;
-	}
-
-	// 2. TÍTULO PRINCIPAL
 	html += `
-		<div class="doc-title" style="margin-top: 15px;">PLANEJAMENTO - VEÍCULO PRINCIPAL${sufixoTitulo}</div>
-		${dataPrincipal.clickup ? `<div class="clickup-link">${dataPrincipal.clickup}</div>` : ''}
-	`;
-
-	// 3. INFORMAÇÕES GERAIS (VEÍCULO PRINCIPAL)
-	if (incluirInfoGerais) {
-		html += `
-		<div id="secao-info-gerais-principal" class="section-header">INFORMAÇÕES GERAIS</div>
-		<div class="info-row"><span class="info-label">PLANEJADO POR:</span> <span class="info-val">${dataPrincipal.planejado_por || 'N/A'}</span></div>
-		<div class="sub-header">- VEÍCULO REFERÊNCIA:</div>
-		<div style="font-style: italic; font-size: 10pt; margin-left: 12px; margin-bottom: 6px;">${dataPrincipal.veiculo || 'N/A'}</div>
-		<div class="info-row"><span class="info-label">ID DIAGRAMAS:</span> <span class="info-val">${dataPrincipal.iddiagramas || 'N/A'}</span></div>
-		<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dataPrincipal.idfusiveis || 'N/A'}</span></div>
-
-		<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-		<div class="path-text" data-caminho="${dataPrincipal.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dataPrincipal.pasta || 'N/A'}</div>
-
-		<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
-		${desconverterHtmlParaRelatorio(dataPrincipal.comentarios)}
-
-		<div class="info-row" style="margin-top: 10px;"><span class="info-label">ASSOCIAÇÃO / CHASSI:</span> <span class="info-val">${dataPrincipal.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dataPrincipal.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A')}</span></div>
-		${dataPrincipal.aplicacao_chassi_texto ? `<div class="chassi-texto-bloco" style="margin-left: 12px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.45;">${dataPrincipal.aplicacao_chassi_texto}</div>` : ''}
-
-		<div class="sub-header">- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:</div>
-		${desconverterHtmlParaRelatorio(dataPrincipal.ilustracao_texto || 'Nenhum pedido.')}
-
-		<div class="info-row" style="margin-top: 10px;"><span class="info-label">PESQUISA:</span> <span class="info-val">${dataPrincipal.pesquisa === 'sim' ? 'Sim' : 'Não'}</span></div>
-		${dataPrincipal.pesquisa === 'sim' && dataPrincipal.pesquisa_texto ? desconverterHtmlParaRelatorio(dataPrincipal.pesquisa_texto) : ''}
-		`;
-	}
-
-	// 4. SISTEMAS (CAPÍTULOS) DO VEÍCULO PRINCIPAL (GRIFADO EM VERDE #d4ffd6)
-	html += `<div class="section-header" style="margin-top: 25px;">SISTEMAS</div>`;
-
-	if (dataPrincipal.sistemas && dataPrincipal.sistemas.length > 0) {
-		dataPrincipal.sistemas.forEach((sistema, idx) => {
-			let tituloCapitulo = (sistema.sistema || '').toUpperCase();
-			if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
-				const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
-				tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
-			} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
-				tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
-			}
-
-			let linhaTransferencia = '';
-			if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
-			else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
-			else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
-
-			const sysUpper = (sistema.sistema || '').toUpperCase();
-			const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
-			const isPaginasFixas = [
-				"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
-				"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
-				"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
-				"CAIXA DE FUSÍVEIS DA BATERIA"
-			].includes(sysUpper);
-			const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
-
-			html += `
-			<div class="avoid-break" style="margin-top: 15px;">
-				<div id="cap-principal-${idx + 1}" class="highlight-tag">${tituloCapitulo}</div>
-				${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
-				<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
-				${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
-			`;
-
-			if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
-				html += `
-				<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
-				<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
-				<div class="sub-header">- Códigos de Conectores:</div>
-				<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
-				<div class="sub-header">- Código de Peça / Link:</div>
-				${desconverterHtmlParaRelatorio(sistema.codmodulo)}
-				`;
-			}
-
-			html += `<div class="sub-header" style="font-size: 11pt; color: #333; margin-top: 10px;">DESENVOLVIMENTO:</div>`;
-
-			if (isCaixasForm) {
-				if (sistema.caixas && sistema.caixas.length > 0) {
-					sistema.caixas.forEach((caixa, cIdx) => {
-						html += `<div style="font-weight: bold; margin-top: 8px;">- Caixa ${cIdx + 1}: ${caixa.nome || 'Sem nome'}</div>`;
-						html += desconverterHtmlParaRelatorio(caixa.descricoes);
-					});
-				} else {
-					html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma caixa adicionada.</p>`;
-				}
-			} else if (isPaginasFixas || !isModuloDedicado) {
-				if (sistema.paginas && sistema.paginas.length > 0) {
-					sistema.paginas.forEach((pagina, pIdx) => {
-						html += `<div style="font-weight: bold; margin-top: 8px;">- Página ${pIdx + 1}:</div>`;
-						html += desconverterHtmlParaRelatorio(pagina.conteudo);
-					});
-				} else {
-					html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
-				}
-			} else {
-				html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Localização:</div>`;
-				html += desconverterHtmlParaRelatorio(sistema.pagloc);
-				html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Conectores:</div>`;
-				html += desconverterHtmlParaRelatorio(sistema.pagcon);
-				html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Diagramas:</div>`;
-				html += desconverterHtmlParaRelatorio(sistema.pagdiag);
-			}
-
-			html += `</div>`;
-		});
-	} else {
-		html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhum sistema adicionado (nesta parte).</p>`;
-	}
-
-	// 5. VEÍCULOS APLICÁVEIS (GRIFADO EM AMARELO #fae743 E ESTRUTURA COMPLETA DO SCRIPT4)
-	if (dataAplicaveis && dataAplicaveis.length > 0) {
-		html += `
-		<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">
-		<div class="doc-title" style="margin-top: 20px; margin-bottom: 25px;">PLANEJAMENTO - VEÍCULOS APLICÁVEIS</div>
-		`;
-		
-		dataAplicaveis.forEach((veiculo, vIndex) => {
-			const dadosGerais = veiculo.dadosGerais || {};
-			html += `
-			<div class="avoid-break" style="margin-top: 25px;">
-				<div id="veiculo-aplicavel-${vIndex + 1}" class="section-header" style="font-size: 16pt; color: #4472c4; margin-bottom: 12px;">VEÍCULO APLICÁVEL #${vIndex + 1}</div>
-				
-				<div class="sub-header">- VEÍCULO REFERÊNCIA:</div>
-				<div style="font-style: italic; margin-left: 12px; margin-bottom: 8px;">${dadosGerais.veiculo || 'N/A'}</div>
-				
-				<div class="info-row"><span class="info-label">ID DIAGRAMAS:</span> <span class="info-val">${dadosGerais.iddiagramas || 'N/A'}</span></div>
-				<div class="info-row"><span class="info-label">ID FUSÍVEIS:</span> <span class="info-val">${dadosGerais.idfusiveis || 'N/A'}</span></div>
-				
-				<div class="sub-header" style="margin-top: 10px;">- PASTA DO VEÍCULO:</div>
-				<div class="path-text" data-caminho="${dadosGerais.pasta || ''}" onclick="copiarCaminho(this, event)" title="Clique para copiar o endereço da pasta">${dadosGerais.pasta || 'N/A'}</div>
-				
-				<div class="sub-header">- IMPORTANTE PARA O DESENVOLVIMENTO:</div>
-				${desconverterHtmlParaRelatorio(dadosGerais.comentarios)}
-				
-				<div class="info-row" style="margin-top: 10px;"><span class="info-label">ASSOCIAÇÃO / CHASSI:</span> <span class="info-val">${dadosGerais.aplicacao_chassi === 'mesma' ? 'Mesma associação' : (dadosGerais.aplicacao_chassi === 'ajustar' ? 'Ajustar/Criar associação' : 'N/A')}</span></div>
-				${dadosGerais.aplicacao_chassi_texto ? `<div class="chassi-texto-bloco" style="margin-left: 12px; margin-bottom: 8px; white-space: pre-wrap; word-break: break-word; font-family: inherit; line-height: 1.45;">${dadosGerais.aplicacao_chassi_texto}</div>` : ''}
-				
-				<div class="sub-header">- PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM:</div>
-				${desconverterHtmlParaRelatorio(dadosGerais.ilustracao_texto || 'Nenhum pedido.')}
-				
-				<div class="info-row" style="margin-top: 10px;"><span class="info-label">PESQUISA:</span> <span class="info-val">${dadosGerais.pesquisa === 'sim' ? 'Sim' : 'Não'}</span></div>
-				${dadosGerais.pesquisa === 'sim' && dadosGerais.pesquisa_texto ? desconverterHtmlParaRelatorio(dadosGerais.pesquisa_texto) : ''}
-				
-				<div class="section-header" style="font-size: 14pt; margin-top: 20px;">SISTEMAS</div>
-			`;
-
-			if (veiculo.sistemas && veiculo.sistemas.length > 0) {
-				veiculo.sistemas.forEach((sistema, idx) => {
-					let tituloCapitulo = (sistema.sistema || '').toUpperCase();
-					if (tituloCapitulo === 'FUSÍVEIS E RELÉS') {
-						const tipo = (sistema.tipo_fusiveis || 'Simplificado').toUpperCase();
-						tituloCapitulo = `FUSÍVEIS E RELÉS (${tipo})`;
-					} else if (tituloCapitulo === 'OUTRO' && !sistema.sistema) {
-						tituloCapitulo = 'OUTRO (NÃO ESPECIFICADO)';
-					}
-
-					// Regras de transferência específicas dos aplicáveis (script4.js)
-					let linhaTransferencia = '';
-					if (sistema.transferencia === 'transferencia_principal') {
-						const idPrincipal = (sistema.sistema === 'Fusíveis e Relés')
-							? dataPrincipal.idfusiveis
-							: dataPrincipal.iddiagramas;
-						linhaTransferencia = `Transferência (do Principal) - ID: ${idPrincipal || 'N/A'}`;
-					} else if (sistema.transferencia === 'transferencia_outro') {
-						linhaTransferencia = `Transferência (Outro) - ID: ${sistema.idtransf || 'N/A'}`;
-					} else if (sistema.transferencia === 'modificar') {
-						linhaTransferencia = `- Modificar Publicado`;
-					}
-
-					const sysUpper = (sistema.sistema || '').toUpperCase();
-					const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
-					const isPaginasFixas = [
-						"ALIMENTAÇÃO POSITIVA", "CONECTORES DE PEITO", "CARGA E PARTIDA", 
-						"SISTEMA DE CARGA E PARTIDA", "CAIXA DE FUSÍVEIS DO INTERIOR", 
-						"CAIXA DE FUSÍVEIS DO MOTOR", "CAIXA DE FUSÍVEIS DO PORTA-MALAS", 
-						"CAIXA DE FUSÍVEIS DA BATERIA"
-					].includes(sysUpper);
-					const isModuloDedicado = String(sistema.modulo_dedicado).toLowerCase() === 'sim';
-
-					html += `
-					<div class="avoid-break" style="margin-top: 15px;">
-						<!-- TÍTULO GRIFADO EM AMARELO #fae743 EXCLUSIVO DOS APLICÁVEIS -->
-						<div id="cap-aplicavel-${vIndex + 1}-${idx + 1}" class="highlight-tag-yellow">${tituloCapitulo}</div>
-						${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
-						<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
-						${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
-					`;
-
-					if (!isCaixasForm && !isPaginasFixas && isModuloDedicado) {
-						html += `
-						<div class="info-row"><span class="info-label">Módulo principal:</span> <span class="info-val">${sistema.modulo || ''}</span></div>
-						<div class="info-row"><span class="info-label">Nome no material:</span> <span class="info-val">${sistema.nomematerial || ''}</span></div>
-						<div class="sub-header">- Códigos de Conectores:</div>
-						<div style="margin-left: 12px; margin-bottom: 6px; white-space: pre-wrap; word-break: break-word;">${sistema.codconectores || 'N/A'}</div>
-						<div class="sub-header">- Código de Peça / Link:</div>
-						${desconverterHtmlParaRelatorio(sistema.codmodulo)}
-						`;
-					}
-
-					html += `<div class="sub-header" style="font-size: 11pt; color: #333; margin-top: 10px;">DESENVOLVIMENTO:</div>`;
-
-					if (isCaixasForm) {
-						if (sistema.caixas && sistema.caixas.length > 0) {
-							sistema.caixas.forEach((caixa, cIdx) => {
-								html += `<div style="font-weight: bold; margin-top: 8px;">- Caixa ${cIdx + 1}: ${caixa.nome || 'Sem nome'}</div>`;
-								html += desconverterHtmlParaRelatorio(caixa.descricoes);
-							});
-						} else {
-							html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma caixa adicionada.</p>`;
-						}
-					} else if (isPaginasFixas || !isModuloDedicado) {
-						if (sistema.paginas && sistema.paginas.length > 0) {
-							sistema.paginas.forEach((pagina, pIdx) => {
-								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
-								html += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
-								html += desconverterHtmlParaRelatorio(pagina.conteudo);
-							});
-						} else {
-							html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
-						}
-					} else {
-						html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Localização:</div>`;
-						html += desconverterHtmlParaRelatorio(sistema.pagloc);
-						html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Conectores:</div>`;
-						html += desconverterHtmlParaRelatorio(sistema.pagcon);
-						html += `<div style="font-weight: bold; margin-top: 6px;">- Página de Diagramas:</div>`;
-						html += desconverterHtmlParaRelatorio(sistema.pagdiag);
-					}
-
-					html += `</div>`; // fim avoid-break capítulo
-				});
-			} else {
-				html += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhum sistema adicionado.</p>`;
-			}
-
-			html += `</div>`; // fim avoid-break veículo
-			if (vIndex < dataAplicaveis.length - 1) {
-				html += `<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">`;
-			}
-		});
-	}
-
-	// 6. DADOS DO CARD
-	html += `
-	<hr class="separator" style="margin-top: 35px; margin-bottom: 30px;">
-	<div class="avoid-break" style="margin-top: 20px;">
-		<div id="secao-dados-card" class="section-header">DADOS DO CARD</div>
-		${(dataAplicaveis && dataAplicaveis.length > 0) ? `<div class="highlight-tag">VEÍCULO PRINCIPAL</div>` : ''}
-		<table class="card-data-table">
-			<tr><td style="font-weight: bold; width: 180px;">DIFICULDADE:</td><td>${dificuldadeExibir || 'Não informada'}</td></tr>
-			<tr><td style="font-weight: bold;">PPP (Total):</td><td>${somaTotal} | Criadas: ${somaCriadas} | Transferidas: ${somaTransferidas} | Modificadas: ${somaModificadas}</td></tr>
-			<tr><td style="font-weight: bold;">ESTIMATIVA DE TEMPO:</td><td>${estimativaPrincipal} horas</td></tr>
-		</table>
-	`;
-
-	if (dataAplicaveis && dataAplicaveis.length > 0) {
-		html += `
-		<div class="highlight-tag-yellow" style="margin-top: 15px;">VEÍCULOS APLICÁVEIS</div>
-		<table class="card-data-table">
-			<tr><td style="font-weight: bold; width: 180px;">DIFICULDADE (Aplicáveis):</td><td>${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}</td></tr>
-			<tr><td style="font-weight: bold;">PPA (Total):</td><td>${somaTotalAplicaveis} | Criadas: ${somaCriadasAplicaveis} | Transferidas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}</td></tr>
-			<tr><td style="font-weight: bold;">ESTIMATIVA DE TEMPO:</td><td>${estimativaAplicaveis} horas</td></tr>
-		</table>
-		`;
-	}
-
-	html += `
-		</div> <!-- fim avoid-break -->
-	</div> <!-- fim document-container -->
-</div> <!-- fim workspace-wrapper -->
-
 	<!-- PAINEL LATERAL DE ÍNDICE NA ESQUERDA -->
 	<button id="btn-abrir-painel-indice" class="no-print" onclick="alternarPainelIndice()" title="Abrir Índice do Planejamento">📑 Índice</button>
 	<div id="painel-indice" class="painel-indice no-print recolhido">
@@ -1574,9 +1752,14 @@ function abrirJanelaImpressaoHtml(partData) {
 			</div>
 			<button class="painel-acrobat-toggle-btn" onclick="alternarPainelIndice()" title="Recolher índice">✕</button>
 		</div>
-		<div class="painel-indice-lista">
-			${htmlIndiceLista}
+		<div id="painel-indice-lista-1" class="painel-indice-lista">
+			${parte1.htmlIndiceLista}
 		</div>
+		${isSplit ? `
+		<div id="painel-indice-lista-2" class="painel-indice-lista" style="display: none;">
+			${parte2.htmlIndiceLista}
+		</div>
+		` : ''}
 	</div>
 
 	<!-- PAINEL DE COMENTÁRIOS ESTILO ACROBAT NA DIREITA -->
@@ -1608,12 +1791,98 @@ function abrirJanelaImpressaoHtml(partData) {
 	</div>
 
 	<script id="dados-formulario-planejamento" type="application/json">
-${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicaveis: dataAplicaveis }).replace(/<\/script/gi, '<\\/script')}
+${JSON.stringify(dadosFormularioCompleto || {}).replace(/<\/script/gi, '<\\/script')}
+	</script>
+	<script id="dados-partes-planejamento" type="application/json">
+${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 	</script>
 
 	<script>
+		const isSplitModo = ${isSplit ? 'true' : 'false'};
+		const tituloParte1 = ${JSON.stringify(parte1.tituloDocumento)};
+		const tituloParte2 = ${isSplit ? JSON.stringify(parte2.tituloDocumento) : '""'};
+		function detectarParteAtivaInicial() {
+			if (document.body && document.body.getAttribute('data-parte-salva')) {
+				return parseInt(document.body.getAttribute('data-parte-salva'), 10);
+			}
+			if (!document.getElementById('wrapper-parte-1') && document.getElementById('wrapper-parte-2')) {
+				return 2;
+			}
+			return 1;
+		}
+		let parteAtiva = detectarParteAtivaInicial();
+
 		let comentariosArmazenados = {};
 		const chaveArmazenamentoLocal = 'planejamento_cmt_' + encodeURIComponent((document.title || 'padrao').trim());
+
+		function mudarParteAtiva(num) {
+			if (!isSplitModo) return;
+			if (cardEmEdicaoId) {
+				salvarComentario(cardEmEdicaoId, true);
+			}
+			parteAtiva = num;
+			const tab1 = document.getElementById('btn-tab-parte-1');
+			const tab2 = document.getElementById('btn-tab-parte-2');
+			const wrap1 = document.getElementById('wrapper-parte-1');
+			const wrap2 = document.getElementById('wrapper-parte-2');
+			const ind1 = document.getElementById('painel-indice-lista-1');
+			const ind2 = document.getElementById('painel-indice-lista-2');
+			const tituloBarra = document.getElementById('titulo-barra-relatorio');
+
+			const isPreview = document.body.classList.contains('modo-relatorio-preview');
+			const sufixo = isPreview ? '' : ' (com Comentador)';
+
+			if (num === 1) {
+				if (tab1) tab1.classList.add('ativo');
+				if (tab2) tab2.classList.remove('ativo');
+				if (wrap1) wrap1.style.display = 'flex';
+				if (wrap2) wrap2.style.display = 'none';
+				if (ind1) ind1.style.display = 'block';
+				if (ind2) ind2.style.display = 'none';
+				if (tituloBarra) tituloBarra.textContent = tituloParte1 + sufixo;
+				document.title = tituloParte1;
+			} else {
+				if (tab2) tab2.classList.add('ativo');
+				if (tab1) tab1.classList.remove('ativo');
+				if (wrap2) wrap2.style.display = 'flex';
+				if (wrap1) wrap1.style.display = 'none';
+				if (ind2) ind2.style.display = 'block';
+				if (ind1) ind1.style.display = 'none';
+				if (tituloBarra) tituloBarra.textContent = tituloParte2 + sufixo;
+				document.title = tituloParte2;
+			}
+			atualizarContadorComentarios();
+			renderizarPainelAcrobat();
+			ajustarPosicoesComentarios();
+		}
+
+		function obterDocAtivo() {
+			return document.getElementById('document-container-' + parteAtiva) || 
+			       document.getElementById('document-container-1') || 
+			       document.getElementById('document-container-2') || 
+			       document.getElementById('document-container');
+		}
+
+		function obterSvgAtivo() {
+			return document.getElementById('camada-rabiscos-' + parteAtiva) || 
+			       document.getElementById('camada-rabiscos-1') || 
+			       document.getElementById('camada-rabiscos-2') || 
+			       document.getElementById('camada-rabiscos');
+		}
+
+		function obterCamadaComentariosAtiva() {
+			return document.getElementById('camada-comentarios-' + parteAtiva) || 
+			       document.getElementById('camada-comentarios-1') || 
+			       document.getElementById('camada-comentarios-2') || 
+			       document.getElementById('camada-comentarios');
+		}
+
+		function obterBtnFlutuanteAtivo() {
+			return document.getElementById('btn-comentario-flutuante-' + parteAtiva) || 
+			       document.getElementById('btn-comentario-flutuante-1') || 
+			       document.getElementById('btn-comentario-flutuante-2') || 
+			       document.getElementById('btn-comentario-flutuante');
+		}
 
 		function salvarJSONPlanejamento() {
 			const scriptEl = document.getElementById('dados-formulario-planejamento');
@@ -1647,18 +1916,148 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			}
 		}
 
+		function salvarArquivoHTMLIntegrado() {
+			const docClone = document.documentElement.cloneNode(true);
+			const cloneBody = docClone.querySelector('body');
+			if (cloneBody) {
+				// No arquivo baixado, o modo-relatorio-preview é removido para que Caneta, Anotações e Comentários fiquem 100% ativos!
+				cloneBody.classList.remove('modo-relatorio-preview', 'modo-preview', 'modo-caneta-ativo');
+			}
+
+			// Reseta botão de caneta no clone
+			const btnCanetaClone = docClone.querySelector('#btn-toggle-caneta');
+			if (btnCanetaClone) {
+				btnCanetaClone.classList.remove('ativo');
+				btnCanetaClone.innerHTML = '🖊️ Caneta';
+			}
+
+			// Garante que os painéis iniciem recolhidos e com os botões visíveis
+			const painelClone = docClone.querySelector('#painel-acrobat');
+			if (painelClone) painelClone.classList.add('recolhido');
+			const btnAbrirClone = docClone.querySelector('#btn-abrir-painel-acrobat');
+			if (btnAbrirClone) btnAbrirClone.style.display = 'flex';
+			const painelIndiceClone = docClone.querySelector('#painel-indice');
+			if (painelIndiceClone) painelIndiceClone.classList.add('recolhido');
+			const btnAbrirIndiceClone = docClone.querySelector('#btn-abrir-painel-indice');
+			if (btnAbrirIndiceClone) btnAbrirIndiceClone.style.display = 'flex';
+
+			// No arquivo integrado salvo: se houver 2 partes, ambas são mantidas intactas com seus botões de alternância!
+			if (isSplitModo) {
+				const w1 = docClone.querySelector('#wrapper-parte-1');
+				if (w1) w1.style.display = 'flex';
+				const w2 = docClone.querySelector('#wrapper-parte-2');
+				if (w2) w2.style.display = 'none';
+				const tab1 = docClone.querySelector('#btn-tab-parte-1');
+				if (tab1) tab1.classList.add('ativo');
+				const tab2 = docClone.querySelector('#btn-tab-parte-2');
+				if (tab2) tab2.classList.remove('ativo');
+				const ind1 = docClone.querySelector('#painel-indice-lista-1');
+				if (ind1) ind1.style.display = 'block';
+				const ind2 = docClone.querySelector('#painel-indice-lista-2');
+				if (ind2) ind2.style.display = 'none';
+			}
+
+			// Obtém nome padronizado do veículo para download
+			let nomeVeiculo = 'Planejamento';
+			const scriptDadosEl = document.getElementById('dados-formulario-planejamento');
+			if (scriptDadosEl) {
+				try {
+					const data = JSON.parse(scriptDadosEl.textContent.trim());
+					if (data.principal && data.principal.veiculo) {
+						if (data.principal.veiculo.includes('>')) {
+							const partes = data.principal.veiculo.split('>');
+							if (partes.length >= 5) {
+								const ano = partes[1].trim();
+								const modelo = partes[3].trim();
+								const motor = partes[4].trim();
+								nomeVeiculo = \`Planejamento - \${ano} \${modelo} \${motor}\`;
+							}
+						} else {
+							nomeVeiculo = \`Planejamento - \${data.principal.veiculo}\`;
+						}
+					}
+				} catch(e) {}
+			}
+			const nomeLimpo = (nomeVeiculo || 'Planejamento').replace(/[\\\\/:*?\"<>|]/g, '').trim();
+
+			const docTitleClone = docClone.querySelector('title');
+			if (docTitleClone) docTitleClone.textContent = nomeLimpo;
+			const tituloBarra = docClone.querySelector('#titulo-barra-relatorio');
+			if (tituloBarra) tituloBarra.textContent = (isSplitModo ? tituloParte1 : nomeLimpo) + ' (com Comentador)';
+
+			// Embute todos os comentários no JSON embutido
+			let scriptJson = docClone.querySelector('#dados-comentarios-salvos');
+			if (!scriptJson) {
+				scriptJson = document.createElement('script');
+				scriptJson.id = 'dados-comentarios-salvos';
+				scriptJson.type = 'application/json';
+				cloneBody.appendChild(scriptJson);
+			}
+			scriptJson.textContent = JSON.stringify(comentariosArmazenados || {});
+
+			// Limpa camada de comentários dinâmicos para ser reconstruída fresquinha no carregamento
+			docClone.querySelectorAll('.camada-comentarios').forEach(c => c.innerHTML = '');
+			docClone.querySelectorAll('.btn-comment-trigger').forEach(b => b.remove());
+			docClone.querySelectorAll('.commentable-row').forEach(r => {
+				r.classList.remove('commentable-row', 'focused-target');
+				const tid = r.id;
+				if (!comentariosArmazenados[tid]) {
+					r.classList.remove('has-comment');
+				}
+			});
+
+			const htmlContent = '<!DOCTYPE html>\\n' + docClone.outerHTML;
+			const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement('a');
+			a.href = url;
+			a.download = nomeLimpo + '.html';
+			document.body.appendChild(a);
+			a.click();
+			document.body.removeChild(a);
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
+		}
+
 		function salvarComoHTMLEJson() {
-			salvarComoArquivoHTML();
+			salvarArquivoHTMLIntegrado();
 			setTimeout(() => {
 				salvarJSONPlanejamento();
-			}, 300);
+			}, 400);
 		}
 
 		function salvarPDFEJson() {
 			salvarJSONPlanejamento();
 			setTimeout(() => {
-				window.print();
-			}, 300);
+				const scriptPartesEl = document.getElementById('dados-partes-planejamento');
+				let partesConfig = [];
+				if (scriptPartesEl) {
+					try {
+						partesConfig = JSON.parse(scriptPartesEl.textContent.trim());
+					} catch(e) {}
+				}
+				const scriptDadosEl = document.getElementById('dados-formulario-planejamento');
+				let dadosForm = {};
+				if (scriptDadosEl) {
+					try {
+						dadosForm = JSON.parse(scriptDadosEl.textContent.trim());
+					} catch(e) {}
+				}
+
+				if (window.opener && typeof window.opener.gerarPDFDocumento === 'function') {
+					if (partesConfig.length > 1) {
+						window.opener.gerarPDFDocumento(partesConfig[0], false, dadosForm);
+						setTimeout(() => {
+							window.opener.gerarPDFDocumento(partesConfig[1], true, dadosForm);
+						}, 600);
+					} else if (partesConfig.length === 1) {
+						window.opener.gerarPDFDocumento(partesConfig[0], true, dadosForm);
+					} else {
+						window.print();
+					}
+				} else {
+					window.print();
+				}
+			}, 350);
 		}
 
 		function formatarDataHora() {
@@ -1682,16 +2081,175 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 
 		let alturaMouseAtual = 60;
 		let cardEmEdicaoId = null;
+		let modoCanetaAtivo = false;
+		let desenhandoAtual = false;
+		let pontosAtuais = [];
+		let caminhoAtualEl = null;
+
+		function alternarModoCaneta() {
+			modoCanetaAtivo = !modoCanetaAtivo;
+			const btn = document.getElementById('btn-toggle-caneta');
+			const btnFlutuante = obterBtnFlutuanteAtivo();
+			if (modoCanetaAtivo) {
+				document.body.classList.add('modo-caneta-ativo');
+				if (btn) {
+					btn.classList.add('ativo');
+					btn.innerHTML = '🖊️ Caneta (Ativa)';
+				}
+				if (btnFlutuante) btnFlutuante.classList.remove('ativo');
+			} else {
+				document.body.classList.remove('modo-caneta-ativo');
+				if (btn) {
+					btn.classList.remove('ativo');
+					btn.innerHTML = '🖊️ Caneta';
+				}
+			}
+		}
+
+		function obterCoordenadasSVG(e) {
+			const svgEl = (caminhoAtualEl && caminhoAtualEl.ownerSVGElement) || 
+			              (e && e.currentTarget && e.currentTarget.tagName && e.currentTarget.tagName.toLowerCase() === 'svg' ? e.currentTarget : obterSvgAtivo());
+			if (!svgEl) return { x: 0, y: 0 };
+			const rect = svgEl.getBoundingClientRect();
+			const clientX = (e.touches && e.touches.length > 0) ? e.touches[0].clientX : e.clientX;
+			const clientY = (e.touches && e.touches.length > 0) ? e.touches[0].clientY : e.clientY;
+			return {
+				x: Math.round(clientX - rect.left),
+				y: Math.round(clientY - rect.top)
+			};
+		}
+
+		function iniciarDesenho(e) {
+			if (!modoCanetaAtivo) return;
+			if (e.target && e.target.closest && (e.target.closest('#btn-toggle-caneta') || e.target.closest('.toolbar-print') || e.target.closest('.painel-acrobat') || e.target.closest('.painel-indice'))) return;
+
+			let svgEl = (e.currentTarget && e.currentTarget.tagName && e.currentTarget.tagName.toLowerCase() === 'svg') ? e.currentTarget : obterSvgAtivo();
+			if (!svgEl) return;
+
+			desenhandoAtual = true;
+			const coords = obterCoordenadasSVG(e);
+			pontosAtuais = [coords];
+
+			const rabiscoId = 'rabisco-p' + parteAtiva + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+			caminhoAtualEl = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+			caminhoAtualEl.setAttribute('id', rabiscoId);
+			caminhoAtualEl.setAttribute('class', 'traco-rabisco');
+			caminhoAtualEl.setAttribute('stroke', '#dc2626');
+			caminhoAtualEl.setAttribute('stroke-width', '6.67');
+			caminhoAtualEl.setAttribute('stroke-linecap', 'round');
+			caminhoAtualEl.setAttribute('stroke-linejoin', 'round');
+			caminhoAtualEl.setAttribute('fill', 'none');
+			caminhoAtualEl.setAttribute('d', \`M \${coords.x} \${coords.y} L \${coords.x + 0.1} \${coords.y + 0.1}\`);
+			caminhoAtualEl.onclick = function(ev) {
+				ev.stopPropagation();
+				irParaComentario(rabiscoId);
+			};
+
+			svgEl.appendChild(caminhoAtualEl);
+			if (e.type === 'touchstart' && e.preventDefault) e.preventDefault();
+		}
+
+		function desenhar(e) {
+			if (!desenhandoAtual || !caminhoAtualEl) return;
+			if (e.type === 'touchmove' && e.preventDefault) e.preventDefault();
+
+			const coords = obterCoordenadasSVG(e);
+			pontosAtuais.push(coords);
+
+			let d = \`M \${pontosAtuais[0].x} \${pontosAtuais[0].y}\`;
+			for (let i = 1; i < pontosAtuais.length; i++) {
+				d += \` L \${pontosAtuais[i].x} \${pontosAtuais[i].y}\`;
+			}
+			caminhoAtualEl.setAttribute('d', d);
+		}
+
+		function finalizarDesenho(e) {
+			if (!desenhandoAtual || !caminhoAtualEl) return;
+			desenhandoAtual = false;
+
+			const rabiscoId = caminhoAtualEl.id;
+			const svgEl = (caminhoAtualEl && caminhoAtualEl.ownerSVGElement) || obterSvgAtivo();
+			const svgRect = svgEl ? svgEl.getBoundingClientRect() : { top: 0 };
+			const pathRect = caminhoAtualEl.getBoundingClientRect();
+			const boundingTop = Math.max(0, Math.round(pathRect.top - svgRect.top));
+			const dStr = caminhoAtualEl.getAttribute('d');
+
+			comentariosArmazenados[rabiscoId] = {
+				tipo: 'desenho',
+				parte: parteAtiva,
+				pathId: rabiscoId,
+				d: dStr,
+				boundingTop: boundingTop,
+				autor: obterAutorSalvo() || 'Desenvolvedor',
+				data: formatarDataHora(),
+				texto: '',
+				status: 'pendente'
+			};
+
+			try {
+				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
+			} catch(err) {}
+
+			atualizarContadorComentarios();
+			renderizarPainelAcrobat();
+
+			// Delay pequeno para não conflitar com click de encerramento do mouse
+			setTimeout(() => {
+				iniciarEdicaoComentario(rabiscoId, null);
+			}, 120);
+
+			pontosAtuais = [];
+			caminhoAtualEl = null;
+		}
+
+		function iniciarCamadaRabiscos() {
+			['camada-rabiscos-1', 'camada-rabiscos-2', 'camada-rabiscos'].forEach(svgId => {
+				const svgEl = document.getElementById(svgId);
+				if (!svgEl) return;
+
+				svgEl.addEventListener('mousedown', (e) => {
+					if (!modoCanetaAtivo) return;
+					iniciarDesenho(e);
+				});
+
+				svgEl.addEventListener('touchstart', (e) => {
+					if (!modoCanetaAtivo) return;
+					iniciarDesenho(e);
+				}, { passive: false });
+			});
+
+			window.addEventListener('mousemove', (e) => {
+				if (!desenhandoAtual) return;
+				desenhar(e);
+			});
+
+			window.addEventListener('mouseup', (e) => {
+				if (!desenhandoAtual) return;
+				finalizarDesenho(e);
+			});
+
+			window.addEventListener('touchmove', (e) => {
+				if (!desenhandoAtual) return;
+				desenhar(e);
+			}, { passive: false });
+
+			window.addEventListener('touchend', (e) => {
+				if (!desenhandoAtual) return;
+				finalizarDesenho(e);
+			});
+		}
 
 		function iniciarSeguidorMouse() {
-			const docEl = document.getElementById('document-container');
-			const btnFlutuante = document.getElementById('btn-comentario-flutuante');
-			if (!docEl || !btnFlutuante) return;
-
 			document.addEventListener('mousemove', (e) => {
-				if (document.body.classList.contains('modo-preview')) return;
+				const btnFlutuante = obterBtnFlutuanteAtivo();
+				if (modoCanetaAtivo) {
+					if (btnFlutuante) btnFlutuante.classList.remove('ativo');
+					return;
+				}
+				const docEl = obterDocAtivo();
+				if (!docEl || !btnFlutuante) return;
+
 				const rect = docEl.getBoundingClientRect();
-				// Se o mouse estiver sobre o documento ou próximo da borda direita
 				if (e.clientX >= rect.left - 40 && e.clientX <= rect.right + 120) {
 					const y = e.clientY - rect.top;
 					if (y >= 10 && y <= docEl.offsetHeight - 20) {
@@ -1704,15 +2262,20 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				}
 			});
 
-			btnFlutuante.onclick = function(e) {
-				e.stopPropagation();
-				e.preventDefault();
-				abrirComentarioNaAltura(alturaMouseAtual);
-			};
+			[1, 2].forEach(pNum => {
+				const btnFlutuante = document.getElementById('btn-comentario-flutuante-' + pNum);
+				if (btnFlutuante) {
+					btnFlutuante.onclick = function(e) {
+						e.stopPropagation();
+						e.preventDefault();
+						abrirComentarioNaAltura(alturaMouseAtual);
+					};
+				}
+			});
 		}
 
 		function obterElementoMaisProximo(y) {
-			const docEl = document.getElementById('document-container');
+			const docEl = obterDocAtivo();
 			if (!docEl) return null;
 			const docRect = docEl.getBoundingClientRect();
 
@@ -1730,7 +2293,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				'.chassi-texto-bloco',
 				'.card-data-table tr'
 			];
-			const elementos = document.querySelectorAll(seletores.join(', '));
+			const elementos = docEl.querySelectorAll(seletores.join(', '));
 			let maisProximo = null;
 			let menorDistancia = Infinity;
 
@@ -1751,13 +2314,14 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			const target = obterElementoMaisProximo(y);
 			if (!target) return;
 			if (!target.id) {
-				target.id = 'cmt-alvo-' + Math.floor(Math.random() * 100000);
+				target.id = 'cmt-alvo-p' + parteAtiva + '-' + Math.floor(Math.random() * 100000);
 			}
 			target.classList.add('commentable-row');
 
-			// Já pré-cadastra na lista de anotações caso não exista
 			if (!comentariosArmazenados[target.id]) {
 				comentariosArmazenados[target.id] = {
+					tipo: 'texto',
+					parte: parteAtiva,
 					autor: obterAutorSalvo() || 'Desenvolvedor',
 					data: formatarDataHora(),
 					texto: '(Nova anotação)',
@@ -1774,8 +2338,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 		}
 
 		function inicializarSistemaComentarios() {
-			// SE ESTIVER EM MODO PREVIEW NA JANELA DO SISTEMA: NÃO EXECUTA NADA (mantém a tela 100% limpa como antes)
-			if (document.body.classList.contains('modo-preview')) {
+			if (document.body.classList.contains('modo-relatorio-preview')) {
 				return;
 			}
 
@@ -1816,12 +2379,12 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			});
 
 			iniciarSeguidorMouse();
+			iniciarCamadaRabiscos();
 			carregarComentariosSalvos();
 			window.addEventListener('resize', ajustarPosicoesComentarios);
 		}
 
 		function carregarComentariosSalvos() {
-			// 1. Tenta ler do script JSON embutido no HTML
 			const scriptJson = document.getElementById('dados-comentarios-salvos');
 			if (scriptJson && scriptJson.textContent.trim()) {
 				try {
@@ -1831,7 +2394,6 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				}
 			}
 
-			// 2. Mescla com dados do localStorage (mais recentes se houver)
 			try {
 				const locais = localStorage.getItem(chaveArmazenamentoLocal);
 				if (locais) {
@@ -1840,10 +2402,37 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				}
 			} catch(e) {}
 
-			// Renderiza todos
 			for (const targetId in comentariosArmazenados) {
 				const cmt = comentariosArmazenados[targetId];
-				if (cmt && cmt.texto) {
+				const pNum = cmt.parte || (targetId.includes('-p2-') ? 2 : 1);
+				const svgEl = document.getElementById('camada-rabiscos-' + pNum);
+				if (cmt && (cmt.tipo === 'desenho' || targetId.startsWith('rabisco-'))) {
+					let path = document.getElementById(targetId);
+					if (!path && cmt.d && svgEl) {
+						path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+						path.setAttribute('id', targetId);
+						path.setAttribute('class', 'traco-rabisco');
+						path.setAttribute('stroke', '#dc2626');
+						path.setAttribute('stroke-width', '6.67');
+						path.setAttribute('stroke-linecap', 'round');
+						path.setAttribute('stroke-linejoin', 'round');
+						path.setAttribute('fill', 'none');
+						path.setAttribute('d', cmt.d);
+						svgEl.appendChild(path);
+					}
+					if (path) {
+						path.onclick = function(e) {
+							e.stopPropagation();
+							irParaComentario(targetId);
+						};
+						if (cmt.status === 'resolvido' || cmt.status === 'concluido') {
+							path.classList.add('status-resolvido');
+						} else {
+							path.classList.remove('status-resolvido');
+						}
+					}
+				}
+				if (cmt && (cmt.texto || cmt.tipo === 'desenho')) {
 					renderizarCardComentario(targetId, cmt);
 				}
 			}
@@ -1854,45 +2443,57 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 		}
 
 		function renderizarCardComentario(targetId, dados) {
-			const camada = document.getElementById('camada-comentarios');
+			const parteDoCard = dados.parte || (document.getElementById(targetId) && document.getElementById(targetId).closest('#wrapper-parte-2') ? 2 : 1) || parteAtiva;
+			const camada = document.getElementById('camada-comentarios-' + parteDoCard) || document.getElementById('camada-comentarios') || obterCamadaComentariosAtiva();
 			const target = document.getElementById(targetId);
 			if (!camada || !target) return;
 
-			target.classList.add('has-comment');
+			if (target.classList) target.classList.add('has-comment');
 
 			let card = document.getElementById('card-cmt-' + targetId);
 			if (!card) {
 				card = document.createElement('div');
 				card.id = 'card-cmt-' + targetId;
-				card.className = 'comment-box-aside no-print';
 				card.setAttribute('data-target-id', targetId);
 				camada.appendChild(card);
 
 				card.addEventListener('mouseenter', () => {
-					target.classList.add('focused-target');
+					if (target.classList) target.classList.add('focused-target');
 				});
 				card.addEventListener('mouseleave', () => {
-					target.classList.remove('focused-target');
+					if (target.classList) target.classList.remove('focused-target');
 				});
+			} else if (card.parentElement !== camada) {
+				camada.appendChild(card);
 			}
 
+			// Previne que clique no card propague e feche a si mesmo ou dispare auto-save incorretamente
+			card.onclick = function(e) {
+				e.stopPropagation();
+			};
+			card.ondblclick = function(e) {
+				e.stopPropagation();
+				iniciarEdicaoComentario(targetId, e);
+			};
+
 			const isResolvido = (dados.status === 'resolvido' || dados.status === 'concluido');
-			card.className = 'comment-box-aside no-print' + (isResolvido ? ' status-resolvido' : '');
+			const isDesenho = (dados.tipo === 'desenho' || targetId.startsWith('rabisco-'));
+			card.className = 'comment-box-aside no-print' + (isDesenho ? ' card-desenho' : '') + (isResolvido ? ' status-resolvido' : '');
 
 			card.innerHTML = \`
 				<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
 					<div>
 						<div style="font-weight: bold; font-size: 10pt; color: #0f172a;">\${dados.autor || 'Desenvolvedor'}</div>
-						<div style="font-size: 8pt; color: #64748b;">\${dados.data || ''}</div>
+						<div style="font-size: 8pt; color: #64748b;">\${dados.data || ''} \${isDesenho ? '<span style="color: #dc2626; font-weight: bold; margin-left: 4px;">(🖊️ Rabisco)</span>' : ''}</div>
 					</div>
-					<button class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="alternarStatusComentario('\${targetId}')" title="Clique para alternar status (Pendente / Concluído)">
+					<button type="button" class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="event.stopPropagation(); alternarStatusComentario('\${targetId}')" title="Clique para alternar status (Pendente / Concluído)">
 						\${isResolvido ? '🟢 Concluído' : '🟡 Pendente'}
 					</button>
 				</div>
 				<div style="font-size: 9.5pt; color: #334155; margin: 8px 0; word-break: break-word; white-space: pre-wrap;">\${dados.texto || '(Sem anotação preenchida)'}</div>
 				<div style="display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #f1f5f9; padding-top: 6px; font-size: 8.5pt;">
-					<button onclick="iniciarEdicaoComentario('\${targetId}')" style="background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; font-size: 8.5pt;">✏️ Editar</button>
-					<button onclick="excluirComentario('\${targetId}')" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0; font-size: 8.5pt;">🗑️ Excluir</button>
+					<button type="button" onclick="event.stopPropagation(); iniciarEdicaoComentario('\${targetId}', event)" style="background: none; border: none; color: #2563eb; cursor: pointer; padding: 0; font-size: 8.5pt;">✏️ Editar</button>
+					<button type="button" onclick="event.stopPropagation(); excluirComentario('\${targetId}')" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0; font-size: 8.5pt;">🗑️ Excluir</button>
 				</div>
 			\`;
 		}
@@ -1902,50 +2503,90 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				event.stopPropagation();
 				event.preventDefault();
 			}
+			// Bloqueia auto-save global por alguns ms para prevenir fechamento acidental por clique fantasma
+			window._bloquearAutoSaveTimestamp = Date.now() + 500;
+
+			// Se a caneta estiver ativa, desativa temporariamente para permitir clicar e digitar normalmente
+			if (modoCanetaAtivo) {
+				alternarModoCaneta();
+			}
+
 			if (cardEmEdicaoId && cardEmEdicaoId !== targetId) {
 				salvarComentario(cardEmEdicaoId, true /* autoSave */);
 			}
 			cardEmEdicaoId = targetId;
 
-			const camada = document.getElementById('camada-comentarios');
-			const target = document.getElementById(targetId);
-			if (!camada || !target) return;
+			const existente = comentariosArmazenados[targetId] || {};
+			const parteCmt = existente.parte || (document.getElementById(targetId) && document.getElementById(targetId).closest('#wrapper-parte-2') ? 2 : 1) || parteAtiva;
+			if (isSplitModo && parteAtiva !== parteCmt) {
+				mudarParteAtiva(parteCmt);
+			}
+
+			const camada = document.getElementById('camada-comentarios-' + parteCmt) || document.getElementById('camada-comentarios') || obterCamadaComentariosAtiva();
+			let target = document.getElementById(targetId);
+
+			if (!target && (existente.tipo === 'desenho' || targetId.startsWith('rabisco-'))) {
+				const svgEl = document.getElementById('camada-rabiscos-' + parteCmt) || obterSvgAtivo();
+				if (svgEl && existente.d) {
+					target = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+					target.setAttribute('id', targetId);
+					target.setAttribute('class', 'traco-rabisco');
+					target.setAttribute('stroke', '#dc2626');
+					target.setAttribute('stroke-width', '6.67');
+					target.setAttribute('stroke-linecap', 'round');
+					target.setAttribute('stroke-linejoin', 'round');
+					target.setAttribute('fill', 'none');
+					target.setAttribute('d', existente.d);
+					svgEl.appendChild(target);
+				}
+			}
 
 			let card = document.getElementById('card-cmt-' + targetId);
-			if (!card) {
+			if (!card && camada) {
 				card = document.createElement('div');
 				card.id = 'card-cmt-' + targetId;
-				card.className = 'comment-box-aside no-print';
 				card.setAttribute('data-target-id', targetId);
+				camada.appendChild(card);
+			} else if (card && camada && card.parentElement !== camada) {
 				camada.appendChild(card);
 			}
 
-			const existente = comentariosArmazenados[targetId] || {};
 			const autorAtual = existente.autor || obterAutorSalvo() || '';
 			let textoAtual = existente.texto || '';
 			if (textoAtual === '(Nova anotação)' || textoAtual === '(Sem anotação preenchida)') {
 				textoAtual = '';
 			}
 
-			card.className = 'comment-box-aside no-print focused-card';
-			card.innerHTML = \`
-				<div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 6px; color: #b45309;">💬 Anotação / Dúvida</div>
-				<input type="text" id="input-autor-\${targetId}" placeholder="Seu nome (ex: Gustavo)" value="\${autorAtual}" style="width: 100%; box-sizing: border-box; padding: 5px 8px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt;">
-				<textarea id="input-texto-\${targetId}" placeholder="Digite sua dúvida ou observação aqui..." rows="3" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt; resize: vertical;">\${textoAtual}</textarea>
-				<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-					<button type="button" onclick="cancelarEdicaoComentario('\${targetId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">Cancelar</button>
-					<button type="button" onclick="salvarComentario('\${targetId}')" style="background: #2563eb; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 8.5pt; font-weight: bold;">Salvar</button>
-				</div>
-			\`;
+			const isDesenho = (existente.tipo === 'desenho' || targetId.startsWith('rabisco-'));
+			if (card) {
+				card.className = 'comment-box-aside no-print focused-card' + (isDesenho ? ' card-desenho' : '');
+				card.onclick = function(e) { e.stopPropagation(); };
+				card.onmousedown = function(e) { e.stopPropagation(); };
+				card.innerHTML = \`
+					<div style="font-weight: bold; font-size: 9.5pt; margin-bottom: 6px; color: \${isDesenho ? '#dc2626' : '#b45309'};">
+						\${isDesenho ? '🖊️ Anotação do Rabisco' : '💬 Anotação / Dúvida'}
+					</div>
+					<input type="text" id="input-autor-\${targetId}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" placeholder="Seu nome (ex: Gustavo)" value="\${autorAtual}" style="width: 100%; box-sizing: border-box; padding: 5px 8px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt;">
+					<textarea id="input-texto-\${targetId}" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()" placeholder="\${isDesenho ? 'Digite sua anotação sobre este rabisco...' : 'Digite sua dúvida ou observação aqui...'}" rows="3" style="width: 100%; box-sizing: border-box; padding: 6px 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 9pt; resize: vertical;">\${textoAtual}</textarea>
+					<div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+						<button type="button" onclick="event.stopPropagation(); cancelarEdicaoComentario('\${targetId}')" style="background: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 8.5pt;">Cancelar</button>
+						<button type="button" onclick="event.stopPropagation(); salvarComentario('\${targetId}')" style="background: #2563eb; color: #fff; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 8.5pt; font-weight: bold;">Salvar</button>
+					</div>
+				\`;
+			}
 
 			ajustarPosicoesComentarios();
-			const textarea = document.getElementById('input-texto-' + targetId);
-			if (textarea) textarea.focus();
+			renderizarPainelAcrobat();
+
+			setTimeout(() => {
+				const textarea = document.getElementById('input-texto-' + targetId) || document.getElementById('input-sidebar-texto-' + targetId);
+				if (textarea) textarea.focus();
+			}, 60);
 		}
 
 		function salvarComentario(targetId, isAutoSave = false) {
-			const inputAutor = document.getElementById('input-autor-' + targetId);
-			const inputTexto = document.getElementById('input-texto-' + targetId);
+			const inputAutor = document.getElementById('input-autor-' + targetId) || document.getElementById('input-sidebar-autor-' + targetId);
+			const inputTexto = document.getElementById('input-texto-' + targetId) || document.getElementById('input-sidebar-texto-' + targetId);
 			if (!inputTexto) return;
 
 			let texto = inputTexto.value.trim();
@@ -1956,10 +2597,23 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			const autor = (inputAutor && inputAutor.value.trim()) ? inputAutor.value.trim() : (obterAutorSalvo() || 'Desenvolvedor');
 			salvarAutorPadrao(autor);
 
-			const statusAnterior = (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].status) || 'pendente';
-			const dataAnterior = (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].data) || formatarDataHora();
+			const existente = comentariosArmazenados[targetId] || {};
+			const parteOriginal = existente.parte || (document.getElementById(targetId) && document.getElementById(targetId).closest('#wrapper-parte-2') ? 2 : 1) || parteAtiva;
+			const statusAnterior = existente.status || 'pendente';
+			const dataAnterior = existente.data || formatarDataHora();
+			const isDesenho = targetId.startsWith('rabisco-') || (existente.tipo === 'desenho');
+			const pathEl = isDesenho ? document.getElementById(targetId) : null;
+			const pathD = pathEl ? pathEl.getAttribute('d') : (existente.d || '');
+			const svgEl = document.getElementById('camada-rabiscos-' + parteOriginal) || document.getElementById('camada-rabiscos') || obterSvgAtivo();
+			const svgRect = svgEl ? svgEl.getBoundingClientRect() : { top: 0 };
+			const boundingTop = (pathEl && svgEl) ? Math.max(0, Math.round(pathEl.getBoundingClientRect().top - svgRect.top)) : (existente.boundingTop || 0);
 
 			comentariosArmazenados[targetId] = {
+				tipo: isDesenho ? 'desenho' : (existente.tipo || 'texto'),
+				parte: parteOriginal,
+				pathId: isDesenho ? targetId : undefined,
+				d: pathD,
+				boundingTop: boundingTop,
 				autor: autor,
 				data: dataAnterior,
 				texto: texto,
@@ -1988,6 +2642,10 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			if (existente && existente.texto && existente.texto !== '(Nova anotação)' && existente.texto !== '(Sem anotação preenchida)') {
 				renderizarCardComentario(targetId, existente);
 			} else {
+				if (targetId.startsWith('rabisco-') || (existente && existente.tipo === 'desenho')) {
+					const pathEl = document.getElementById(targetId);
+					if (pathEl) pathEl.remove();
+				}
 				delete comentariosArmazenados[targetId];
 				try {
 					localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
@@ -1995,7 +2653,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				const card = document.getElementById('card-cmt-' + targetId);
 				if (card) card.remove();
 				const target = document.getElementById(targetId);
-				if (target) target.classList.remove('has-comment', 'focused-target');
+				if (target && target.classList) target.classList.remove('has-comment', 'focused-target');
 				atualizarContadorComentarios();
 				renderizarPainelAcrobat();
 			}
@@ -2011,6 +2669,16 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
 			} catch(e) {}
 
+			// Se for traço de desenho, atualiza estilo visual na página
+			const pathEl = document.getElementById(targetId);
+			if (pathEl && (pathEl.tagName.toLowerCase() === 'path' || pathEl.classList.contains('traco-rabisco'))) {
+				if (cmt.status === 'resolvido' || cmt.status === 'concluido') {
+					pathEl.classList.add('status-resolvido');
+				} else {
+					pathEl.classList.remove('status-resolvido');
+				}
+			}
+
 			renderizarCardComentario(targetId, cmt);
 			atualizarContadorComentarios();
 			renderizarPainelAcrobat();
@@ -2022,6 +2690,12 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			if (cardEmEdicaoId === targetId) {
 				cardEmEdicaoId = null;
 			}
+
+			if (targetId.startsWith('rabisco-') || (comentariosArmazenados[targetId] && comentariosArmazenados[targetId].tipo === 'desenho')) {
+				const pathEl = document.getElementById(targetId);
+				if (pathEl) pathEl.remove();
+			}
+
 			delete comentariosArmazenados[targetId];
 			try {
 				localStorage.setItem(chaveArmazenamentoLocal, JSON.stringify(comentariosArmazenados));
@@ -2031,7 +2705,7 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			if (card) card.remove();
 
 			const target = document.getElementById(targetId);
-			if (target) target.classList.remove('has-comment', 'focused-target');
+			if (target && target.classList) target.classList.remove('has-comment', 'focused-target');
 
 			ajustarPosicoesComentarios();
 			atualizarContadorComentarios();
@@ -2050,14 +2724,23 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			cardEmEdicaoId = null;
 			for (const targetId in comentariosArmazenados) {
 				const target = document.getElementById(targetId);
-				if (target) target.classList.remove('has-comment', 'focused-target');
+				if (target && target.classList) target.classList.remove('has-comment', 'focused-target');
 			}
+			[1, 2].forEach(pNum => {
+				const svgEl = document.getElementById('camada-rabiscos-' + pNum);
+				if (svgEl) svgEl.innerHTML = '';
+				const camada = document.getElementById('camada-comentarios-' + pNum);
+				if (camada) camada.innerHTML = '';
+			});
+			const svgElPadrao = document.getElementById('camada-rabiscos');
+			if (svgElPadrao) svgElPadrao.innerHTML = '';
+			const camadaPadrao = document.getElementById('camada-comentarios');
+			if (camadaPadrao) camadaPadrao.innerHTML = '';
+
 			comentariosArmazenados = {};
 			try {
 				localStorage.removeItem(chaveArmazenamentoLocal);
 			} catch(e) {}
-			const camada = document.getElementById('camada-comentarios');
-			if (camada) camada.innerHTML = '';
 			atualizarContadorComentarios();
 			renderizarPainelAcrobat();
 		}
@@ -2098,19 +2781,22 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			}
 
 			if (ids.length === 0) {
-				listaEl.innerHTML = '<div style="font-size: 9pt; color: #94a3b8; text-align: center; margin-top: 30px; font-style: italic;">Nenhum comentário cadastrado ainda.<br>Passe o mouse na página e clique no balãozinho 💬 para comentar.</div>';
+				listaEl.innerHTML = '<div style="font-size: 9pt; color: #94a3b8; text-align: center; margin-top: 30px; font-style: italic;">Nenhum comentário cadastrado ainda.<br>Passe o mouse na página e clique no balãozinho 💬 para comentar ou use a Caneta 🖊️.</div>';
 				return;
 			}
 
-			const docEl = document.getElementById('document-container');
+			const docEl = obterDocAtivo();
 			const docRect = docEl ? docEl.getBoundingClientRect() : { top: 0 };
 
 			const ordenados = ids.map(id => ({ id, data: comentariosArmazenados[id] }))
 				.sort((a, b) => {
+					const pA = a.data.parte || 1;
+					const pB = b.data.parte || 1;
+					if (pA !== pB) return pA - pB;
 					const elA = document.getElementById(a.id);
 					const elB = document.getElementById(b.id);
-					const topA = elA ? (elA.getBoundingClientRect().top - docRect.top) : 0;
-					const topB = elB ? (elB.getBoundingClientRect().top - docRect.top) : 0;
+					const topA = elA ? (elA.getBoundingClientRect().top - docRect.top) : (a.data.boundingTop || 0);
+					const topB = elB ? (elB.getBoundingClientRect().top - docRect.top) : (b.data.boundingTop || 0);
 					return topA - topB;
 				});
 
@@ -2145,8 +2831,11 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				const cmt = item.data;
 				const target = document.getElementById(item.id);
 				let secao = 'Elemento do Relatório';
-				if (target) {
-					if (target.classList.contains('relatorio-img-container')) {
+				const isDesenho = (item.id.startsWith('rabisco-') || cmt.tipo === 'desenho');
+				if (isDesenho) {
+					secao = '🖊️ Rabisco / Desenho';
+				} else if (target) {
+					if (target.classList && target.classList.contains('relatorio-img-container')) {
 						secao = 'Imagem do Relatório';
 					} else {
 						const primeiraLinha = target.innerText ? target.innerText.split('\\n')[0].trim() : '';
@@ -2154,45 +2843,76 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 					}
 				}
 				const isResolvido = (cmt.status === 'resolvido' || cmt.status === 'concluido');
+				const badgeParte = (isSplitModo && cmt.parte) ? \`<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: bold; margin-left: 6px;">PARTE \${cmt.parte}</span>\` : '';
 
-				htmlLista += \`
-					<div class="painel-acrobat-item \${isResolvido ? 'resolvido' : ''}" onclick="irParaComentario('\${item.id}')">
-						<div class="painel-acrobat-item-header">
-							<span class="painel-acrobat-item-autor">\${cmt.autor || 'Desenvolvedor'}</span>
-							<span class="painel-acrobat-item-data">\${cmt.data || ''}</span>
-						</div>
-						<div class="painel-acrobat-item-secao">📍 \${secao}</div>
-						<div class="painel-acrobat-item-texto">\${cmt.texto || '(Sem anotação preenchida)'}</div>
-						<div style="margin-top: 6px; font-size: 8pt; display: flex; justify-content: space-between; align-items: center;">
-							<button type="button" class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="event.stopPropagation(); alternarStatusComentario('\${item.id}')" title="Clique para alternar status (Pendente / Concluído)">
-								\${isResolvido ? '🟢 Concluído' : '🟡 Pendente'}
-							</button>
-							<div style="display: flex; gap: 8px; align-items: center;">
-								<span style="color: #2563eb; font-size: 7.5pt;">Ir ➔</span>
-								<button type="button" onclick="event.stopPropagation(); excluirComentario('\${item.id}')" title="Excluir este comentário" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0 4px; font-size: 9.5pt;">🗑️</button>
+				if (cardEmEdicaoId === item.id) {
+					htmlLista += \`
+						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isDesenho ? 'item-desenho' : ''} focused-card" style="border-left-color: #2563eb; background: #eff6ff;" onclick="event.stopPropagation()">
+							<div style="font-weight: bold; font-size: 8.5pt; margin-bottom: 6px; color: \${isDesenho ? '#dc2626' : '#2563eb'};">
+								\${isDesenho ? '🖊️ Editando Rabisco' : '💬 Editando Anotação'}
+							</div>
+							<input type="text" id="input-sidebar-autor-\${item.id}" placeholder="Seu nome" value="\${cmt.autor || ''}" style="width: 100%; box-sizing: border-box; padding: 4px 6px; margin-bottom: 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">
+							<textarea id="input-sidebar-texto-\${item.id}" placeholder="Digite sua anotação..." rows="3" style="width: 100%; box-sizing: border-box; padding: 5px 6px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 8.5pt; resize: vertical;" onclick="event.stopPropagation()" onmousedown="event.stopPropagation()">\${(cmt.texto && cmt.texto !== '(Sem anotação preenchida)' && cmt.texto !== '(Nova anotação)') ? cmt.texto : ''}</textarea>
+							<div style="display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px;">
+								<button type="button" onclick="event.stopPropagation(); cancelarEdicaoComentario('\${item.id}')" style="background: #fff; border: 1px solid #cbd5e1; padding: 3px 8px; border-radius: 4px; cursor: pointer; font-size: 8pt;">Cancelar</button>
+								<button type="button" onclick="event.stopPropagation(); salvarComentario('\${item.id}')" style="background: #2563eb; color: #fff; border: none; padding: 3px 10px; border-radius: 4px; cursor: pointer; font-size: 8pt; font-weight: bold;">Salvar</button>
 							</div>
 						</div>
-					</div>
-				\`;
+					\`;
+				} else {
+					htmlLista += \`
+						<div id="item-acrobat-\${item.id}" class="painel-acrobat-item \${isResolvido ? 'resolvido' : ''} \${isDesenho ? 'item-desenho' : ''}" onclick="irParaComentario('\${item.id}')" ondblclick="event.stopPropagation(); iniciarEdicaoComentario('\${item.id}', event)">
+							<div class="painel-acrobat-item-header">
+								<div>
+									<span class="painel-acrobat-item-autor">\${cmt.autor || 'Desenvolvedor'}</span>
+									\${badgeParte}
+								</div>
+								<span class="painel-acrobat-item-data">\${cmt.data || ''}</span>
+							</div>
+							<div class="painel-acrobat-item-secao">📍 \${secao}</div>
+							<div class="painel-acrobat-item-texto">\${cmt.texto || '(Sem anotação preenchida)'}</div>
+							<div style="margin-top: 6px; font-size: 8pt; display: flex; justify-content: space-between; align-items: center;">
+								<button type="button" class="btn-status-toggle \${isResolvido ? 'resolvido' : 'pendente'}" onclick="event.stopPropagation(); alternarStatusComentario('\${item.id}')" title="Clique para alternar status (Pendente / Concluído)">
+									\${isResolvido ? '🟢 Concluído' : '🟡 Pendente'}
+								</button>
+								<div style="display: flex; gap: 8px; align-items: center;">
+									<button type="button" onclick="event.stopPropagation(); iniciarEdicaoComentario('\${item.id}', event)" title="Editar anotação" style="background: none; border: none; color: #2563eb; cursor: pointer; padding: 0 4px; font-size: 8.5pt;">✏️ Editar</button>
+									<span style="color: #2563eb; font-size: 7.5pt;">Ir ➔</span>
+									<button type="button" onclick="event.stopPropagation(); excluirComentario('\${item.id}')" title="Excluir este comentário" style="background: none; border: none; color: #dc2626; cursor: pointer; padding: 0 4px; font-size: 9.5pt;">🗑️</button>
+								</div>
+							</div>
+						</div>
+					\`;
+				}
 			});
 
 			listaEl.innerHTML = htmlLista;
 		}
 
 		function irParaComentario(targetId) {
-			const target = document.getElementById(targetId);
-			if (!target) return;
-
-			target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-			target.classList.add('pulse-target');
-			setTimeout(() => target.classList.remove('pulse-target'), 2500);
-
-			const card = document.getElementById('card-cmt-' + targetId);
-			if (card) {
-				card.classList.add('focused-card');
-				setTimeout(() => card.classList.remove('focused-card'), 2500);
+			const cmt = comentariosArmazenados[targetId];
+			const parteCmt = (cmt && cmt.parte) || (document.getElementById(targetId) && document.getElementById(targetId).closest('#wrapper-parte-2') ? 2 : 1) || 1;
+			if (isSplitModo && parteAtiva !== parteCmt) {
+				mudarParteAtiva(parteCmt);
 			}
+
+			setTimeout(() => {
+				const target = document.getElementById(targetId);
+				if (!target) return;
+
+				if (target.scrollIntoView) {
+					target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+
+				target.classList.add('pulse-target');
+				setTimeout(() => target.classList.remove('pulse-target'), 2500);
+
+				const card = document.getElementById('card-cmt-' + targetId);
+				if (card) {
+					card.classList.add('focused-card');
+					setTimeout(() => card.classList.remove('focused-card'), 2500);
+				}
+			}, 80);
 		}
 
 		function alternarPainelAcrobat() {
@@ -2223,12 +2943,17 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 			}
 		}
 
-		function irParaElementoIndice(elementId) {
-			const el = document.getElementById(elementId);
-			if (!el) return;
-			el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			el.classList.add('pulse-target');
-			setTimeout(() => el.classList.remove('pulse-target'), 2500);
+		function irParaElementoIndice(elementId, parteNum) {
+			if (isSplitModo && parteNum && parteAtiva !== parteNum) {
+				mudarParteAtiva(parteNum);
+			}
+			setTimeout(() => {
+				const el = document.getElementById(elementId);
+				if (!el) return;
+				el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				el.classList.add('pulse-target');
+				setTimeout(() => el.classList.remove('pulse-target'), 2500);
+			}, 80);
 		}
 
 		function alternarGrupoIndice(grupoId) {
@@ -2256,7 +2981,12 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 
 		// Fecha os painéis flutuantes (Anotações e Índice) ao clicar fora, e auto-salva comentário em edição
 		document.addEventListener('click', (e) => {
-			if (document.body.classList.contains('modo-preview')) return;
+			if (!document.body.contains(e.target)) return;
+
+			// Ignora auto-save se estiver dentro do intervalo de proteção contra clique duplo/propagação
+			if (window._bloquearAutoSaveTimestamp && Date.now() < window._bloquearAutoSaveTimestamp) {
+				return;
+			}
 
 			// 1. Fechar Painel de Anotações se clicar fora
 			const painelAcrobat = document.getElementById('painel-acrobat');
@@ -2280,133 +3010,107 @@ ${JSON.stringify(dadosFormularioCompleto || { principal: dataPrincipal, aplicave
 				}
 			}
 
-			// 3. Salvar card de comentário aberto em edição se clicar fora do card
+			// 3. Salvar card de comentário aberto em edição se clicar fora do card e fora do item da barra lateral
 			if (cardEmEdicaoId) {
 				const cardAtivo = document.getElementById('card-cmt-' + cardEmEdicaoId);
-				const btnFlutuante = document.getElementById('btn-comentario-flutuante');
-				if (cardAtivo && !cardAtivo.contains(e.target) && (!btnFlutuante || !btnFlutuante.contains(e.target))) {
+				const itemSidebarAtivo = document.getElementById('item-acrobat-' + cardEmEdicaoId);
+				const btnFlutuante = obterBtnFlutuanteAtivo();
+
+				const clicouNoCard = cardAtivo && cardAtivo.contains(e.target);
+				const clicouNoSidebarItem = itemSidebarAtivo && itemSidebarAtivo.contains(e.target);
+				const clicouNoFlutuante = btnFlutuante && btnFlutuante.contains(e.target);
+				const clicouEmControle = e.target.closest('.btn-comentario-flutuante') || e.target.closest('.btn-parte-tab') || e.target.closest('.btn-status-toggle');
+
+				if (!clicouNoCard && !clicouNoSidebarItem && !clicouNoFlutuante && !clicouEmControle) {
 					salvarComentario(cardEmEdicaoId, true /* autoSave */);
 				}
 			}
 		});
 
 		function ajustarPosicoesComentarios() {
-			const docEl = document.getElementById('document-container');
-			if (!docEl) return;
-			const docRect = docEl.getBoundingClientRect();
+			if (isSplitModo) {
+				[1, 2].forEach(pNum => {
+					const docEl = document.getElementById('document-container-' + pNum);
+					if (!docEl) return;
+					const docRect = docEl.getBoundingClientRect();
+					const camada = document.getElementById('camada-comentarios-' + pNum);
+					if (!camada) return;
 
-			const cards = Array.from(document.querySelectorAll('.comment-box-aside'))
-				.filter(card => {
-					const targetId = card.getAttribute('data-target-id');
-					return document.getElementById(targetId) !== null;
-				})
-				.sort((a, b) => {
-					const targetA = document.getElementById(a.getAttribute('data-target-id'));
-					const targetB = document.getElementById(b.getAttribute('data-target-id'));
-					const topA = targetA ? (targetA.getBoundingClientRect().top - docRect.top) : 0;
-					const topB = targetB ? (targetB.getBoundingClientRect().top - docRect.top) : 0;
-					return topA - topB;
+					const cards = Array.from(camada.querySelectorAll('.comment-box-aside'))
+						.filter(card => {
+							const targetId = card.getAttribute('data-target-id');
+							return document.getElementById(targetId) !== null || (comentariosArmazenados[targetId] !== undefined);
+						})
+						.sort((a, b) => {
+							const idA = a.getAttribute('data-target-id');
+							const idB = b.getAttribute('data-target-id');
+							const targetA = document.getElementById(idA);
+							const targetB = document.getElementById(idB);
+							const cmtA = comentariosArmazenados[idA];
+							const cmtB = comentariosArmazenados[idB];
+							const topA = targetA ? (targetA.getBoundingClientRect().top - docRect.top) : ((cmtA && cmtA.boundingTop) || 0);
+							const topB = targetB ? (targetB.getBoundingClientRect().top - docRect.top) : ((cmtB && cmtB.boundingTop) || 0);
+							return topA - topB;
+						});
+
+					let proximoTopMinimo = 0;
+					cards.forEach(card => {
+						const targetId = card.getAttribute('data-target-id');
+						const target = document.getElementById(targetId);
+						const cmt = comentariosArmazenados[targetId];
+						if (!target && !cmt) return;
+
+						const targetTop = target ? (target.getBoundingClientRect().top - docRect.top) : ((cmt && cmt.boundingTop) || 0);
+						const topFinal = Math.max(targetTop - 2, proximoTopMinimo);
+						card.style.top = topFinal + 'px';
+						proximoTopMinimo = topFinal + card.offsetHeight + 14;
+					});
 				});
+			} else {
+				const docEl = document.getElementById('document-container') || document.getElementById('document-container-1');
+				if (!docEl) return;
+				const docRect = docEl.getBoundingClientRect();
+				const camada = document.getElementById('camada-comentarios') || document.getElementById('camada-comentarios-1');
+				if (!camada) return;
 
-			let proximoTopMinimo = 0;
-			cards.forEach(card => {
-				const target = document.getElementById(card.getAttribute('data-target-id'));
-				if (!target) return;
+				const cards = Array.from(camada.querySelectorAll('.comment-box-aside'))
+					.filter(card => {
+						const targetId = card.getAttribute('data-target-id');
+						return document.getElementById(targetId) !== null || (comentariosArmazenados[targetId] !== undefined);
+					})
+					.sort((a, b) => {
+						const idA = a.getAttribute('data-target-id');
+						const idB = b.getAttribute('data-target-id');
+						const targetA = document.getElementById(idA);
+						const targetB = document.getElementById(idB);
+						const cmtA = comentariosArmazenados[idA];
+						const cmtB = comentariosArmazenados[idB];
+						const topA = targetA ? (targetA.getBoundingClientRect().top - docRect.top) : ((cmtA && cmtA.boundingTop) || 0);
+						const topB = targetB ? (targetB.getBoundingClientRect().top - docRect.top) : ((cmtB && cmtB.boundingTop) || 0);
+						return topA - topB;
+					});
 
-				const targetTop = target.getBoundingClientRect().top - docRect.top;
-				const topFinal = Math.max(targetTop - 2, proximoTopMinimo);
-				card.style.top = topFinal + 'px';
-				proximoTopMinimo = topFinal + card.offsetHeight + 14; // espaço entre cards próximos
-			});
+				let proximoTopMinimo = 0;
+				cards.forEach(card => {
+					const targetId = card.getAttribute('data-target-id');
+					const target = document.getElementById(targetId);
+					const cmt = comentariosArmazenados[targetId];
+					if (!target && !cmt) return;
+
+					const targetTop = target ? (target.getBoundingClientRect().top - docRect.top) : ((cmt && cmt.boundingTop) || 0);
+					const topFinal = Math.max(targetTop - 2, proximoTopMinimo);
+					card.style.top = topFinal + 'px';
+					proximoTopMinimo = topFinal + card.offsetHeight + 14;
+				});
+			}
 		}
 
 		function salvarComoArquivoHTML() {
-			// Clona o documento para exportação limpa
-			const docClone = document.documentElement.cloneNode(true);
-			const cloneBody = docClone.querySelector('body');
-			if (cloneBody) {
-				// No arquivo baixado, o modo-preview é removido para que o comentador seja ativo!
-				cloneBody.classList.remove('modo-preview');
-			}
-
-			// Garante que o painel acrobat inicie recolhido e com o botão de aba disponível
-			const painelClone = docClone.querySelector('#painel-acrobat');
-			if (painelClone) {
-				painelClone.classList.add('recolhido');
-			}
-			const btnAbrirClone = docClone.querySelector('#btn-abrir-painel-acrobat');
-			if (btnAbrirClone) {
-				btnAbrirClone.style.display = 'flex';
-			}
-
-			// Garante que o painel de índice inicie recolhido e com o botão de aba disponível
-			const painelIndiceClone = docClone.querySelector('#painel-indice');
-			if (painelIndiceClone) {
-				painelIndiceClone.classList.add('recolhido');
-			}
-			const btnAbrirIndiceClone = docClone.querySelector('#btn-abrir-painel-indice');
-			if (btnAbrirIndiceClone) {
-				btnAbrirIndiceClone.style.display = 'flex';
-			}
-
-			// Atualiza textos da barra no arquivo baixado preservando a parte (Parte 1 / Parte 2) se houver
-			const tituloBarraOriginal = document.getElementById('titulo-barra-relatorio');
-			const tituloBarra = docClone.querySelector('#titulo-barra-relatorio');
-			if (tituloBarra && tituloBarraOriginal) {
-				tituloBarra.textContent = tituloBarraOriginal.textContent.trim();
-			}
-			const btnHtml = docClone.querySelector('.btn-html');
-			if (btnHtml) {
-				btnHtml.textContent = '💾 Salvar HTML+JSON';
-				btnHtml.setAttribute('title', 'Salva novamente este arquivo com todas as anotações atualizadas e baixa o JSON');
-			}
-			const btnPrint = docClone.querySelector('.btn-print');
-			if (btnPrint) {
-				btnPrint.textContent = '🖨️ Salvar PDF+JSON';
-				btnPrint.setAttribute('title', 'Salva como PDF ou Imprime e baixa o JSON');
-			}
-
-			// Embute script JSON de dados salvos
-			let scriptJson = docClone.querySelector('#dados-comentarios-salvos');
-			if (!scriptJson) {
-				scriptJson = document.createElement('script');
-				scriptJson.id = 'dados-comentarios-salvos';
-				scriptJson.type = 'application/json';
-				cloneBody.appendChild(scriptJson);
-			}
-			scriptJson.textContent = JSON.stringify(comentariosArmazenados || {});
-
-			// Limpa camada de comentários dinâmicos para ser reconstruída fresquinha no carregamento
-			const camadaClone = docClone.querySelector('#camada-comentarios');
-			if (camadaClone) {
-				camadaClone.innerHTML = '';
-			}
-
-			// Limpa botões e classes adicionadas dinamicamente para que o arquivo baixado inicialize 100% fresco e funcional
-			docClone.querySelectorAll('.btn-comment-trigger').forEach(b => b.remove());
-			docClone.querySelectorAll('.commentable-row').forEach(r => {
-				r.classList.remove('commentable-row', 'focused-target');
-				const tid = r.id;
-				if (!comentariosArmazenados[tid]) {
-					r.classList.remove('has-comment');
-				}
-			});
-
-			const htmlContent = '<!DOCTYPE html>\\n' + docClone.outerHTML;
-			const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-			const url = URL.createObjectURL(blob);
-			const a = document.createElement('a');
-			a.href = url;
-			const docTitle = document.title ? document.title.replace(/[\\\\/:*?\"<>|]/g, '').trim() : 'Planejamento';
-			a.download = (docTitle || 'Planejamento') + '.html';
-			document.body.appendChild(a);
-			a.click();
-			document.body.removeChild(a);
-			setTimeout(() => URL.revokeObjectURL(url), 1000);
+			salvarComoHTMLEJson();
 		}
 
 		function copiarCaminho(elemento, event) {
-			if (event && event.target && (event.target.id === 'btn-comentario-flutuante' || event.target.closest('#btn-comentario-flutuante') || event.target.closest('.comment-box-aside') || event.target.closest('.btn-comment-trigger'))) {
+			if (event && event.target && (event.target.classList.contains('btn-comentario-flutuante') || event.target.closest('.btn-comentario-flutuante') || event.target.closest('.comment-box-aside') || event.target.closest('.btn-comment-trigger'))) {
 				return;
 			}
 			const texto = elemento.getAttribute('data-caminho') || elemento.innerText.trim();
