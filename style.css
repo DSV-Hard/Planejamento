@@ -1,4 +1,19 @@
-    body { font-family: Arial, sans-serif; margin: 40px; }
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f5fff5;
+    }
+    #modulo-planejamento {
+        margin: 0;
+        padding: 30px 40px 40px 40px;
+        box-sizing: border-box;
+    }
+    #modulo-itens {
+        margin: 0;
+        padding: 30px 40px 40px 40px;
+        box-sizing: border-box;
+    }
     h1 { font-size: 2em; text-align: center; margin-bottom: 30px; }
     #main-frame {
         background-color: #ffffff; /* Fundo branco para o quadro */
