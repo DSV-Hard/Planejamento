@@ -16,6 +16,9 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 	};
 
 	renderizarPaginacaoVeiculosAplicaveis();
+	if (typeof sincronizarVeiculosDoPlanejamento === 'function') {
+		sincronizarVeiculosDoPlanejamento(true);
+	}
 }
 
 function abrirModalCopia(veiculoIndex) {
@@ -681,12 +684,23 @@ function coletarDadosFormulario() {
 		};
 	});
 
+	let dadosItens = null;
+	if (typeof obterAppStateItens === 'function') {
+		dadosItens = obterAppStateItens();
+	} else if (window.appStateItens) {
+		dadosItens = window.appStateItens;
+	} else if (window.appState) {
+		dadosItens = window.appState;
+	}
+
 	return {
 		principal: dataPrincipal,
-		aplicaveis: aplicaveisAtualizados
+		aplicaveis: aplicaveisAtualizados,
+		itens_serie: dadosItens
 	};
 }
 
+window.salvarComoJSONPlanejamentoUnificado = function() { salvarComoJSON(); };
 function salvarComoJSON() {
 	const data = coletarDadosFormulario();
 	const dataStr = JSON.stringify(data, null, 2);
@@ -722,6 +736,12 @@ function carregarDeJSON(input) {
 				const dataJSON = JSON.parse(e.target.result);
 				const dataPrincipal = dataJSON.principal || {};
 				const dataAplicaveis = dataJSON.aplicaveis || [];
+
+				if (dataJSON.itens_serie && typeof carregarAppStateItens === 'function') {
+					carregarAppStateItens(dataJSON.itens_serie, dataPrincipal.veiculo);
+				} else if (dataJSON.itensCustom && typeof carregarAppStateItens === 'function') {
+					carregarAppStateItens(dataJSON, dataPrincipal.veiculo);
+				}
 
 				const setData = (id, value) => {
 					const element = document.getElementById(id);
@@ -789,6 +809,7 @@ function carregarDeJSON(input) {
 				}
 
 				veiculosAplicaveisData = dataAplicaveis;
+				window.veiculosAplicaveisData = veiculosAplicaveisData;
 				veiculosAplicaveisData.forEach(v => {
 					if (v.sistemas) {
 						v.sistemas.forEach(s => {
@@ -938,3 +959,4 @@ function validarFormularioGlobal() {
 
 	return [...new Set(erros)];
 }
+window.salvarDadosVeiculoAplicavel = salvarDadosVeiculoAplicavel;
