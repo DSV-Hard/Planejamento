@@ -1,0 +1,225 @@
+<div id="cabecalho-itens">
+        <!-- Ícone representativo ou logo da sua empresa -->
+        <i class="fa-solid fa-car-side" style="font-size: 2.5em; color: var(--orange-main); margin-right: 15px;"></i>
+        <div>
+            <h1>ITENS DE SÉRIE & OPCIONAIS</h1>
+            <p style="font-size: 0.85em; color: var(--text-muted); margin-top: -3px;">Ferramenta para geração de relatório</p>
+        </div>
+    </div>
+
+    <div id="main-frame-itens">
+        <!-- Abas do Sistema -->
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('resumo')">
+                <i class="fa-solid fa-table-list"></i> RESUMO
+            </button>
+            <button class="tab-btn" onclick="switchTab('principal')">
+                <i class="fa-solid fa-car-rear"></i> VEÍCULO PRINCIPAL
+            </button>
+            <button class="tab-btn" onclick="switchTab('aplicaveis')">
+                <i class="fa-solid fa-network-wired"></i> VEÍCULOS APLICÁVEIS
+            </button>
+        </div>
+
+        <!-- Conteúdo 1: RESUMO -->
+        <div id="tab-resumo" class="tab-content active">
+            <div class="summary-actions">
+                <!-- Seletor de Formato do PDF Dinâmico adicionado ao lado do botão -->
+                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    
+                    <select id="pdf-format-select" class="form-control" style="width: auto; height: 41px; padding: 0 10px; margin-bottom: 0; font-weight: 600; color: var(--text-dark);">
+                        <option value="continuous" selected>Página Única Adaptativa (Sem Cortes) ⭐</option>
+                        <option value="a3_portrait">A3 - Retrato (Ideal para Listas Longas)</option>
+                    </select>
+					<button class="orange-button" onclick="gerarPDF_Formatado()">
+                        <i class="fa-solid fa-file-pdf"></i> SALVAR PDF+JSON
+                    </button>
+                </div>
+                <button class="orange-button secondary" type="button" onclick="sincronizarVeiculosDoPlanejamento()" title="Importa o nome do Veículo Principal e Aplicáveis do Planejamento">
+        <i class="fa-solid fa-arrows-rotate"></i> SINCRONIZAR VEÍCULOS
+    </button>
+    <button class="orange-button secondary" type="button" onclick="salvarComoJSON()">
+                    <i class="fa-solid fa-floppy-disk"></i> SALVAR JSON
+                </button>
+                <button class="orange-button secondary" onclick="document.getElementById('jsonFileInput').click()">
+                    <i class="fa-solid fa-folder-open"></i> CARREGAR JSON
+                </button>
+                <input type="file" id="jsonFileInput" style="display: none;" accept=".json" onchange="carregarDeJSON(event)" />
+            </div>
+
+            <div class="section-card" style="padding: 10px; border: none; box-shadow: none;">
+                <h3 class="section-title">Visualização da tabela de Itens de Série & Opcionais</h3>
+                
+                <!-- Área da tabela capturada para o PDF -->
+                <div id="pdf-capture-area" style="background-color: #ffffff; padding: 15px; border-radius: 8px;">
+                    <!-- Informações do Cabeçalho do PDF que irão aparecer na exportação -->
+                    <div id="pdf-header-info" style="margin-bottom: 15px; display: none;">
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                            <tr>
+                                <td style="border: none; padding: 0;">
+                                    <h2 style="color: #2e7d32; margin: 0; font-size: 1.5em; font-weight: bold;">PLANEJAMENTO DE VEÍCULOS</h2>
+                                    <p style="color: #757575; margin: 2px 0 0 0; font-size: 0.85em;">Relatório Comparativo de Itens de Série e Opcionais da Sprint</p>
+                                </td>
+                                <td style="border: none; text-align: right; padding: 0; font-size: 0.85em; color: #555;">
+                                    <strong>Data de Geração:</strong> <span id="pdf-generation-date"></span>
+                                </td>
+                            </tr>
+                        </table>
+                        <hr style="border: 0; height: 2px; background: #f57c00; margin-bottom: 15px;">
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="resumo-table" id="tabela-comparativa">
+                            <thead>
+                                <tr id="tabela-headers">
+                                    <th>ITENS</th>
+                                    <th>VEÍCULO PRINCIPAL</th>
+                                    <!-- Cabeçalhos dos veículos aplicáveis entram dinamicamente -->
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-body">
+                                <!-- Linhas de itens entram dinamicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo 2: VEÍCULO PRINCIPAL -->
+        <div id="tab-principal" class="tab-content">
+            <div class="section-card">
+                <h3 class="section-title">Veículo Principal</h3>
+                
+                <!-- Layout idêntico de orientação com o Carrinho Verde adicionado e perfeitamente alinhado -->
+                <div style="display: flex; gap: 15px; align-items: flex-end; width: 100%;">
+                    <i class="fa-solid fa-car" style="font-size: 1.5em; color: var(--primary-green); margin-bottom: 6px;"></i>
+                    <div class="form-group" style="flex: 1; margin-bottom: 0;">
+                        <label for="nome-veiculo-principal" style="color: var(--primary-green); font-weight: bold; font-size: 0.85em;">MODELO, MOTOR E VERSÃO:</label>
+                        <input type="text" id="nome-veiculo-principal" class="form-control" placeholder="Ex: Corolla 2.0 XEi" oninput="atualizarResumoTab()">
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h3 class="section-title">
+                    <span>Configuração de Série & Opcionais</span>
+                    <span style="font-size: 0.75em; font-weight: normal; color: var(--text-muted);">
+                        Catálogo e preenchimento de itens integrados.
+                    </span>
+                </h3>
+                <!-- Bloco Didático de Legendas -->
+                <div class="legendas-box">
+                    <p class="legendas-title">LEGENDAS:</p>
+                    <div class="legendas-items">
+                        <span class="legenda-item"><strong class="badge-circle s">S</strong> = De Série</span>
+                        <span class="legenda-item"><strong class="badge-circle o">O</strong> = Opcional</span>
+                        <span class="legenda-item"><strong class="badge-circle n">-</strong> = Não Possui</span>
+                    </div>
+                </div>
+
+                <!-- Itens Fixos -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: var(--primary-green); margin-bottom: 10px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px;">
+                        Itens Fixos
+                    </h4>
+                    
+                    <div id="principal-itens-fixos-container" class="items-grid-container">
+                        <!-- Gerado automaticamente via JS -->
+                    </div>
+                </div>
+
+                <!-- Outros Itens (Mestre + Preenchimento integrados) -->
+                <div>
+                    <h4 style="color: var(--primary-green); margin-bottom: 12px; font-size: 0.95em; border-left: 3px solid var(--orange-main); padding-left: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                        Outros Itens Cadastrados
+                        <div style="display: flex; gap: 8px;">
+                            <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em;" onclick="adicionarNovoItemMestre('simple')">
+                                <i class="fa-solid fa-plus"></i> + Item Simples
+                            </button>
+                            <button class="orange-button" style="padding: 6px 12px; font-size: 0.8em; background-color: var(--primary-green);" onclick="adicionarNovoItemMestre('multiple')">
+                                <i class="fa-solid fa-square-check"></i> + Item Múltiplo
+                            </button>
+                        </div>
+                    </h4>
+
+                    <div id="principal-itens-custom-container" style="margin-top: 10px;">
+                        <!-- Gerado de forma dinâmica via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conteúdo 4: VEÍCULOS APLICÁVEIS -->
+        <div id="tab-aplicaveis" class="tab-content">
+            <div class="summary-actions" style="margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap;">
+                <button class="orange-button" onclick="adicionarVeiculoAplicavel()">
+                    <i class="fa-solid fa-circle-plus"></i> Adicionar Veículo Aplicável
+                </button>
+
+                <!-- Barra de botões numerada para selecionar qual veículo exibir/editar -->
+                <div id="veiculos-botoes-container" style="display: flex; gap: 12px; justify-content: center; align-items: flex-start; flex-wrap: wrap;">
+                    <!-- Números dos veículos entram aqui dinamicamente -->
+                </div>
+            </div>
+
+            <div id="veiculos-aplicaveis-lista" class="veiculos-aplicaveis-container">
+                <!-- Gerados Dinamicamente igual à pegada do outro index -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Mensagens Rápidas (Toast) -->
+    <div id="toast" class="toast-msg"></div>
+
+    <!-- Modal de Copiar Sistemas (Seleção de Doador e Alerta Condicional) -->
+    <div id="modal-confirmacao-copia" class="modal-overlay" onclick="if(event.target === this) fecharModalCopiarSistemas()">
+        <div class="modal-box">
+            
+            <!-- Visão 1: Seleção do Veículo Doador -->
+            <div id="modal-copiar-visao-selecao">
+                <div class="modal-icon">
+                    <i class="fa-solid fa-copy"></i>
+                </div>
+                <div class="modal-title">Copiar Sistemas & Opcionais</div>
+                <div class="modal-msg" style="margin-bottom: 12px;">
+                    Selecione de qual veículo você deseja copiar os itens:
+                </div>
+                <div id="modal-copiar-doadores-container" class="veiculos-doadores-lista">
+                    <!-- Gerado dinamicamente com Veículo Principal + outros veículos aplicáveis -->
+                </div>
+                <div class="modal-actions" style="margin-top: 10px;">
+                    <button class="modal-btn-nao" onclick="fecharModalCopiarSistemas()">
+                        <i class="fa-solid fa-xmark"></i> Cancelar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visão 2: Alerta de Sobrescrita de Dados (Aparece apenas se o veículo destino tiver itens preenchidos) -->
+            <div id="modal-copiar-visao-alerta" style="display: none;">
+                <div class="modal-icon" style="color: #f57c00;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div class="modal-title">Atenção: Sobrescrever Itens?</div>
+                <div class="modal-msg">
+                    Deseja copiar (ou sobrescrever) os itens de <strong id="modal-alerta-nome-doador">...</strong> sobre este <strong>VEÍCULO APLICÁVEL</strong>?
+                    <br><br>
+                    <span style="font-size: 0.88em; color: #d32f2f;">
+                        <i class="fa-solid fa-circle-exclamation"></i> Se houver algo preenchido neste veículo aplicável, será substituído e as alterações atuais serão perdidas.
+                    </span>
+                </div>
+                <div class="modal-actions">
+                    <button class="modal-btn-sim" id="btn-modal-copiar-sim" onclick="executarConfirmacaoCopiarSistemas()">
+                        <i class="fa-solid fa-check"></i> SIM
+                    </button>
+                    <button class="modal-btn-nao" onclick="voltarParaSelecaoDoador()">
+                        <i class="fa-solid fa-arrow-left"></i> Voltar
+                    </button>
+                    <button class="modal-btn-nao" onclick="fecharModalCopiarSistemas()">
+                        <i class="fa-solid fa-xmark"></i> NÃO
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
