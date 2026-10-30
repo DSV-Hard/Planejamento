@@ -1,8 +1,10 @@
 let sistemasData = [];
 let paginaAtual = 0;
 
-let veiculosAplicaveisData = [];
-let veiculoAplicavelAtual = 0;
+var veiculosAplicaveisData = [];
+var veiculoAplicavelAtual = 0;
+window.veiculosAplicaveisData = veiculosAplicaveisData;
+window.veiculoAplicavelAtual = veiculoAplicavelAtual;
 let currentEditableElement = null;
 let targetVeiculoIndexParaCopia = null;
 
@@ -964,6 +966,9 @@ function adicionarVeiculoAplicavel() {
 	}
 	criarNovoVeiculoAplicavel();
 	atualizarVisibilidadeDadosCardAplicaveis();
+	if (typeof sincronizarVeiculosDoPlanejamento === 'function') {
+		sincronizarVeiculosDoPlanejamento(true);
+	}
 }
 
 function removerUltimoVeiculoAplicavel() {
@@ -999,6 +1004,9 @@ function removerUltimoVeiculoAplicavel() {
 			veiculoAplicavelAtual = 0;
 		}
 		atualizarVisibilidadeDadosCardAplicaveis();
+		if (typeof sincronizarVeiculosDoPlanejamento === 'function') {
+			sincronizarVeiculosDoPlanejamento(true);
+		}
 	};
 
 	confirmNoBtn.onclick = () => {
