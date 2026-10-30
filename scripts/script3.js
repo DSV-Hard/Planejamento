@@ -417,8 +417,39 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 	const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
 	const getRadio = (name) => systemDiv.querySelector(`input[name="${name}"]:checked`)?.value || '';
 
-	const caixasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].caixas : [];
-	const paginasExistentes = veiculo.sistemas[sistemaIndex] ? veiculo.sistemas[sistemaIndex].paginas : [];
+	let caixasExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].caixas || []) : [];
+	let paginasExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].paginas || []) : [];
+
+	// Sincroniza diretamente do DOM caso o container dinâmico de desenvolvimento esteja renderizado:
+	const dynamicContainer = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+	if (dynamicContainer) {
+		const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
+		if (caixasDOMElements.length > 0) {
+			const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
+			const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
+			if (isCaixas) {
+				const caixasAtualizadas = [];
+				caixasDOMElements.forEach((item, i) => {
+					const inputNome = item.querySelector('input[type="text"]');
+					const descEl = item.querySelector('.editable-content');
+					caixasAtualizadas.push({
+						nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
+						descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+					});
+				});
+				caixasExistentes = caixasAtualizadas;
+			} else {
+				const paginasAtualizadas = [];
+				caixasDOMElements.forEach((item, i) => {
+					const descEl = item.querySelector('.editable-content');
+					paginasAtualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+					});
+				});
+				paginasExistentes = paginasAtualizadas;
+			}
+		}
+	}
 
 	veiculo.sistemas[sistemaIndex] = {
 		caixas: caixasExistentes,
@@ -636,53 +667,7 @@ function coletarDadosFormulario() {
 		sistemas: sistemasData
 	};
 
-	const aplicaveisAtualizados = veiculosAplicaveisData.map((veiculo, index) => {
-		const container = document.querySelector(`.veiculo-aplicavel-item[data-index="${index}"]`);
-		if (!container) return veiculo;
-
-		const sistemaSelect = container.querySelector('.sistema-aplicavel');
-		const sistemaValue = sistemaSelect ? sistemaSelect.value : veiculo.sistema;
-		
-		let sistemasDoVeiculo = veiculo.sistemas || [{}];
-		let paginasColetadas = [];
-
-		if (sistemaValue === "OUTROS") {
-			const paginasContainer = container.querySelector('.paginas-extras-container');
-			if (paginasContainer) {
-				const itensPagina = paginasContainer.querySelectorAll('.pagina-extra-item');
-				itensPagina.forEach(item => {
-					const tituloInput = item.querySelector('.titulo-pagina-extra');
-					const conteudoDiv = item.querySelector('.editable-content');
-					paginasColetadas.push({
-						titulo: tituloInput ? tituloInput.value : "Página Extra",
-						conteudo: conteudoDiv ? conteudoDiv.innerHTML : "Nenhum conteúdo informado"
-					});
-				});
-			}
-		} else {
-			const labels = ["Página de Localização", "Página de conectores", "Página de Diagrama"];
-			const conteudos = container.querySelectorAll('.editable-content');
-			labels.forEach((label, i) => {
-				if (conteudos[i]) {
-					paginasColetadas.push({
-						titulo: label,
-						conteudo: conteudos[i].innerHTML
-					});
-				}
-			});
-		}
-
-		if (sistemasDoVeiculo[0]) {
-			sistemasDoVeiculo[0].sistema = sistemaValue;
-			sistemasDoVeiculo[0].paginas = paginasColetadas;
-			sistemasDoVeiculo[0].outrosTitulo = container.querySelector('.outros-titulo-input')?.value || "";
-		}
-
-		return {
-			...veiculo,
-			sistemas: sistemasDoVeiculo
-		};
-	});
+	const aplicaveisAtualizados = veiculosAplicaveisData;
 
 	let dadosItens = null;
 	if (typeof obterAppStateItens === 'function') {
