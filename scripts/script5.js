@@ -684,17 +684,27 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 					</div>`;
 				});
 			} else {
-				if (isCaixasForm) {
+				if (isCaixasForm || (sistema.caixas && sistema.caixas.length > 0)) {
 					corpoDoc += `
 					<div class="info-row"><span class="info-label">Tipo de Caixa:</span> <span class="info-val">${sistema.tipo_fusiveis || 'Simplificado'}</span></div>
-					<div class="sub-header">- Informações da Caixa de Fusíveis:</div>
-					${desconverterHtmlParaRelatorio(sistema.info_fusiveis)}
 					`;
-				} else if (sistema.tipo_layout === 'paginas') {
+					if (sistema.caixas && sistema.caixas.length > 0) {
+						sistema.caixas.forEach((caixa, cIdx) => {
+							const nomeCaixa = (caixa.nome && caixa.nome.trim()) ? caixa.nome.trim() : `Caixa ${cIdx + 1}`;
+							corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- ${nomeCaixa}:</div>`;
+							corpoDoc += desconverterHtmlParaRelatorio(caixa.descricoes);
+						});
+					} else if (sistema.info_fusiveis) {
+						corpoDoc += `<div class="sub-header">- Informações da Caixa de Fusíveis:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(sistema.info_fusiveis);
+					} else {
+						corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma caixa adicionada.</p>`;
+					}
+				} else if (isPaginasFixas || !isModuloDedicado || (sistema.paginas && sistema.paginas.length > 0) || sistema.tipo_layout === 'paginas') {
 					if (sistema.paginas && sistema.paginas.length > 0) {
 						sistema.paginas.forEach((pagina, pIdx) => {
-							const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
-							corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+							const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1}`;
+							corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- ${tituloPg}:</div>`;
 							corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
 						});
 					} else {
@@ -786,17 +796,27 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 						`;
 					}
 
-					if (isCaixasForm) {
+					if (isCaixasForm || (sistema.caixas && sistema.caixas.length > 0)) {
 						corpoDoc += `
 						<div class="info-row"><span class="info-label">Tipo de Caixa:</span> <span class="info-val">${sistema.tipo_fusiveis || 'Simplificado'}</span></div>
-						<div class="sub-header">- Informações da Caixa de Fusíveis:</div>
-						${desconverterHtmlParaRelatorio(sistema.info_fusiveis)}
 						`;
-					} else if (sistema.tipo_layout === 'paginas') {
+						if (sistema.caixas && sistema.caixas.length > 0) {
+							sistema.caixas.forEach((caixa, cIdx) => {
+								const nomeCaixa = (caixa.nome && caixa.nome.trim()) ? caixa.nome.trim() : `Caixa ${cIdx + 1}`;
+								corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- ${nomeCaixa}:</div>`;
+								corpoDoc += desconverterHtmlParaRelatorio(caixa.descricoes);
+							});
+						} else if (sistema.info_fusiveis) {
+							corpoDoc += `<div class="sub-header">- Informações da Caixa de Fusíveis:</div>`;
+							corpoDoc += desconverterHtmlParaRelatorio(sistema.info_fusiveis);
+						} else {
+							corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma caixa adicionada.</p>`;
+						}
+					} else if (isPaginasFixas || !isModuloDedicado || (sistema.paginas && sistema.paginas.length > 0) || sistema.tipo_layout === 'paginas') {
 						if (sistema.paginas && sistema.paginas.length > 0) {
 							sistema.paginas.forEach((pagina, pIdx) => {
-								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
-								corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+								const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1}`;
+								corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- ${tituloPg}:</div>`;
 								corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
 							});
 						} else {
