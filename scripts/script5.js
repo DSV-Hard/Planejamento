@@ -292,17 +292,35 @@ async function gerarPDFHtmlPrint(options = null) {
 		});
 	}
 
+	let htmlItensSerie = '';
+	if (typeof atualizarResumoTab === 'function') {
+		try { atualizarResumoTab(); } catch(e) {}
+	}
+	const captureEl = document.getElementById('pdf-capture-area');
+	if (captureEl) {
+		const clone = captureEl.cloneNode(true);
+		const headerInfo = clone.querySelector('#pdf-header-info');
+		if (headerInfo) {
+			headerInfo.style.display = 'block';
+			const dateEl = headerInfo.querySelector('#pdf-generation-date');
+			if (dateEl) dateEl.textContent = new Date().toLocaleDateString('pt-BR');
+		}
+		htmlItensSerie = clone.innerHTML;
+	}
+
 	if (isSplit) {
 		abrirJanelaImpressaoHtml({
 			isSplit: true,
 			parts: partsToGenerate,
-			dadosFormularioCompleto: dadosCompletos
+			dadosFormularioCompleto: dadosCompletos,
+			htmlItensSerie: htmlItensSerie
 		});
 	} else {
 		abrirJanelaImpressaoHtml({
 			isSplit: false,
 			parts: partsToGenerate,
-			dadosFormularioCompleto: dadosCompletos
+			dadosFormularioCompleto: dadosCompletos,
+			htmlItensSerie: htmlItensSerie
 		});
 	}
 }
@@ -850,12 +868,16 @@ function abrirJanelaImpressaoHtml(config) {
 	const parte1 = gerarDadosParteRelatorio(parts[0], 1);
 	const parte2 = isSplit ? gerarDadosParteRelatorio(parts[1], 2) : null;
 	const tituloDocumento = parte1.tituloDocumento;
+	const htmlItensSerie = config.htmlItensSerie || '';
+	const temItensSerie = !!htmlItensSerie.trim();
 
 	let html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 	<meta charset="UTF-8">
 	<title>${tituloDocumento}</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<link rel="stylesheet" href="ITENS/itens-scoped.css">
 	<style>
 		@page {
 			size: A4;
@@ -881,36 +903,40 @@ function abrirJanelaImpressaoHtml(config) {
 			top: 0;
 			background: #1e293b;
 			color: #ffffff;
-			padding: 8px 20px;
+			padding: 10px 20px;
 			display: flex;
-			justify-content: space-between;
+			flex-direction: column;
+			justify-content: center;
 			align-items: center;
-			gap: 12px;
+			gap: 8px;
 			z-index: 9999;
 			box-shadow: 0 2px 10px rgba(0, 0, 0, 0.25);
 			font-family: Arial, sans-serif;
-			min-height: 50px;
+			min-height: 54px;
 		}
-		.toolbar-print-left {
+		body:not(.modo-relatorio-preview) .toolbar-print {
+			min-height: 94px;
+			padding: 14px 20px;
+			gap: 10px;
+		}
+		body.modo-relatorio-preview .toolbar-row-bottom {
+			display: none !important;
+		}
+		.toolbar-row-top {
 			display: flex;
 			align-items: center;
-			justify-content: flex-start;
-			gap: 8px;
-			flex: 1;
+			justify-content: center;
+			gap: 12px;
+			width: 100%;
+			flex-wrap: wrap;
 		}
-		.toolbar-print-center {
+		.toolbar-row-bottom {
 			display: flex;
 			align-items: center;
 			justify-content: center;
 			gap: 10px;
-			flex-shrink: 0;
-		}
-		.toolbar-print-right {
-			display: flex;
-			align-items: center;
-			justify-content: flex-end;
-			gap: 10px;
-			flex: 1;
+			width: 100%;
+			flex-wrap: wrap;
 		}
 		.parte-tabs-container {
 			display: inline-flex;
@@ -1046,6 +1072,69 @@ function abrirJanelaImpressaoHtml(config) {
 			display: flex;
 			justify-content: center;
 		}
+		/* ITENS DE SÉRIE COMPARATIVO NO RELATÓRIO */
+		.table-responsive {
+			width: 100%;
+			overflow-x: auto;
+			margin-top: 15px;
+			border: 1px solid #e0e0e0;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+			background-color: #ffffff;
+		}
+		.resumo-table {
+			width: 100%;
+			border-collapse: collapse;
+			text-align: left;
+			font-size: 9.5pt;
+			background-color: #ffffff;
+		}
+		.resumo-table th {
+			background-color: #2e7d32;
+			color: #ffffff;
+			font-weight: 600;
+			padding: 10px 14px;
+			border-bottom: 3px solid #f57c00;
+			text-transform: uppercase;
+			font-size: 10pt;
+			letter-spacing: 0.5px;
+			min-width: 150px;
+		}
+		.resumo-table th:first-child {
+			min-width: 250px;
+			background-color: #1b5e20;
+		}
+		.resumo-table td {
+			padding: 10px 14px;
+			border-bottom: 1px solid #e0e0e0;
+			vertical-align: middle;
+		}
+		.resumo-table tbody tr:nth-child(even) {
+			background-color: #fcfdfc;
+		}
+		.resumo-table tbody tr:hover {
+			background-color: #f1f8f1;
+		}
+		.status-badge {
+			display: inline-flex;
+			flex-direction: column;
+			align-items: center;
+			padding: 4px 10px;
+			border-radius: 12px;
+			font-size: 8.5pt;
+			font-weight: 700;
+			color: #ffffff;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		.status-badge.s { background-color: #2e7d32; }
+		.status-badge.o { background-color: #f57c00; }
+		.status-badge.n { background-color: #9e9e9e; }
+		.badge-details {
+			font-size: 8pt;
+			color: #555;
+			margin-top: 2px;
+		}
+
 		.document-container {
 			width: 210mm;
 			min-width: 210mm;
@@ -1736,6 +1825,79 @@ function abrirJanelaImpressaoHtml(config) {
 		.avoid-break {
 			page-break-inside: avoid;
 		}
+		/* ESTILOS DA TABELA DE ITENS DE SÉRIE & OPCIONAIS NO RELATÓRIO */
+		#document-container-itens {
+			max-width: 1400px;
+			width: 100%;
+			margin: 0 auto;
+			padding: 20px 30px;
+			background: #ffffff;
+		}
+		#document-container-itens .table-responsive {
+			width: 100%;
+			overflow-x: auto;
+			margin-top: 15px;
+			border: 1px solid #e0e0e0;
+			border-radius: 8px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+		}
+		#document-container-itens .resumo-table {
+			width: 100%;
+			border-collapse: collapse;
+			text-align: left;
+			font-size: 0.9em;
+			background-color: #ffffff;
+		}
+		#document-container-itens .resumo-table th {
+			background-color: #f57c00 !important;
+			color: #ffffff !important;
+			font-weight: 700;
+			padding: 12px 16px;
+			border-bottom: 3px solid #e65100;
+			text-transform: uppercase;
+			font-size: 1.00em;
+			letter-spacing: 0.5px;
+			min-width: 150px;
+			text-align: center;
+		}
+		#document-container-itens .resumo-table th:first-child {
+			min-width: 250px;
+			background-color: #1b5e20 !important;
+			text-align: left;
+		}
+		#document-container-itens .resumo-table td {
+			padding: 12px 16px;
+			border-bottom: 1px solid #e0e0e0;
+			vertical-align: middle;
+			text-align: center;
+		}
+		#document-container-itens .resumo-table td:first-child {
+			text-align: left;
+			font-weight: 600;
+		}
+		#document-container-itens .resumo-table tbody tr:nth-child(even) {
+			background-color: #fcfdfc;
+		}
+		#document-container-itens .status-badge {
+			display: inline-flex;
+			flex-direction: column;
+			align-items: center;
+			padding: 4px 10px;
+			border-radius: 12px;
+			font-size: 0.8em;
+			font-weight: 700;
+			color: #ffffff !important;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+		}
+		#document-container-itens .status-badge.s {
+			background-color: #2e7d32 !important;
+		}
+		#document-container-itens .status-badge.o {
+			background-color: #ef6c00 !important;
+		}
+		#document-container-itens .status-badge.n {
+			background-color: #757575 !important;
+		}
 		@media print {
 			.no-print {
 				display: none !important;
@@ -1752,9 +1914,10 @@ function abrirJanelaImpressaoHtml(config) {
 				display: block !important;
 				width: 100% !important;
 			}
-			#wrapper-parte-2 {
+			#wrapper-parte-2, #wrapper-itens-serie {
 				page-break-before: always !important;
 				break-before: page !important;
+				display: block !important;
 			}
 			.document-container {
 				width: 100% !important;
@@ -1781,23 +1944,26 @@ function abrirJanelaImpressaoHtml(config) {
 </head>
 <body class="modo-relatorio-preview">
 	<div class="toolbar-print no-print">
-		<div class="toolbar-print-left">
-			${isSplit ? `
+		<div class="toolbar-row-top">
+			${(isSplit || temItensSerie) ? `
 			<div class="parte-tabs-container">
-				<button type="button" id="btn-tab-parte-1" class="btn-parte-tab ativo" onclick="mudarParteAtiva(1)" title="Visualizar Relatório da Parte 1">PARTE 1</button>
+				<button type="button" id="btn-tab-parte-1" class="btn-parte-tab ativo" onclick="mudarParteAtiva(1)" title="Visualizar Relatório da Parte 1">${isSplit ? 'PARTE 1' : 'PLANEJAMENTO'}</button>
+				${isSplit ? `
 				<button type="button" id="btn-tab-parte-2" class="btn-parte-tab" onclick="mudarParteAtiva(2)" title="Visualizar Relatório da Parte 2">PARTE 2</button>
+				` : ''}
+				${temItensSerie ? `
+				<button type="button" id="btn-tab-itens" class="btn-parte-tab" onclick="mudarParteAtiva('itens')" title="Visualizar Itens de Série & Opcionais">ITENS DE SÉRIE & OPCIONAIS</button>
+				` : ''}
 			</div>
 			` : ''}
+			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório integrado em arquivo HTML e faz o download automático do JSON">💾 HTML+JSON</button>
+			<button class="btn-print" onclick="salvarPDFEJson()" title="Abre a janela de impressão em PDF e faz o download automático do JSON">🖨️ PDF+JSON</button>
 		</div>
-		<div class="toolbar-print-center">
+		<div class="toolbar-row-bottom">
 			<span id="badge-contador-comentarios" class="badge-comentarios-top" onclick="alternarPainelAcrobat()" title="Clique para abrir/fechar o painel de anotações">💬 0 anotações</span>
 			<button id="btn-toggle-caneta" class="btn-tool-top" type="button" onclick="alternarModoCaneta()" title="Rabisco Livre (Caneta Vermelha 5pt)">🖊️</button>
 			<button id="btn-toggle-quadrado" class="btn-tool-top" type="button" onclick="alternarModoQuadrado()" title="Desenhar Retângulo / Quadrado (Clique e arraste na página)">⬜</button>
 			<button id="btn-toggle-grifar" class="btn-tool-top" type="button" onclick="alternarModoGrifar()" title="Grifar Texto (Marca-texto Vermelho Claro - Clique e arraste sobre o texto)">🖍️</button>
-		</div>
-		<div class="toolbar-print-right">
-			<button class="btn-html" onclick="salvarComoHTMLEJson()" title="Salva este relatório integrado em arquivo HTML e faz o download automático do JSON">💾 HTML+JSON</button>
-			<button class="btn-print" onclick="salvarPDFEJson()" title="Abre a janela de impressão em PDF e faz o download automático do JSON">🖨️ PDF+JSON</button>
 		</div>
 	</div>
 
@@ -1817,6 +1983,16 @@ function abrirJanelaImpressaoHtml(config) {
 				<div id="camada-comentarios-2" class="camada-comentarios no-print"></div>
 				<svg id="camada-rabiscos-2" class="camada-rabiscos-svg" xmlns="http://www.w3.org/2000/svg"></svg>
 				${parte2.corpoDoc}
+			</div>
+		</div>
+		` : ''}
+		${temItensSerie ? `
+		<div id="wrapper-itens-serie" class="wrapper-parte" style="display: none;">
+			<div class="document-container" id="document-container-itens" style="max-width: 1400px; width: 100%;">
+				<button id="btn-comentario-flutuante-itens" class="btn-comentario-flutuante no-print" type="button" title="Clique para adicionar comentário nesta altura">💬</button>
+				<div id="camada-comentarios-itens" class="camada-comentarios no-print"></div>
+				<svg id="camada-rabiscos-itens" class="camada-rabiscos-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+				${htmlItensSerie}
 			</div>
 		</div>
 		` : ''}
@@ -1901,15 +2077,16 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		const chaveArmazenamentoLocal = 'planejamento_cmt_' + encodeURIComponent((document.title || 'padrao').trim());
 
 		function mudarParteAtiva(num) {
-			if (!isSplitModo) return;
 			if (cardEmEdicaoId) {
 				salvarComentario(cardEmEdicaoId, true);
 			}
 			parteAtiva = num;
 			const tab1 = document.getElementById('btn-tab-parte-1');
 			const tab2 = document.getElementById('btn-tab-parte-2');
+			const tabItens = document.getElementById('btn-tab-itens');
 			const wrap1 = document.getElementById('wrapper-parte-1');
 			const wrap2 = document.getElementById('wrapper-parte-2');
+			const wrapItens = document.getElementById('wrapper-itens-serie');
 			const ind1 = document.getElementById('painel-indice-lista-1');
 			const ind2 = document.getElementById('painel-indice-lista-2');
 			const tituloBarra = document.getElementById('titulo-barra-relatorio');
@@ -1920,21 +2097,36 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 			if (num === 1) {
 				if (tab1) tab1.classList.add('ativo');
 				if (tab2) tab2.classList.remove('ativo');
+				if (tabItens) tabItens.classList.remove('ativo');
 				if (wrap1) wrap1.style.display = 'flex';
 				if (wrap2) wrap2.style.display = 'none';
+				if (wrapItens) wrapItens.style.display = 'none';
 				if (ind1) ind1.style.display = 'block';
 				if (ind2) ind2.style.display = 'none';
 				if (tituloBarra) tituloBarra.textContent = tituloParte1 + sufixo;
 				document.title = tituloParte1;
-			} else {
+			} else if (num === 2) {
 				if (tab2) tab2.classList.add('ativo');
 				if (tab1) tab1.classList.remove('ativo');
+				if (tabItens) tabItens.classList.remove('ativo');
 				if (wrap2) wrap2.style.display = 'flex';
 				if (wrap1) wrap1.style.display = 'none';
+				if (wrapItens) wrapItens.style.display = 'none';
 				if (ind2) ind2.style.display = 'block';
 				if (ind1) ind1.style.display = 'none';
 				if (tituloBarra) tituloBarra.textContent = tituloParte2 + sufixo;
 				document.title = tituloParte2;
+			} else if (num === 'itens' || num === 3) {
+				if (tabItens) tabItens.classList.add('ativo');
+				if (tab1) tab1.classList.remove('ativo');
+				if (tab2) tab2.classList.remove('ativo');
+				if (wrapItens) wrapItens.style.display = 'flex';
+				if (wrap1) wrap1.style.display = 'none';
+				if (wrap2) wrap2.style.display = 'none';
+				if (ind1) ind1.style.display = 'none';
+				if (ind2) ind2.style.display = 'none';
+				if (tituloBarra) tituloBarra.textContent = 'ITENS DE SÉRIE & OPCIONAIS' + sufixo;
+				document.title = 'ITENS DE SÉRIE & OPCIONAIS - ' + tituloParte1;
 			}
 			atualizarContadorComentarios();
 			renderizarPainelAcrobat();
@@ -2051,6 +2243,10 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				const ind2 = docClone.querySelector('#painel-indice-lista-2');
 				if (ind2) ind2.style.display = 'none';
 			}
+			const wItens = docClone.querySelector('#wrapper-itens-serie');
+			if (wItens) wItens.style.display = 'none';
+			const tabItensClone = docClone.querySelector('#btn-tab-itens');
+			if (tabItensClone) tabItensClone.classList.remove('ativo');
 
 			// Obtém nome padronizado do veículo para download
 			let nomeVeiculo = 'Planejamento';
@@ -2462,7 +2658,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		}
 
 		function iniciarCamadaRabiscos() {
-			['camada-rabiscos-1', 'camada-rabiscos-2', 'camada-rabiscos'].forEach(svgId => {
+			['camada-rabiscos-1', 'camada-rabiscos-2', 'camada-rabiscos-itens', 'camada-rabiscos'].forEach(svgId => {
 				const svgEl = document.getElementById(svgId);
 				if (!svgEl) return;
 
@@ -2521,7 +2717,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				}
 			});
 
-			[1, 2].forEach(pNum => {
+			[1, 2, 'itens'].forEach(pNum => {
 				const btnFlutuante = document.getElementById('btn-comentario-flutuante-' + pNum);
 				if (btnFlutuante) {
 					btnFlutuante.onclick = function(e) {
@@ -3120,7 +3316,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 				const target = document.getElementById(targetId);
 				if (target && target.classList) target.classList.remove('has-comment', 'focused-target');
 			}
-			[1, 2].forEach(pNum => {
+			[1, 2, 'itens'].forEach(pNum => {
 				const svgEl = document.getElementById('camada-rabiscos-' + pNum);
 				if (svgEl) svgEl.innerHTML = '';
 				const camada = document.getElementById('camada-comentarios-' + pNum);
@@ -3245,7 +3441,7 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 					}
 				}
 				const isResolvido = (cmt.status === 'resolvido' || cmt.status === 'concluido');
-				const badgeParte = (isSplitModo && cmt.parte) ? \`<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: bold; margin-left: 6px;">PARTE \${cmt.parte}</span>\` : '';
+				const badgeParte = (cmt.parte === 'itens') ? \`<span style="background: #fef3c7; color: #b45309; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: bold; margin-left: 6px;">ITENS</span>\` : ((isSplitModo && cmt.parte) ? \`<span style="background: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 7.5pt; font-weight: bold; margin-left: 6px;">PARTE \${cmt.parte}</span>\` : '');
 
 				if (cardEmEdicaoId === item.id) {
 					const tituloSidebar = isDesenho ? '🖊️ Editando Rabisco' : (isRetangulo ? '⬜ Editando Retângulo' : (isGrifo ? '🖍️ Editando Texto Grifado' : '💬 Editando Anotação'));
@@ -3294,8 +3490,9 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 
 		function irParaComentario(targetId) {
 			const cmt = comentariosArmazenados[targetId];
-			const parteCmt = (cmt && cmt.parte) || (document.getElementById(targetId) && document.getElementById(targetId).closest('#wrapper-parte-2') ? 2 : 1) || 1;
-			if (isSplitModo && parteAtiva !== parteCmt) {
+			const el = document.getElementById(targetId);
+			const parteCmt = (cmt && cmt.parte) || (el && el.closest('#wrapper-itens-serie') ? 'itens' : (el && el.closest('#wrapper-parte-2') ? 2 : 1)) || 1;
+			if (parteAtiva !== parteCmt) {
 				mudarParteAtiva(parteCmt);
 			}
 
@@ -3431,8 +3628,8 @@ ${JSON.stringify(parts).replace(/<\/script/gi, '<\\/script')}
 		});
 
 		function ajustarPosicoesComentarios() {
-			if (isSplitModo) {
-				[1, 2].forEach(pNum => {
+			if (isSplitModo || document.getElementById('wrapper-itens-serie')) {
+				[1, 2, 'itens'].forEach(pNum => {
 					const docEl = document.getElementById('document-container-' + pNum);
 					if (!docEl) return;
 					const docRect = docEl.getBoundingClientRect();
