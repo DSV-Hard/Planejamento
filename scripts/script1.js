@@ -896,8 +896,39 @@ function salvarDadosSistema(index) {
 	const getHtml = (sel) => systemDiv.querySelector(sel)?.innerHTML || '';
 	const getRadio = (name) => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
 
-	const caixasExistentes = sistemasData[index] ? sistemasData[index].caixas : [];
-	const paginasExistentes = sistemasData[index] ? sistemasData[index].paginas : [];
+	let caixasExistentes = (sistemasData[index] && sistemasData[index].caixas) ? sistemasData[index].caixas : [];
+	let paginasExistentes = (sistemasData[index] && sistemasData[index].paginas) ? sistemasData[index].paginas : [];
+
+	// Sincroniza diretamente do DOM caso o container dinâmico de desenvolvimento esteja renderizado:
+	const dynamicContainer = document.getElementById(`dynamic-content-container_${index}`);
+	if (dynamicContainer) {
+		const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
+		if (caixasDOMElements.length > 0) {
+			const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
+			const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
+			if (isCaixas) {
+				const caixasAtualizadas = [];
+				caixasDOMElements.forEach((item, i) => {
+					const inputNome = item.querySelector('input[type="text"]');
+					const descEl = item.querySelector('.editable-content');
+					caixasAtualizadas.push({
+						nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
+						descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+					});
+				});
+				caixasExistentes = caixasAtualizadas;
+			} else {
+				const paginasAtualizadas = [];
+				caixasDOMElements.forEach((item, i) => {
+					const descEl = item.querySelector('.editable-content');
+					paginasAtualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+					});
+				});
+				paginasExistentes = paginasAtualizadas;
+			}
+		}
+	}
 
 	sistemasData[index] = {
 		caixas: caixasExistentes,
@@ -941,7 +972,11 @@ function renderizarPaginacaoVeiculosAplicaveis() {
 
 function mostrarPaginaVeiculoAplicavel(index) {
 	if (index >= 0 && index < veiculosAplicaveisData.length) {
-		if(veiculosAplicaveisData.length > 0 && veiculoAplicavelAtual >= 0) {
+		if (veiculosAplicaveisData.length > 0 && veiculoAplicavelAtual >= 0) {
+			const vAtual = veiculosAplicaveisData[veiculoAplicavelAtual];
+			if (vAtual && vAtual.sistemas && vAtual.sistemas.length > 0 && vAtual.paginaAtual >= 0) {
+				salvarDadosSistemaAplicaveis(veiculoAplicavelAtual, vAtual.paginaAtual);
+			}
 			salvarDadosVeiculoAplicavel(veiculoAplicavelAtual);
 		}
 		veiculoAplicavelAtual = index;
