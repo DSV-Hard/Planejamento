@@ -619,7 +619,7 @@ function coletarDadosFormulario() {
 				const paginas = parseInt(s.paginasprev, 10) || 0;
 				if (s.transferencia === 'modificar') {
 					ppaModificadas += (paginas || 1);
-				} else if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
+				} else if (s.transferencia === 'transferencia' || s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 					ppaTransferidas += paginas;
 				} else {
 					ppaCriadas += paginas;
