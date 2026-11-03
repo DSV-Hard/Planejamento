@@ -983,9 +983,9 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					const paginas = parseInt(s.paginasprev, 10) || 0;
 					if (s.transferencia === 'modificar') {
 						somaModificadasAplicaveis += (paginas || 1);
-					} else if (s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
+					} else if (s.transferencia === 'transferencia' || s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
-						tempoTotalAplicaveis += (paginas * 1.0);
+						tempoTotalAplicaveis += (paginas * 0.5);
 					} else {
 						somaCriadasAplicaveis += paginas;
 						tempoTotalAplicaveis += (paginas * 1.0);
@@ -1001,7 +1001,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 		
 		addHighlightedText(`VEÍCULOS APLICÁVEIS`, 14, 'bold', 0, 250, 231, 67);
 		addLabeledValue('DIFICULDADE', `${dataPrincipal.dificuldade_aplicaveis || 'Não informada'}`);
-		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Criadas: ${somaCriadasAplicaveis} | Aplicadas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}`);
+		addLabeledValue('PPA (Total)', ` ${somaTotalAplicaveis} | Criadas: ${somaCriadasAplicaveis} | Transferidas: ${somaTransferidasAplicaveis} | Modificadas: ${somaModificadasAplicaveis}`);
 		addLabeledValue('ESTIMATIVA DE TEMPO', ` ${estimativaAplicaveis} horas`);
 	}
 	
