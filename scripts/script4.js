@@ -683,11 +683,20 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			
 			let linhaTransferencia = '';
 			if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
+			else if (sistema.transferencia === 'zero_transferencia') linhaTransferencia = `- Fazer do Zero + Transferência${sistema.idtransf ? ` - ID: ${sistema.idtransf}` : ''}`;
 			else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
 			else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
 			if (linhaTransferencia) addText(linhaTransferencia, 12, "bold", 0);
 			
-			addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
+			if (sistema.transferencia === 'zero_transferencia') {
+				const pz = parseInt(sistema.paginasprev_zero, 10) || 0;
+				const pt = parseInt(sistema.paginasprev_transf, 10) || 0;
+				addLabeledValue('Nº pág. prev. (Zero)', `${pz}`);
+				addLabeledValue('Nº pág. prev. (Transf.)', `${pt}`);
+				addLabeledValue('Nº pág. prev. (Total)', `${pz + pt}`);
+			} else {
+				addLabeledValue('Nº páginas prevista', `${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}`);
+			}
 			
 			const sysUpper = (sistema.sistema || '').toUpperCase();
 			const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
@@ -719,7 +728,31 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			y += lineSpacing / 2;
 
 			// RENDERIZA O DESENVOLVIMENTO baseado no tipo
-			if (isCaixasForm) {
+			if (sistema.transferencia === 'zero_transferencia') {
+				addText('PARTE FAZER DO ZERO:', 12, "bold", 0);
+				if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
+					for (const [paginaIdx, pagina] of sistema.paginas_zero.entries()) {
+						addText(`- Página ${paginaIdx + 1} (Fazer do Zero):`, 12, "bold", 0);
+						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+						y += lineHeight * 2;
+					}
+				} else {
+					addText('Nenhuma página adicionada.', 12, 'italic', 4);
+					y += lineHeight;
+				}
+
+				addText('PARTE TRANSFERIR:', 12, "bold", 0);
+				if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
+					for (const [paginaIdx, pagina] of sistema.paginas_transf.entries()) {
+						addText(`- Página ${paginaIdx + 1} (Transferência):`, 12, "bold", 0);
+						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+						y += lineHeight * 2;
+					}
+				} else {
+					addText('Nenhuma página adicionada.', 12, 'italic', 4);
+					y += lineHeight;
+				}
+			} else if (isCaixasForm) {
 				if (sistema.caixas && sistema.caixas.length > 0) {
 					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
 						addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
@@ -832,10 +865,22 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						addLabeledValue('Transferência (do Principal) - ID', ` ${idPrincipal || 'N/A'}`);
 					} else if (sistema.transferencia === 'transferencia_outro') {
 						addLabeledValue('Transferência (Outro) - ID', ` ${sistema.idtransf || 'N/A'}`);
+					} else if (sistema.transferencia === 'zero_transferencia') {
+						addText(`- Fazer do Zero + Transferência${sistema.idtransf ? ` - ID: ${sistema.idtransf}` : ''}`, 12, "bold", 0);
+					} else if (sistema.transferencia === 'zero') {
+						addText(`- Fazer do Zero`, 12, "bold", 0);
 					} else if (sistema.transferencia === 'modificar') {
 						addText(`- Modificar Publicado`, 12, "normal", 0);
 					}
-					addLabeledValue('Nº páginas prevista', sistema.transferencia === 'modificar' ? '0' : sistema.paginasprev);
+					if (sistema.transferencia === 'zero_transferencia') {
+						const pz = parseInt(sistema.paginasprev_zero, 10) || 0;
+						const pt = parseInt(sistema.paginasprev_transf, 10) || 0;
+						addLabeledValue('Nº pág. prev. (Zero)', `${pz}`);
+						addLabeledValue('Nº pág. prev. (Transf.)', `${pt}`);
+						addLabeledValue('Nº pág. prev. (Total)', `${pz + pt}`);
+					} else {
+						addLabeledValue('Nº páginas prevista', sistema.transferencia === 'modificar' ? '0' : sistema.paginasprev);
+					}
 					
 					const sysUpper = (sistema.sistema || '').toUpperCase();
 					const isCaixasForm = sysUpper === "FUSÍVEIS E RELÉS";
@@ -865,11 +910,35 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					addText(`DESENVOLVIMENTO:`, 14, "bold", 0);
 					y += lineSpacing / 2;
 					
-					if (isCaixasForm) {
+					if (sistema.transferencia === 'zero_transferencia') {
+						addText('PARTE FAZER DO ZERO:', 12, "bold", 0);
+						if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
+							for (const [pIdx, pagina] of sistema.paginas_zero.entries()) {
+								addText(`- Página ${pIdx + 1} (Fazer do Zero):`, 12, "bold", 0);
+								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
+								y += 8;
+							}
+						} else {
+							addText('Nenhuma página adicionada.', 12, 'italic', 4);
+							y += lineHeight;
+						}
+
+						addText('PARTE TRANSFERIR:', 12, "bold", 0);
+						if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
+							for (const [pIdx, pagina] of sistema.paginas_transf.entries()) {
+								addText(`- Página ${pIdx + 1} (Transferência):`, 12, "bold", 0);
+								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
+								y += 8;
+							}
+						} else {
+							addText('Nenhuma página adicionada.', 12, 'italic', 4);
+							y += lineHeight;
+						}
+					} else if (isCaixasForm) {
 						if (sistema.caixas && sistema.caixas.length > 0) {
 							for (const caixa of sistema.caixas) {
 								addText(`- ${caixa.nome || 'Caixa'}:`, 12, "bold", 0);
-								y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
+								y = await addRichContent(caixa.descricoes, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 5;
 							}
 						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
@@ -879,7 +948,7 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 							for (const [pIdx, pagina] of sistema.paginas.entries()) {
 								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
 								addText(`- ${tituloPg}:`, 12, "bold", 0);
-								y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 8;
 							}
 						} else {
@@ -949,6 +1018,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 			const paginas = parseInt(s.paginasprev, 10) || 0;
 			if (s.transferencia === 'modificar') {
 				somaModificadas += (paginas || 1);
+			} else if (s.transferencia === 'zero_transferencia') {
+				const pz = parseInt(s.paginasprev_zero, 10) || 0;
+				const pt = parseInt(s.paginasprev_transf, 10) || 0;
+				somaCriadas += pz;
+				somaTransferidas += pt;
+				tempoTotalPrincipal += (pz * 3.65) + (pt * 1.825);
 			} else if (s.transferencia === 'transferencia') {
 				somaTransferidas += paginas;
 				tempoTotalPrincipal += (paginas * 1.825);
@@ -983,6 +1058,12 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					const paginas = parseInt(s.paginasprev, 10) || 0;
 					if (s.transferencia === 'modificar') {
 						somaModificadasAplicaveis += (paginas || 1);
+					} else if (s.transferencia === 'zero_transferencia') {
+						const pz = parseInt(s.paginasprev_zero, 10) || 0;
+						const pt = parseInt(s.paginasprev_transf, 10) || 0;
+						somaCriadasAplicaveis += pz;
+						somaTransferidasAplicaveis += pt;
+						tempoTotalAplicaveis += (pz * 1.0) + (pt * 0.5);
 					} else if (s.transferencia === 'transferencia' || s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
 						tempoTotalAplicaveis += (paginas * 0.5);
