@@ -201,6 +201,9 @@ function executarCopiaCapitulo() {
 		veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
 		renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
 		renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+		if (typeof rolarParaTituloCapitulo === 'function') {
+			rolarParaTituloCapitulo(targetVeiculoIndexParaCopia);
+		}
 	}
 	
 	document.getElementById('copy-chapter-modal').style.display = 'none';
@@ -379,6 +382,9 @@ function adicionarSistemaAplicaveis(veiculoIndex) {
 	veiculo.paginaAtual = veiculo.sistemas.length - 1;
 	renderizarPaginacaoAplicaveis(veiculoIndex);
 	renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+	if (typeof rolarParaTituloCapitulo === 'function') {
+		rolarParaTituloCapitulo(veiculoIndex);
+	}
 }
 
 function moverSistemaAplicavel(veiculoIndex, direcao) {
@@ -427,10 +433,16 @@ function removerUltimoSistemaAplicaveis(veiculoIndex) {
 			veiculo.paginaAtual = Math.min(sistemaIndex, veiculo.sistemas.length - 1);
 			renderizarPaginacaoAplicaveis(veiculoIndex);
 			renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+			if (typeof rolarParaTituloCapitulo === 'function') {
+				rolarParaTituloCapitulo(veiculoIndex);
+			}
 		} else {
 			document.getElementById(`sistemas-container-aplicaveis_${veiculoIndex}`).innerHTML = '';
 			document.getElementById(`paginas-navegacao-aplicaveis_${veiculoIndex}`).innerHTML = '';
 			veiculo.paginaAtual = 0;
+			if (typeof rolarParaTituloCapitulo === 'function') {
+				rolarParaTituloCapitulo(veiculoIndex);
+			}
 		}
 	};
 
@@ -448,6 +460,9 @@ function mostrarPaginaAplicaveis(veiculoIndex, sistemaIndex) {
 		veiculo.paginaAtual = sistemaIndex;
 		renderizarPaginacaoAplicaveis(veiculoIndex);
 		renderizarSistemaAplicaveis(veiculoIndex, veiculo.paginaAtual);
+		if (typeof rolarParaTituloCapitulo === 'function') {
+			rolarParaTituloCapitulo(veiculoIndex);
+		}
 	}
 }
 
