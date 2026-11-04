@@ -171,7 +171,11 @@
     }
     fieldset { border: 1px solid #ccc; padding: 20px; margin-top: 20px; border-radius: 8px; }
     legend { font-weight: bold; padding: 0 10px; }
-    .system-block {
+    #sistemas-container {
+    scroll-margin-top: 200px;
+}
+.system-block {
+    scroll-margin-top: 200px;
         border: 1px dashed #aaa; padding: 15px; margin-top: 15px;
         background-color: #f7f7f7; border-radius: 6px;
     }
@@ -530,3 +534,37 @@
 		transform: scale(1.2);
 	}
 	/* FIM: Adição de Estilos do Popup de Divisão */
+
+	/* Subdivisões de Desenvolvimento (Fazer do Zero + Transferir) */
+	.subdivisao-desenvolvimento {
+		border: 1.5px solid #cbd5e1;
+		border-radius: 8px;
+		padding: 16px;
+		margin-top: 15px;
+		background-color: #f8fafc;
+	}
+	.subdivisao-desenvolvimento legend {
+		font-size: 13px;
+		font-weight: 800;
+		letter-spacing: 0.5px;
+		padding: 4px 12px;
+		border-radius: 5px;
+	}
+	.subdivisao-zero {
+		border-color: #86efac;
+		background-color: #f0fdf4;
+	}
+	.subdivisao-zero legend {
+		color: #166534;
+		background-color: #dcfce7;
+		border: 1px solid #86efac;
+	}
+	.subdivisao-transf {
+		border-color: #93c5fd;
+		background-color: #eff6ff;
+	}
+	.subdivisao-transf legend {
+		color: #1e40af;
+		background-color: #dbeafe;
+		border: 1px solid #93c5fd;
+	}
