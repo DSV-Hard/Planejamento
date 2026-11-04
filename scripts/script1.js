@@ -66,6 +66,71 @@ document.addEventListener('focusout', (e) => {
 window.addEventListener('scroll', positionToolbar);
 window.addEventListener('resize', positionToolbar);
 
+// Listener global para capturar cópia (Ctrl+C) dentro de campos editáveis contendo miniaturas e links
+document.addEventListener('copy', (e) => {
+	const selection = window.getSelection();
+	if (!selection || !selection.rangeCount || selection.isCollapsed) return;
+
+	const anchorEl = selection.anchorNode ? (selection.anchorNode.nodeType === Node.ELEMENT_NODE ? selection.anchorNode : selection.anchorNode.parentElement) : null;
+	const editableParent = anchorEl ? anchorEl.closest('.editable-content, [contenteditable="true"]') : null;
+	if (!editableParent) return;
+
+	const range = selection.getRangeAt(0);
+	const clonedSelection = range.cloneContents();
+	const tempDiv = document.createElement('div');
+	tempDiv.appendChild(clonedSelection);
+
+	// Se a seleção contém elementos ricos (imagens, containers, links como PASTA ou LINK, anexos, etc.)
+	if (tempDiv.querySelector('img, a, .image-container, .attachment')) {
+		e.preventDefault();
+		const html = tempDiv.innerHTML;
+		const text = tempDiv.innerText || tempDiv.textContent;
+		if (e.clipboardData) {
+			e.clipboardData.setData('text/html', html);
+			e.clipboardData.setData('text/plain', text);
+		}
+	}
+});
+
+function processarTextoNos(root, doc) {
+	const pathRegex = /((?:[A-Z]:\\|\\\\)[^\n\r]+)/;
+	const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/;
+
+	const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+		acceptNode: function(node) {
+			if (!node.textContent || (!pathRegex.test(node.textContent) && !urlRegex.test(node.textContent))) {
+				return NodeFilter.FILTER_REJECT;
+			}
+			if (node.parentElement && (node.parentElement.closest('a') || node.parentElement.closest('script') || node.parentElement.closest('style'))) {
+				return NodeFilter.FILTER_REJECT;
+			}
+			return NodeFilter.FILTER_ACCEPT;
+		}
+	});
+
+	const nodesToReplace = [];
+	while (walker.nextNode()) {
+		nodesToReplace.push(walker.currentNode);
+	}
+
+	nodesToReplace.forEach(textNode => {
+		const text = textNode.textContent;
+		const span = doc.createElement('span');
+		let replaced = text.replace(/((?:[A-Z]:\\|\\\\)[^\n\r]+)/g, (path) => {
+			const sanitized = path.trim();
+			return `<a href="${sanitized}" title="${sanitized}" target="_blank" contenteditable="false" style="color: green; cursor: pointer; text-decoration: underline;">PASTA</a>`;
+		});
+		replaced = replaced.replace(/(https?:\/\/[^\s]+)|(www\.[^\s]+)/g, (url) => {
+			const fullUrl = url.startsWith('http') ? url : `http://${url}`;
+			return `<a href="${fullUrl}" title="${fullUrl}" target="_blank" contenteditable="false" style="color: blue; cursor: pointer; text-decoration: underline;">LINK</a>`;
+		});
+		span.innerHTML = replaced;
+		if (textNode.parentNode) {
+			textNode.parentNode.replaceChild(span, textNode);
+		}
+	});
+}
+
 function setupEditableContent(elementId) {
 	const element = document.getElementById(elementId);
 	if (!element) return;
@@ -85,41 +150,183 @@ function setupEditableContent(elementId) {
 		e.preventDefault();
 
 		const clipboardData = e.clipboardData || window.clipboardData;
+		if (!clipboardData) return;
+
 		let contentInserted = false;
 
-		if (clipboardData.files.length > 0) {
-			const file = clipboardData.files[0];
-			if (file.type.indexOf('image') !== -1) {
-				await processarArquivo(element, file);
-				contentInserted = true;
-			}
-		}
-
-		if (!contentInserted) {
-			const text = clipboardData.getData('text/plain');
-
-			if (text) {
-				const pathRegex = /((?:[A-Z]:\\|\\\\)[^\n\r]+)/g;
-				const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
-				let newContent = text;
-
-				if (text.match(pathRegex)) {
-					newContent = text.replace(pathRegex, (path) => {
-						const sanitized = path.trim();
-						return `<a href="${sanitized}" title="${sanitized}" target="_blank" contenteditable="false" style="color: green; cursor: pointer; text-decoration: underline;">PASTA</a>`;
-					});
-				} else if (text.match(urlRegex)) {
-					newContent = text.replace(urlRegex, (url) => {
-						const fullUrl = url.startsWith('http') ? url : `http://${url}`;
-						return `<a href="${fullUrl}" title="${fullUrl}" target="_blank" contenteditable="false" style="color: blue; cursor: pointer; text-decoration: underline;">LINK</a>`;
-					});
+		// 1. Arquivos de imagem colados diretamente (print de tela ou arquivo arrastado/copiado do explorer)
+		if (clipboardData.files && clipboardData.files.length > 0) {
+			for (const file of Array.from(clipboardData.files)) {
+				if (file.type && file.type.indexOf('image') !== -1) {
+					await processarArquivo(element, file);
+					contentInserted = true;
 				}
+			}
+			if (contentInserted) {
+				updateEditablePlaceholder(element);
+				autoResizeEditableContent(element);
+				if (element.oninput) element.oninput();
+				return;
+			}
+		}
 
-				document.execCommand('insertHTML', false, newContent);
+		if (clipboardData.items && clipboardData.items.length > 0 && (!clipboardData.files || clipboardData.files.length === 0)) {
+			for (const item of Array.from(clipboardData.items)) {
+				if (item.type && item.type.indexOf('image') !== -1) {
+					const file = item.getAsFile();
+					if (file) {
+						await processarArquivo(element, file);
+						contentInserted = true;
+					}
+				}
+			}
+			if (contentInserted) {
+				updateEditablePlaceholder(element);
+				autoResizeEditableContent(element);
+				if (element.oninput) element.oninput();
+				return;
+			}
+		}
+
+		// 2. Conteúdo HTML rico (copiado de outro campo do formulário, com miniaturas e links)
+		const html = clipboardData.getData('text/html');
+		const text = clipboardData.getData('text/plain');
+
+		const hasRichElements = html && (
+			html.includes('<img') || 
+			html.includes('<a') || 
+			html.includes('image-container') || 
+			html.includes('PASTA') || 
+			html.includes('LINK') || 
+			html.includes('attachment')
+		);
+
+		if (hasRichElements) {
+			const parser = new DOMParser();
+			const doc = parser.parseFromString(html, 'text/html');
+			const body = doc.body;
+
+			// Remove tags indesejadas ou perigosas
+			body.querySelectorAll('script, style, meta, link, iframe, object, embed').forEach(el => el.remove());
+
+			// Padroniza imagens com formato de miniatura e preserva/garante data-original-image
+			body.querySelectorAll('img').forEach(img => {
+				const originalSrc = img.getAttribute('data-original-image') || img.src;
+				img.setAttribute('data-original-image', originalSrc);
+				img.style.maxWidth = '150px';
+				img.style.maxHeight = '100px';
+				img.style.display = 'block';
+				img.style.border = '1px solid #ccc';
+				img.style.borderRadius = '4px';
+				img.style.cursor = 'pointer';
+
+				let parent = img.parentElement;
+				if (!parent || !parent.classList.contains('image-container')) {
+					const container = doc.createElement('div');
+					container.className = 'image-container';
+					container.style.display = 'inline-block';
+					container.style.marginTop = '5px';
+					container.style.marginBottom = '5px';
+					container.contentEditable = 'false';
+					img.parentNode.insertBefore(container, img);
+					container.appendChild(img);
+				} else {
+					parent.contentEditable = 'false';
+					parent.style.display = 'inline-block';
+				}
+			});
+
+			// Padroniza links (PASTA, LINK e anexos)
+			body.querySelectorAll('a').forEach(a => {
+				a.contentEditable = 'false';
+				a.target = '_blank';
+				const txt = a.textContent.trim().toUpperCase();
+				if (txt === 'PASTA' || a.classList.contains('pasta-link')) {
+					a.style.color = 'green';
+					a.style.cursor = 'pointer';
+					a.style.textDecoration = 'underline';
+				} else if (txt === 'LINK' || a.classList.contains('web-link')) {
+					a.style.color = 'blue';
+					a.style.cursor = 'pointer';
+					a.style.textDecoration = 'underline';
+				}
+			});
+
+			// Processa possíveis caminhos ou URLs em nós de texto soltos
+			processarTextoNos(body, doc);
+
+			const cleanHtml = body.innerHTML;
+			if (cleanHtml) {
+				element.focus();
+				let success = false;
+				try {
+					success = document.execCommand('insertHTML', false, cleanHtml);
+				} catch (err) {
+					success = false;
+				}
+				if (!success) {
+					const temp = document.createElement('div');
+					temp.innerHTML = cleanHtml;
+					const frag = document.createDocumentFragment();
+					while (temp.firstChild) {
+						frag.appendChild(temp.firstChild);
+					}
+					if (typeof insertAtCursor === 'function') {
+						insertAtCursor(element, frag);
+					} else {
+						element.appendChild(frag);
+					}
+				}
 				contentInserted = true;
 			}
 		}
 
+		// 3. Fallback para Texto Puro (quando não houver elementos ricos em HTML)
+		if (!contentInserted && text) {
+			const pathRegex = /((?:[A-Z]:\\|\\\\)[^\n\r]+)/g;
+			const urlRegex = /(https?:\/\/[^\s]+)|(www\.[^\s]+)/g;
+			let newContent = text;
+
+			if (text.match(pathRegex)) {
+				newContent = text.replace(pathRegex, (path) => {
+					const sanitized = path.trim();
+					return `<a href="${sanitized}" title="${sanitized}" target="_blank" contenteditable="false" style="color: green; cursor: pointer; text-decoration: underline;">PASTA</a>`;
+				});
+			} else if (text.match(urlRegex)) {
+				newContent = text.replace(urlRegex, (url) => {
+					const fullUrl = url.startsWith('http') ? url : `http://${url}`;
+					return `<a href="${fullUrl}" title="${fullUrl}" target="_blank" contenteditable="false" style="color: blue; cursor: pointer; text-decoration: underline;">LINK</a>`;
+				});
+			}
+
+			// Converte quebras de linha em <br> para manter a estrutura do texto
+			newContent = newContent.replace(/\r\n|\n/g, '<br>');
+
+			element.focus();
+			let success = false;
+			try {
+				success = document.execCommand('insertHTML', false, newContent);
+			} catch (err) {
+				success = false;
+			}
+			if (!success) {
+				const temp = document.createElement('div');
+				temp.innerHTML = newContent;
+				const frag = document.createDocumentFragment();
+				while (temp.firstChild) {
+					frag.appendChild(temp.firstChild);
+				}
+				if (typeof insertAtCursor === 'function') {
+					insertAtCursor(element, frag);
+				} else {
+					element.appendChild(frag);
+				}
+			}
+			contentInserted = true;
+		}
+
+		updateEditablePlaceholder(element);
+		autoResizeEditableContent(element);
 		if (element.oninput) {
 			element.oninput();
 		}
@@ -247,21 +454,53 @@ function renderizarFormularioCapitulo(idx) {
 		}
 	}
 
+	const isZeroTransferencia = dados.transferencia === 'zero_transferencia';
+
 	// --- Bloco Comum (Transferência e Páginas Previstas) ---
 	const commonTransferHtml = `
 		<div class="checkbox-block">
-			<div class="checkbox-inline" onchange="toggleIdTransfPrincipal(${idx}); togglePaginasPrevistaPrincipal(${idx}); salvarDadosSistema(${idx})">
+			<div class="checkbox-inline" onchange="salvarDadosSistema(${idx}); renderizarFormularioCapitulo(${idx})">
 				<label><input type="radio" name="transferencia_${idx}" value="zero" ${dados.transferencia === 'zero' || !dados.transferencia ? 'checked' : ''}> Fazer do Zero</label>
 				<label><input type="radio" name="transferencia_${idx}" value="transferencia" ${dados.transferencia === 'transferencia' ? 'checked' : ''}> Transferência</label>
+				<label><input type="radio" name="transferencia_${idx}" value="zero_transferencia" ${dados.transferencia === 'zero_transferencia' ? 'checked' : ''}> Fazer do Zero+Transferir</label>
 				<label><input type="radio" name="transferencia_${idx}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 			</div>
 		</div>
-		<input type="number" id="idtransf_${idx}" name="idtransf_${idx}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia' ? 'block' : 'none'}" onchange="salvarDadosSistema(${idx})">
+		<input type="number" id="idtransf_${idx}" name="idtransf_${idx}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" style="display: ${(dados.transferencia === 'transferencia' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'}" onchange="salvarDadosSistema(${idx})">
 		
-		<div data-container-for="paginasprev_${idx}" style="display: ${dados.transferencia === 'modificar' ? 'none' : 'block'}">
+		<div data-container-for="paginasprev_${idx}" style="display: ${(dados.transferencia !== 'modificar' && dados.transferencia !== 'zero_transferencia') ? 'block' : 'none'}">
 			<label>Nº páginas prevista</label>
 			<input type="number" name="paginasprev_${idx}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
 		</div>
+
+		<div data-container-for="paginasprev_dupla_${idx}" style="display: ${dados.transferencia === 'zero_transferencia' ? 'block' : 'none'}; margin-top: 5px;">
+			<div style="display: flex; gap: 12px;">
+				<div style="flex: 1;">
+					<label>Nº pg prevista (Fazer do Zero)</label>
+					<input type="number" name="paginasprev_zero_${idx}" value="${dados.paginasprev_zero || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+				</div>
+				<div style="flex: 1;">
+					<label>Nº pg prevista (Transferência)</label>
+					<input type="number" name="paginasprev_transf_${idx}" value="${dados.paginasprev_transf || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistema(${idx})">
+				</div>
+			</div>
+		</div>
+	`;
+
+	const zeroTransferenciaDevelopmentHtml = `
+		<fieldset>
+			<legend>DESENVOLVIMENTO</legend>
+			<fieldset class="subdivisao-desenvolvimento subdivisao-zero">
+				<legend>PARTE FAZER DO ZERO</legend>
+				<div id="dynamic-content-container-zero_${idx}"></div>
+				<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaZero(${idx})">+ Adicionar Página</button>
+			</fieldset>
+			<fieldset class="subdivisao-desenvolvimento subdivisao-transf">
+				<legend>PARTE TRANSFERIR</legend>
+				<div id="dynamic-content-container-transf_${idx}"></div>
+				<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaTransf(${idx})">+ Adicionar Página</button>
+			</fieldset>
+		</fieldset>
 	`;
 	
 	// --- Bloco Padrão (Módulo, Nome, Conectores, etc.) ---
@@ -324,17 +563,44 @@ function renderizarFormularioCapitulo(idx) {
 		</fieldset>
 	`;
 
-	if (isCaixasForm) {
-         const fusiveisOptionsHtml = `
-             <div class="checkbox-blockk"></div>
-             <label class="checkbox-title">TIPO DE DEMANDA:</label>
-             <div class="checkbox-inline" onchange="salvarDadosSistema(${idx})">
-                 <label><input type="radio" name="tipo_fusiveis_${idx}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
-                 <label><input type="radio" name="tipo_fusiveis_${idx}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
-                 <label><input type="radio" name="tipo_fusiveis_${idx}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
-             </div>
-             <div class="checkbox-blockk"></div>
-         `;
+	const fusiveisOptionsHtml = `
+         <div class="checkbox-blockk"></div>
+         <label class="checkbox-title">TIPO DE DEMANDA:</label>
+         <div class="checkbox-inline" onchange="salvarDadosSistema(${idx})">
+             <label><input type="radio" name="tipo_fusiveis_${idx}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
+             <label><input type="radio" name="tipo_fusiveis_${idx}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
+             <label><input type="radio" name="tipo_fusiveis_${idx}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
+         </div>
+         <div class="checkbox-blockk"></div>
+    `;
+
+	if (isZeroTransferencia) {
+		if (isCaixasForm) {
+			container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + zeroTransferenciaDevelopmentHtml;
+		} else if (isPaginasForm) {
+			container.innerHTML = commonTransferHtml + zeroTransferenciaDevelopmentHtml;
+		} else {
+			container.innerHTML = `
+				${commonTransferHtml}
+				<div class="checkbox-blockk"></div>
+				<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
+				<div class="checkbox-inline" onchange="toggleModuloDedicadoPrincipal(${idx}); salvarDadosSistema(${idx})">
+					<label><input type="radio" name="modulo_dedicado_${idx}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
+					<label><input type="radio" name="modulo_dedicado_${idx}" value="nao" ${dados.modulo_dedicado === 'nao' ? 'checked' : ''}> NÃO</label>
+				</div>
+				
+				<div id="standard-module-fields_${idx}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
+					${standardModuleHtml}
+				</div>
+				
+				<div id="development-fields_${idx}">
+					${zeroTransferenciaDevelopmentHtml}
+				</div>
+			`;
+		}
+		renderizarPaginasZero(idx);
+		renderizarPaginasTransf(idx);
+	} else if (isCaixasForm) {
 		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
 		renderizarCaixas(idx);
 	} else if (isPaginasForm) {
@@ -451,6 +717,116 @@ function moverPagina(sistemaIndex, paginaIndex, direcao) {
 	renderizarPaginas(sistemaIndex);
 }
 
+function adicionarPaginaZero(sistemaIndex) {
+	const dados = sistemasData[sistemaIndex];
+	if (!dados.paginas_zero) dados.paginas_zero = [];
+	dados.paginas_zero.push({ conteudo: '' });
+	renderizarPaginasZero(sistemaIndex);
+}
+
+function removerPaginaZero(sistemaIndex, paginaIndex) {
+	if (sistemasData[sistemaIndex] && sistemasData[sistemaIndex].paginas_zero) {
+		sistemasData[sistemaIndex].paginas_zero.splice(paginaIndex, 1);
+		renderizarPaginasZero(sistemaIndex);
+	}
+}
+
+function moverPaginaZero(sistemaIndex, paginaIndex, direcao) {
+	const paginas = sistemasData[sistemaIndex]?.paginas_zero;
+	if (!paginas) return;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginasZero(sistemaIndex);
+}
+
+function renderizarPaginasZero(sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-zero_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = sistemasData[sistemaIndex]?.paginas_zero || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_zero_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label for="${descId}">Página ${i + 1} (Fazer do Zero)</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPaginaZero(${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaZero(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaZero(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { sistemasData[sistemaIndex].paginas_zero[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
+
+function adicionarPaginaTransf(sistemaIndex) {
+	const dados = sistemasData[sistemaIndex];
+	if (!dados.paginas_transf) dados.paginas_transf = [];
+	dados.paginas_transf.push({ conteudo: '' });
+	renderizarPaginasTransf(sistemaIndex);
+}
+
+function removerPaginaTransf(sistemaIndex, paginaIndex) {
+	if (sistemasData[sistemaIndex] && sistemasData[sistemaIndex].paginas_transf) {
+		sistemasData[sistemaIndex].paginas_transf.splice(paginaIndex, 1);
+		renderizarPaginasTransf(sistemaIndex);
+	}
+}
+
+function moverPaginaTransf(sistemaIndex, paginaIndex, direcao) {
+	const paginas = sistemasData[sistemaIndex]?.paginas_transf;
+	if (!paginas) return;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginasTransf(sistemaIndex);
+}
+
+function renderizarPaginasTransf(sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-transf_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = sistemasData[sistemaIndex]?.paginas_transf || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_transf_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label for="${descId}">Página ${i + 1} (Transferência)</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPaginaTransf(${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaTransf(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaTransf(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { sistemasData[sistemaIndex].paginas_transf[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
+
 function renderizarPaginas(sistemaIndex) {
 	const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
 	if (!container) return;
@@ -514,19 +890,52 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 		}
 	}
 
+	const isZeroTransferencia = dados.transferencia === 'zero_transferencia';
+
 	const commonTransferHtml = `
 		<div class="checkbox-block">
-			<div class="checkbox-inline" onchange="toggleIdTransfAplicaveis(${veiculoIndex}, ${sistemaIndex}); togglePaginasPrevistaAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+			<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex}); renderizarFormularioCapituloAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_principal" ${dados.transferencia === 'transferencia_principal' || !dados.transferencia ? 'checked' : ''}> Transferência (do Principal)</label>
 				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="transferencia_outro" ${dados.transferencia === 'transferencia_outro' ? 'checked' : ''}> Transferência (Outro)</label>
+				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="zero_transferencia" ${dados.transferencia === 'zero_transferencia' ? 'checked' : ''}> Fazer do Zero+Transferir</label>
 				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 			</div>
 		</div>
-		<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID..." value="${dados.idtransf || ''}" style="display: ${dados.transferencia === 'transferencia_outro' ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-		<div data-container-for="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.transferencia === 'modificar' ? 'none' : 'block'}">
+		<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" style="display: ${(dados.transferencia === 'transferencia_outro' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		
+		<div data-container-for="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${(dados.transferencia !== 'modificar' && dados.transferencia !== 'zero_transferencia') ? 'block' : 'none'}">
 			<label>Nº páginas prevista</label>
 			<input type="number" name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
 		</div>
+
+		<div data-container-for="paginasprev_dupla_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.transferencia === 'zero_transferencia' ? 'block' : 'none'}; margin-top: 5px;">
+			<div style="display: flex; gap: 12px;">
+				<div style="flex: 1;">
+					<label>Nº pg prevista (Fazer do Zero)</label>
+					<input type="number" name="paginasprev_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev_zero || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				</div>
+				<div style="flex: 1;">
+					<label>Nº pg prevista (Transferência)</label>
+					<input type="number" name="paginasprev_transf_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="${dados.paginasprev_transf || ''}" placeholder="Apenas números" oninput="this.value = this.value.replace(/[^0-9]/g, ''); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+				</div>
+			</div>
+		</div>
+	`;
+
+	const zeroTransferenciaDevelopmentHtmlAplicaveis = `
+		<fieldset>
+			<legend>DESENVOLVIMENTO</legend>
+			<fieldset class="subdivisao-desenvolvimento subdivisao-zero">
+				<legend>PARTE FAZER DO ZERO</legend>
+				<div id="dynamic-content-container-aplicaveis-zero_${veiculoIndex}_${sistemaIndex}"></div>
+				<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+			</fieldset>
+			<fieldset class="subdivisao-desenvolvimento subdivisao-transf">
+				<legend>PARTE TRANSFERIR</legend>
+				<div id="dynamic-content-container-aplicaveis-transf_${veiculoIndex}_${sistemaIndex}"></div>
+				<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+			</fieldset>
+		</fieldset>
 	`;
 
 	const standardModuleHtml = `
@@ -577,17 +986,44 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 		</fieldset>
 	`;
 
-	if (isCaixasForm) {
-		const fusiveisOptionsHtml = `
-			<div class="checkbox-blockk"></div>
-			<label class="checkbox-title">TIPO DE DEMANDA:</label>
-			<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
-				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
-				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
-				<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
-			</div>
-			<div class="checkbox-blockk"></div>
-		`;
+	const fusiveisOptionsHtml = `
+		<div class="checkbox-blockk"></div>
+		<label class="checkbox-title">TIPO DE DEMANDA:</label>
+		<div class="checkbox-inline" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+			<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Simplificado" ${dados.tipo_fusiveis === 'Simplificado' || !dados.tipo_fusiveis ? 'checked' : ''}> Simplificado</label>
+			<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Completo" ${dados.tipo_fusiveis === 'Completo' ? 'checked' : ''}> Completo</label>
+			<label><input type="radio" name="tipo_fusiveis_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="Adicionar tabelas" ${dados.tipo_fusiveis === 'Adicionar tabelas' ? 'checked' : ''}> Adicionar tabelas</label>
+		</div>
+		<div class="checkbox-blockk"></div>
+	`;
+
+	if (isZeroTransferencia) {
+		if (isCaixasForm) {
+			container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + zeroTransferenciaDevelopmentHtmlAplicaveis;
+		} else if (isPaginasForm) {
+			container.innerHTML = commonTransferHtml + zeroTransferenciaDevelopmentHtmlAplicaveis;
+		} else {
+			container.innerHTML = `
+				${commonTransferHtml}
+				<div class="checkbox-blockk"></div>
+				<label class="checkbox-title">POSSUI MÓDULO DEDICADO?</label>
+				<div class="checkbox-inline" onchange="toggleModuloDedicadoAplicaveis(${veiculoIndex}, ${sistemaIndex}); salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+					<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="sim" ${dados.modulo_dedicado === 'sim' ? 'checked' : ''}> SIM</label>
+					<label><input type="radio" name="modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="nao" ${dados.modulo_dedicado === 'nao' ? 'checked' : ''}> NÃO</label>
+				</div>
+				
+				<div id="standard-module-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${dados.modulo_dedicado === 'sim' ? 'block' : 'none'};">
+					${standardModuleHtml}
+				</div>
+				
+				<div id="development-fields-aplicaveis_${veiculoIndex}_${sistemaIndex}">
+					${zeroTransferenciaDevelopmentHtmlAplicaveis}
+				</div>
+			`;
+		}
+		if (typeof renderizarPaginasAplicaveisZero === 'function') renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
+		if (typeof renderizarPaginasAplicaveisTransf === 'function') renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
+	} else if (isCaixasForm) {
 		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
 		renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
 	} else if (isPaginasForm) {
@@ -719,7 +1155,25 @@ function toggleModuloDedicadoPrincipal(index) {
 	}
 
 	if (developmentContainer) {
-		if (moduloDedicado === 'sim') {
+		if (dados.transferencia === 'zero_transferencia') {
+			developmentContainer.innerHTML = `
+				<fieldset>
+					<legend>DESENVOLVIMENTO</legend>
+					<fieldset class="subdivisao-desenvolvimento subdivisao-zero">
+						<legend>PARTE FAZER DO ZERO</legend>
+						<div id="dynamic-content-container-zero_${index}"></div>
+						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaZero(${index})">+ Adicionar Página</button>
+					</fieldset>
+					<fieldset class="subdivisao-desenvolvimento subdivisao-transf">
+						<legend>PARTE TRANSFERIR</legend>
+						<div id="dynamic-content-container-transf_${index}"></div>
+						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaTransf(${index})">+ Adicionar Página</button>
+					</fieldset>
+				</fieldset>
+			`;
+			renderizarPaginasZero(index);
+			renderizarPaginasTransf(index);
+		} else if (moduloDedicado === 'sim') {
 			developmentContainer.innerHTML = `
 				<fieldset>
 					<legend>DESENVOLVIMENTO</legend>
@@ -787,12 +1241,43 @@ function togglePaginasPrevistaAplicaveis(veiculoIndex, sistemaIndex) {
 	}
 }
 
+function rolarParaTituloCapitulo() {
+	setTimeout(() => {
+		// Elemento alvo: o fieldset de SISTEMAS ou o container/label
+		const target = document.getElementById('sistemas-container')?.closest('fieldset') 
+			|| document.querySelector('#sistemas-container label') 
+			|| document.getElementById('sistemas-container');
+		if (target) {
+			// 1. Barra preta fixa no topo (módulos / ações gerais)
+			const topNav = document.querySelector('.top-nav-modulos');
+			const topNavHeight = topNav ? topNav.offsetHeight : 58;
+
+			// 2. Barra de navegação e botões fixa no topo (#sticky-action-bar)
+			const stickyBar = document.getElementById('sticky-action-bar');
+			const stickyBarHeight = stickyBar ? stickyBar.offsetHeight : 115;
+
+			// Altura total combinada das duas barras fixas no topo + margem de respiro
+			const totalFixedOffset = topNavHeight + stickyBarHeight + 15;
+
+			const rect = target.getBoundingClientRect();
+			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+			const targetY = rect.top + scrollTop - totalFixedOffset;
+
+			window.scrollTo({
+				top: Math.max(0, targetY),
+				behavior: 'smooth'
+			});
+		}
+	}, 30);
+}
+
 function adicionarSistema() {
 	const sistemasContainer = document.getElementById('sistemas-container');
 	if (sistemasData.length > 0) salvarDadosSistema(paginaAtual);
 	sistemasData.push({});
 	renderizarPaginacao();
 	mostrarPagina(sistemasData.length - 1);
+	rolarParaTituloCapitulo();
 }
 
 function moverSistema(direcao) {
@@ -804,6 +1289,7 @@ function moverSistema(direcao) {
 	paginaAtual = newIndex;
 	renderizarPaginacao();
 	renderizarSistema(paginaAtual);
+	rolarParaTituloCapitulo();
 }
 
 function removerUltimoSistema() {
@@ -833,10 +1319,12 @@ function removerUltimoSistema() {
 			paginaAtual = Math.min(sistemaIndex, sistemasData.length - 1); 
 			renderizarPaginacao();
 			renderizarSistema(paginaAtual);
+			rolarParaTituloCapitulo();
 		} else {
 			document.getElementById('sistemas-container').innerHTML = '';
 			document.getElementById('paginas-navegacao').innerHTML = '';
 			paginaAtual = 0;
+			rolarParaTituloCapitulo();
 		}
 	};
 
@@ -851,6 +1339,7 @@ function mostrarPagina(index) {
 		paginaAtual = index;
 		renderizarPaginacao();
 		renderizarSistema(paginaAtual);
+		rolarParaTituloCapitulo();
 	}
 }
 
@@ -866,6 +1355,7 @@ function renderizarPaginacao() {
 			paginaAtual = index;
 			renderizarSistema(paginaAtual);
 			renderizarPaginacao();
+			rolarParaTituloCapitulo();
 		};
 		btn.classList.add("btn-paginacao");
 		const tituloCap = sistemasData[index]?.sistema;
@@ -898,45 +1388,89 @@ function salvarDadosSistema(index) {
 
 	let caixasExistentes = (sistemasData[index] && sistemasData[index].caixas) ? sistemasData[index].caixas : [];
 	let paginasExistentes = (sistemasData[index] && sistemasData[index].paginas) ? sistemasData[index].paginas : [];
+	let paginasZeroExistentes = (sistemasData[index] && sistemasData[index].paginas_zero) ? sistemasData[index].paginas_zero : [];
+	let paginasTransfExistentes = (sistemasData[index] && sistemasData[index].paginas_transf) ? sistemasData[index].paginas_transf : [];
 
-	// Sincroniza diretamente do DOM caso o container dinâmico de desenvolvimento esteja renderizado:
-	const dynamicContainer = document.getElementById(`dynamic-content-container_${index}`);
-	if (dynamicContainer) {
-		const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
-		if (caixasDOMElements.length > 0) {
-			const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
-			const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
-			if (isCaixas) {
-				const caixasAtualizadas = [];
-				caixasDOMElements.forEach((item, i) => {
-					const inputNome = item.querySelector('input[type="text"]');
+	// Sincroniza diretamente do DOM caso os containers dinâmicos estejam renderizados:
+	if (transferenciaValue === 'zero_transferencia') {
+		const dynamicZero = document.getElementById(`dynamic-content-container-zero_${index}`);
+		if (dynamicZero) {
+			const itemsZero = dynamicZero.querySelectorAll('.caixa-item');
+			if (itemsZero.length > 0) {
+				const atualizadas = [];
+				itemsZero.forEach((item, i) => {
 					const descEl = item.querySelector('.editable-content');
-					caixasAtualizadas.push({
-						nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
-						descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+					atualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasZeroExistentes[i]?.conteudo || '')
 					});
 				});
-				caixasExistentes = caixasAtualizadas;
-			} else {
-				const paginasAtualizadas = [];
-				caixasDOMElements.forEach((item, i) => {
+				paginasZeroExistentes = atualizadas;
+			}
+		}
+
+		const dynamicTransf = document.getElementById(`dynamic-content-container-transf_${index}`);
+		if (dynamicTransf) {
+			const itemsTransf = dynamicTransf.querySelectorAll('.caixa-item');
+			if (itemsTransf.length > 0) {
+				const atualizadas = [];
+				itemsTransf.forEach((item, i) => {
 					const descEl = item.querySelector('.editable-content');
-					paginasAtualizadas.push({
-						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+					atualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasTransfExistentes[i]?.conteudo || '')
 					});
 				});
-				paginasExistentes = paginasAtualizadas;
+				paginasTransfExistentes = atualizadas;
+			}
+		}
+	} else {
+		const dynamicContainer = document.getElementById(`dynamic-content-container_${index}`);
+		if (dynamicContainer) {
+			const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
+			if (caixasDOMElements.length > 0) {
+				const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
+				const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
+				if (isCaixas) {
+					const caixasAtualizadas = [];
+					caixasDOMElements.forEach((item, i) => {
+						const inputNome = item.querySelector('input[type="text"]');
+						const descEl = item.querySelector('.editable-content');
+						caixasAtualizadas.push({
+							nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
+							descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+						});
+					});
+					caixasExistentes = caixasAtualizadas;
+				} else {
+					const paginasAtualizadas = [];
+					caixasDOMElements.forEach((item, i) => {
+						const descEl = item.querySelector('.editable-content');
+						paginasAtualizadas.push({
+							conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+						});
+					});
+					paginasExistentes = paginasAtualizadas;
+				}
 			}
 		}
 	}
 
+	const pagZeroVal = getVal(`input[name="paginasprev_zero_${index}"]`);
+	const pagTransfVal = getVal(`input[name="paginasprev_transf_${index}"]`);
+	const pagPrevTotal = transferenciaValue === 'zero_transferencia'
+		? String((parseInt(pagZeroVal, 10) || 0) + (parseInt(pagTransfVal, 10) || 0))
+		: getVal(`input[name="paginasprev_${index}"]`);
+
 	sistemasData[index] = {
 		caixas: caixasExistentes,
 		paginas: paginasExistentes,
+		paginas_zero: paginasZeroExistentes,
+		paginas_transf: paginasTransfExistentes,
 		sistema: sistemaValor,
 		transferencia: transferenciaValue,
 		idtransf: getVal(`#idtransf_${index}`),
-		paginasprev: getVal(`input[name="paginasprev_${index}"]`),
+		paginasprev: pagPrevTotal,
+		paginasprev_zero: pagZeroVal,
+		paginasprev_transf: pagTransfVal,
 		tipo_iluminacao: getRadio(`tipo_iluminacao_${index}`),
 		modulo_dedicado: getRadio(`modulo_dedicado_${index}`),
 		tipo_fusiveis: getRadio(`tipo_fusiveis_${index}`),
