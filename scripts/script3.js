@@ -24,21 +24,38 @@ function salvarDadosVeiculoAplicavel(veiculoIndex) {
 function abrirModalCopia(veiculoIndex) {
 	targetVeiculoIndexParaCopia = veiculoIndex;
 
+	const modalTitle = document.querySelector('#copy-chapter-modal h3');
+	if (modalTitle) {
+		modalTitle.textContent = (veiculoIndex === 'principal') 
+			? 'Copiar Capítulo(s) para Veículo Principal' 
+			: `Copiar Capítulo(s) para Veículo Aplicável ${typeof veiculoIndex === 'number' ? veiculoIndex + 1 : ''}`;
+	}
+
 	const selectVeiculo = document.getElementById('select-veiculo-copia');
 	selectVeiculo.innerHTML = ''; 
 
 	const optPrincipal = document.createElement('option');
 	optPrincipal.value = 'principal';
-	optPrincipal.textContent = 'Veículo Principal';
+	const principalVeiculoInput = document.getElementById('veiculo');
+	const principalLabel = (principalVeiculoInput && principalVeiculoInput.value) 
+		? (typeof extrairTooltipVeiculo === 'function' ? extrairTooltipVeiculo(principalVeiculoInput.value) : principalVeiculoInput.value) 
+		: 'Veículo Principal';
+	optPrincipal.textContent = `Veículo Principal: ${principalLabel}`;
 	selectVeiculo.appendChild(optPrincipal);
 
 	veiculosAplicaveisData.forEach((veiculo, idx) => {
 		const optAplicavel = document.createElement('option');
 		optAplicavel.value = `aplicavel_${idx}`;
-		const veiculoLabel = extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) || `Veículo ${idx + 1}`;
+		const veiculoLabel = (typeof extrairTooltipVeiculo === 'function' ? extrairTooltipVeiculo(veiculo.dadosGerais.veiculo) : '') || `Veículo ${idx + 1}`;
 		optAplicavel.textContent = `Veículo Aplicável ${idx + 1}: ${veiculoLabel}`;
 		selectVeiculo.appendChild(optAplicavel);
 	});
+
+	if (veiculoIndex === 'principal' && sistemasData.length === 0 && veiculosAplicaveisData.length > 0) {
+		selectVeiculo.value = 'aplicavel_0';
+	} else {
+		selectVeiculo.value = 'principal';
+	}
 
 	popularCapitulosParaCopia();
 
@@ -103,7 +120,7 @@ function executarCopiaCapitulo() {
 	const selectedVeiculoValue = selectVeiculo.value;
 	const checkboxesMarcados = checkboxesContainer.querySelectorAll('input[type="checkbox"]:checked');
 	
-	if (targetVeiculoIndexParaCopia === null) {
+	if (targetVeiculoIndexParaCopia === null || targetVeiculoIndexParaCopia === undefined) {
 		alert('Erro: Veículo de destino inválido.');
 		return;
 	}
@@ -121,34 +138,70 @@ function executarCopiaCapitulo() {
 		isCopiandoDoPrincipal = true;
 	} else if (selectedVeiculoValue.startsWith('aplicavel_')) {
 		const veiculoIndex = parseInt(selectedVeiculoValue.split('_')[1], 10);
-		sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
+		if (veiculosAplicaveisData[veiculoIndex]) {
+			sourceSistemas = veiculosAplicaveisData[veiculoIndex].sistemas;
+		}
 		isCopiandoDoPrincipal = false;
 	}
 
-	const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
-	
-	checkboxesMarcados.forEach(checkbox => {
-		const capituloIndex = parseInt(checkbox.value, 10);
-		const capituloParaCopiar = sourceSistemas[capituloIndex];
-		
-		if (capituloParaCopiar) {
-			const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
-			
-			if (isCopiandoDoPrincipal) {
-				if (copiaCapitulo.transferencia === 'transferencia') {
-					copiaCapitulo.transferencia = 'transferencia_principal';
-				} else if (copiaCapitulo.transferencia === 'zero') {
-					copiaCapitulo.transferencia = 'transferencia_principal';
-				}
-			}
-			
-			veiculoDestino.sistemas.push(copiaCapitulo);
+	if (targetVeiculoIndexParaCopia === 'principal') {
+		if (sistemasData.length > 0 && typeof paginaAtual === 'number') {
+			salvarDadosSistema(paginaAtual);
 		}
-	});
 
-	veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
-	renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
-	renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+		checkboxesMarcados.forEach(checkbox => {
+			const capituloIndex = parseInt(checkbox.value, 10);
+			const capituloParaCopiar = sourceSistemas[capituloIndex];
+			
+			if (capituloParaCopiar) {
+				const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
+				
+				if (copiaCapitulo.transferencia === 'transferencia_principal' || copiaCapitulo.transferencia === 'transferencia_outro') {
+					copiaCapitulo.transferencia = 'transferencia';
+				}
+				
+				sistemasData.push(copiaCapitulo);
+			}
+		});
+
+		paginaAtual = sistemasData.length - 1;
+		renderizarPaginacao();
+		renderizarSistema(paginaAtual);
+		if (typeof rolarParaTituloCapitulo === 'function') {
+			rolarParaTituloCapitulo();
+		}
+	} else {
+		const veiculoDestino = veiculosAplicaveisData[targetVeiculoIndexParaCopia];
+		if (!veiculoDestino) {
+			alert('Erro: Veículo de destino não encontrado.');
+			return;
+		}
+
+		if (veiculoDestino.sistemas && veiculoDestino.sistemas.length > 0 && typeof veiculoDestino.paginaAtual === 'number') {
+			salvarDadosSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+		}
+		
+		checkboxesMarcados.forEach(checkbox => {
+			const capituloIndex = parseInt(checkbox.value, 10);
+			const capituloParaCopiar = sourceSistemas[capituloIndex];
+			
+			if (capituloParaCopiar) {
+				const copiaCapitulo = JSON.parse(JSON.stringify(capituloParaCopiar));
+				
+				if (isCopiandoDoPrincipal) {
+					if (copiaCapitulo.transferencia === 'transferencia' || copiaCapitulo.transferencia === 'zero') {
+						copiaCapitulo.transferencia = 'transferencia_principal';
+					}
+				}
+				
+				veiculoDestino.sistemas.push(copiaCapitulo);
+			}
+		});
+
+		veiculoDestino.paginaAtual = veiculoDestino.sistemas.length - 1;
+		renderizarPaginacaoAplicaveis(targetVeiculoIndexParaCopia);
+		renderizarSistemaAplicaveis(targetVeiculoIndexParaCopia, veiculoDestino.paginaAtual);
+	}
 	
 	document.getElementById('copy-chapter-modal').style.display = 'none';
 	targetVeiculoIndexParaCopia = null;
@@ -256,7 +309,25 @@ function toggleModuloDedicadoAplicaveis(veiculoIndex, sistemaIndex) {
 	}
 
 	if (developmentContainer) {
-		if (moduloDedicado === 'sim') {
+		if (dados.transferencia === 'zero_transferencia') {
+			developmentContainer.innerHTML = `
+				<fieldset>
+					<legend>DESENVOLVIMENTO</legend>
+					<fieldset class="subdivisao-desenvolvimento subdivisao-zero">
+						<legend>PARTE FAZER DO ZERO</legend>
+						<div id="dynamic-content-container-aplicaveis-zero_${veiculoIndex}_${sistemaIndex}"></div>
+						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+					</fieldset>
+					<fieldset class="subdivisao-desenvolvimento subdivisao-transf">
+						<legend>PARTE TRANSFERIR</legend>
+						<div id="dynamic-content-container-aplicaveis-transf_${veiculoIndex}_${sistemaIndex}"></div>
+						<button type="button" class="btn-adicionar-caixa" onclick="adicionarPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Página</button>
+					</fieldset>
+				</fieldset>
+			`;
+			if (typeof renderizarPaginasAplicaveisZero === 'function') renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
+			if (typeof renderizarPaginasAplicaveisTransf === 'function') renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
+		} else if (moduloDedicado === 'sim') {
 			developmentContainer.innerHTML = `
 				<fieldset>
 					<legend>DESENVOLVIMENTO</legend>
@@ -419,46 +490,90 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 
 	let caixasExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].caixas || []) : [];
 	let paginasExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].paginas || []) : [];
+	let paginasZeroExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].paginas_zero || []) : [];
+	let paginasTransfExistentes = veiculo.sistemas[sistemaIndex] ? (veiculo.sistemas[sistemaIndex].paginas_transf || []) : [];
 
-	// Sincroniza diretamente do DOM caso o container dinâmico de desenvolvimento esteja renderizado:
-	const dynamicContainer = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	if (dynamicContainer) {
-		const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
-		if (caixasDOMElements.length > 0) {
-			const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
-			const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
-			if (isCaixas) {
-				const caixasAtualizadas = [];
-				caixasDOMElements.forEach((item, i) => {
-					const inputNome = item.querySelector('input[type="text"]');
+	// Sincroniza diretamente do DOM caso os containers dinâmicos estejam renderizados:
+	if (transferenciaValue === 'zero_transferencia') {
+		const dynamicZero = document.getElementById(`dynamic-content-container-aplicaveis-zero_${veiculoIndex}_${sistemaIndex}`);
+		if (dynamicZero) {
+			const itemsZero = dynamicZero.querySelectorAll('.caixa-item');
+			if (itemsZero.length > 0) {
+				const atualizadas = [];
+				itemsZero.forEach((item, i) => {
 					const descEl = item.querySelector('.editable-content');
-					caixasAtualizadas.push({
-						nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
-						descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+					atualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasZeroExistentes[i]?.conteudo || '')
 					});
 				});
-				caixasExistentes = caixasAtualizadas;
-			} else {
-				const paginasAtualizadas = [];
-				caixasDOMElements.forEach((item, i) => {
+				paginasZeroExistentes = atualizadas;
+			}
+		}
+
+		const dynamicTransf = document.getElementById(`dynamic-content-container-aplicaveis-transf_${veiculoIndex}_${sistemaIndex}`);
+		if (dynamicTransf) {
+			const itemsTransf = dynamicTransf.querySelectorAll('.caixa-item');
+			if (itemsTransf.length > 0) {
+				const atualizadas = [];
+				itemsTransf.forEach((item, i) => {
 					const descEl = item.querySelector('.editable-content');
-					paginasAtualizadas.push({
-						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+					atualizadas.push({
+						conteudo: descEl ? descEl.innerHTML : (paginasTransfExistentes[i]?.conteudo || '')
 					});
 				});
-				paginasExistentes = paginasAtualizadas;
+				paginasTransfExistentes = atualizadas;
+			}
+		}
+	} else {
+		const dynamicContainer = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
+		if (dynamicContainer) {
+			const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
+			if (caixasDOMElements.length > 0) {
+				const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
+				const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
+				if (isCaixas) {
+					const caixasAtualizadas = [];
+					caixasDOMElements.forEach((item, i) => {
+						const inputNome = item.querySelector('input[type="text"]');
+						const descEl = item.querySelector('.editable-content');
+						caixasAtualizadas.push({
+							nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
+							descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
+						});
+					});
+					caixasExistentes = caixasAtualizadas;
+				} else {
+					const paginasAtualizadas = [];
+					caixasDOMElements.forEach((item, i) => {
+						const descEl = item.querySelector('.editable-content');
+						paginasAtualizadas.push({
+							conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
+						});
+					});
+					paginasExistentes = paginasAtualizadas;
+				}
 			}
 		}
 	}
 
+	const pagZeroVal = getVal(`input[name="paginasprev_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+	const pagTransfVal = getVal(`input[name="paginasprev_transf_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+	const pagPrevTotal = transferenciaValue === 'zero_transferencia'
+		? String((parseInt(pagZeroVal, 10) || 0) + (parseInt(pagTransfVal, 10) || 0))
+		: getVal(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
+
 	veiculo.sistemas[sistemaIndex] = {
 		caixas: caixasExistentes,
 		paginas: paginasExistentes,
+		paginas_zero: paginasZeroExistentes,
+		paginas_transf: paginasTransfExistentes,
 
 		sistema: sistemaValor,
 		transferencia: transferenciaValue,
 		idtransf: getVal(`#idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
-		paginasprev: getVal(`input[name="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`),
+		paginasprev: pagPrevTotal,
+		paginasprev_zero: pagZeroVal,
+		paginasprev_transf: pagTransfVal,
 
 		tipo_iluminacao: getRadio(`tipo_iluminacao_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
 		modulo_dedicado: getRadio(`modulo_dedicado_aplicaveis_${veiculoIndex}_${sistemaIndex}`),
@@ -551,6 +666,120 @@ function moverPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex, direcao)
 	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 }
 
+function adicionarPaginaAplicaveisZero(veiculoIndex, sistemaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
+	if (!sistema) return;
+	if (!sistema.paginas_zero) sistema.paginas_zero = [];
+	sistema.paginas_zero.push({ conteudo: '' });
+	renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
+}
+
+function removerPaginaAplicaveisZero(veiculoIndex, sistemaIndex, paginaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
+	if (sistema && sistema.paginas_zero) {
+		sistema.paginas_zero.splice(paginaIndex, 1);
+		renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
+	}
+}
+
+function moverPaginaAplicaveisZero(veiculoIndex, sistemaIndex, paginaIndex, direcao) {
+	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_zero;
+	if (!paginas) return;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
+}
+
+function renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-aplicaveis-zero_${veiculoIndex}_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_zero || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label>Página ${i + 1} (Fazer do Zero)</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas_zero[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
+
+function adicionarPaginaAplicaveisTransf(veiculoIndex, sistemaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
+	if (!sistema) return;
+	if (!sistema.paginas_transf) sistema.paginas_transf = [];
+	sistema.paginas_transf.push({ conteudo: '' });
+	renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
+}
+
+function removerPaginaAplicaveisTransf(veiculoIndex, sistemaIndex, paginaIndex) {
+	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
+	if (sistema && sistema.paginas_transf) {
+		sistema.paginas_transf.splice(paginaIndex, 1);
+		renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
+	}
+}
+
+function moverPaginaAplicaveisTransf(veiculoIndex, sistemaIndex, paginaIndex, direcao) {
+	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_transf;
+	if (!paginas) return;
+	const newIndex = paginaIndex + direcao;
+	if (newIndex < 0 || newIndex >= paginas.length) return;
+	const itemMovido = paginas.splice(paginaIndex, 1)[0];
+	paginas.splice(newIndex, 0, itemMovido);
+	renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
+}
+
+function renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex) {
+	const container = document.getElementById(`dynamic-content-container-aplicaveis-transf_${veiculoIndex}_${sistemaIndex}`);
+	if (!container) return;
+	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_transf || [];
+	container.innerHTML = '';
+	paginas.forEach((pagina, i) => {
+		const descId = `descricoes_pagina_transf_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const paginaDiv = document.createElement('div');
+		paginaDiv.className = 'caixa-item';
+		paginaDiv.innerHTML = `
+			<label>Página ${i + 1} (Transferência)</label>
+			<div class="development-field-container">
+				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div class="caixa-actions-column">
+					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
+					<div class="mover-buttons">
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+					</div>
+				</div>
+			</div>`;
+		container.appendChild(paginaDiv);
+		const descElement = document.getElementById(descId);
+		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas_transf[i].conteudo = descElement.innerHTML; };
+		setupDragAndDrop(descId);
+		setupEditableContent(descId);
+	});
+}
+
 function renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex) {
 	const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	if (!container) return;
@@ -604,6 +833,9 @@ function coletarDadosFormulario() {
 		const paginas = parseInt(s.paginasprev, 10) || 0;
 		if (s.transferencia === 'modificar') {
 			pppModificadas += (paginas || 1);
+		} else if (s.transferencia === 'zero_transferencia') {
+			pppCriadas += (parseInt(s.paginasprev_zero, 10) || 0);
+			pppTransferidas += (parseInt(s.paginasprev_transf, 10) || 0);
 		} else if (s.transferencia === 'transferencia') {
 			pppTransferidas += paginas;
 		} else {
@@ -619,6 +851,9 @@ function coletarDadosFormulario() {
 				const paginas = parseInt(s.paginasprev, 10) || 0;
 				if (s.transferencia === 'modificar') {
 					ppaModificadas += (paginas || 1);
+				} else if (s.transferencia === 'zero_transferencia') {
+					ppaCriadas += (parseInt(s.paginasprev_zero, 10) || 0);
+					ppaTransferidas += (parseInt(s.paginasprev_transf, 10) || 0);
 				} else if (s.transferencia === 'transferencia' || s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 					ppaTransferidas += paginas;
 				} else {
@@ -884,8 +1119,19 @@ function validarFormularioGlobal() {
 		const capLabel = `(Capítulo Principal ${idx + 1})`;
 		if (!sistema.transferencia) {
 			erros.push(`Opção de Transferência ${capLabel}`);
-		} else if (sistema.transferencia === 'transferencia' && !sistema.idtransf) {
+		} else if ((sistema.transferencia === 'transferencia' || sistema.transferencia === 'zero_transferencia') && !sistema.idtransf) {
 			erros.push(`ID de Transferência ${capLabel}`);
+		} else if (sistema.transferencia === 'zero_transferencia') {
+			if (!sistema.paginasprev_zero) {
+				erros.push(`Nº pg prevista (Fazer do Zero) ${capLabel}`);
+				const el = document.querySelector(`input[name="paginasprev_zero_${idx}"]`);
+				if (el) el.classList.add('campo-invalido');
+			}
+			if (!sistema.paginasprev_transf) {
+				erros.push(`Nº pg prevista (Transferência) ${capLabel}`);
+				const el = document.querySelector(`input[name="paginasprev_transf_${idx}"]`);
+				if (el) el.classList.add('campo-invalido');
+			}
 		} else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
 			erros.push(`Nº páginas prevista ${capLabel}`);
 			const el = document.querySelector(`input[name="paginasprev_${idx}"]`);
@@ -929,8 +1175,19 @@ function validarFormularioGlobal() {
 				const capLabel = `(Aplicável ${idx + 1}, Capítulo ${sIdx + 1})`;
 				if (!sistema.transferencia) {
 					erros.push(`Opção de Transferência ${capLabel}`);
-				} else if (sistema.transferencia === 'transferencia_outro' && !sistema.idtransf) {
+				} else if ((sistema.transferencia === 'transferencia_outro' || sistema.transferencia === 'zero_transferencia') && !sistema.idtransf) {
 					erros.push(`ID de Transferência ${capLabel}`);
+				} else if (sistema.transferencia === 'zero_transferencia') {
+					if (!sistema.paginasprev_zero) {
+						erros.push(`Nº pg prevista (Fazer do Zero) ${capLabel}`);
+						const el = document.querySelector(`input[name="paginasprev_zero_aplicaveis_${idx}_${sIdx}"]`);
+						if (el) el.classList.add('campo-invalido');
+					}
+					if (!sistema.paginasprev_transf) {
+						erros.push(`Nº pg prevista (Transferência) ${capLabel}`);
+						const el = document.querySelector(`input[name="paginasprev_transf_aplicaveis_${idx}_${sIdx}"]`);
+						if (el) el.classList.add('campo-invalido');
+					}
 				} else if (sistema.transferencia !== 'modificar' && !sistema.paginasprev) {
 					erros.push(`Nº páginas prevista ${capLabel}`);
 					const el = document.querySelector(`input[name="paginasprev_aplicaveis_${idx}_${sIdx}"]`);
