@@ -1241,12 +1241,34 @@ function togglePaginasPrevistaAplicaveis(veiculoIndex, sistemaIndex) {
 	}
 }
 
-function rolarParaTituloCapitulo() {
+function rolarParaTituloCapitulo(veiculoIndex = null) {
 	setTimeout(() => {
-		// Elemento alvo: o fieldset de SISTEMAS ou o container/label
-		const target = document.getElementById('sistemas-container')?.closest('fieldset') 
-			|| document.querySelector('#sistemas-container label') 
-			|| document.getElementById('sistemas-container');
+		// Detecta automaticamente se a aba ativa é a de Veículos Aplicáveis
+		const abaAplicaveis = document.getElementById('aba-aplicaveis');
+		const isAplicaveis = (abaAplicaveis && abaAplicaveis.style.display !== 'none');
+
+		let vIdx = null;
+		if (typeof veiculoIndex === 'number') {
+			vIdx = veiculoIndex;
+		} else if (isAplicaveis) {
+			vIdx = (typeof veiculoAplicavelAtual === 'number') ? veiculoAplicavelAtual : 0;
+		}
+
+		let target = null;
+		if (typeof vIdx === 'number') {
+			const container = document.getElementById(`sistemas-container-aplicaveis_${vIdx}`);
+			target = container?.closest('fieldset') 
+				|| container?.querySelector('.system-block')
+				|| container?.querySelector('label') 
+				|| container;
+		} else {
+			const container = document.getElementById('sistemas-container');
+			target = container?.closest('fieldset') 
+				|| container?.querySelector('.system-block')
+				|| container?.querySelector('label') 
+				|| container;
+		}
+
 		if (target) {
 			// 1. Barra preta fixa no topo (módulos / ações gerais)
 			const topNav = document.querySelector('.top-nav-modulos');
@@ -1268,7 +1290,7 @@ function rolarParaTituloCapitulo() {
 				behavior: 'smooth'
 			});
 		}
-	}, 30);
+	}, 40);
 }
 
 function adicionarSistema() {
@@ -1289,7 +1311,6 @@ function moverSistema(direcao) {
 	paginaAtual = newIndex;
 	renderizarPaginacao();
 	renderizarSistema(paginaAtual);
-	rolarParaTituloCapitulo();
 }
 
 function removerUltimoSistema() {
@@ -1648,6 +1669,7 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
 				<label for="ilustracao_texto_aplicaveis_${veiculoIndex}">PEDIDOS DE ILUSTRAÇÃO / TRATAMENTO DE IMAGEM</label>
 				<div contenteditable="true" class="editable-content" id="ilustracao_texto_aplicaveis_${veiculoIndex}" data-field="ilustracao_texto_aplicaveis" oninput="salvarDadosVeiculoAplicavel(${veiculoIndex})" data-placeholder="P:\\Desenvolvimento\\+ DIAGRAMAS\\0. (2026-X)\\Mazda\\RX-7>1.3 256cv (13B - Wankel) (1994)\\Fotos e Ilustrações\\Pedidos...">${veiculo.dadosGerais.ilustracao_texto || ''}</div>
+			</fieldset>
 
 			<fieldset>
 				<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
