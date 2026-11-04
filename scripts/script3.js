@@ -207,10 +207,14 @@ function executarCopiaCapitulo() {
 	}
 	
 	document.getElementById('copy-chapter-modal').style.display = 'none';
+	const destIndex = targetVeiculoIndexParaCopia;
 	targetVeiculoIndexParaCopia = null;
 	
 	const qtdCopiados = checkboxesMarcados.length;
 	alert(`${qtdCopiados} capítulo(s) copiado(s) com sucesso!`);
+	if (typeof rolarParaTituloCapitulo === 'function') {
+		rolarParaTituloCapitulo(destIndex);
+	}
 }
 
 function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
