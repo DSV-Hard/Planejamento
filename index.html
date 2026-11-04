@@ -214,6 +214,7 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
                 <button type="button" class="orange-button" onclick="adicionarSistema()">➕</button>
                 <button type="button" class="orange-button" onclick="removerUltimoSistema()">➖</button>
+                <button type="button" class="orange-button" onclick="abrirModalCopia('principal')">Copiar Capítulo</button>
             </div>
         </fieldset>
 
@@ -387,7 +388,7 @@
 			
 			<div style="display: flex; justify-content: center; gap: 15px; margin-top: 20px;">
 				<button class="orange-button" onclick="executarCopiaCapitulo()">Copiar</button>
-				<button class="orange-button" onclick="document.getElementById('copy-chapter-modal').style.display='none'">Cancelar</button>
+				<button class="orange-button" onclick="document.getElementById('copy-chapter-modal').style.display='none'; targetVeiculoIndexParaCopia = null;">Cancelar</button>
 			</div>
 		</div>
 	</div>
