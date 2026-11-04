@@ -442,6 +442,12 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 			const paginas = parseInt(s.paginasprev, 10) || 0;
 			if (s.transferencia === 'modificar') {
 				somaModificadas += (paginas || 1);
+			} else if (s.transferencia === 'zero_transferencia') {
+				const pz = parseInt(s.paginasprev_zero, 10) || 0;
+				const pt = parseInt(s.paginasprev_transf, 10) || 0;
+				somaCriadas += pz;
+				somaTransferidas += pt;
+				tempoTotalPrincipal += (pz * 3.65) + (pt * 1.825);
 			} else if (s.transferencia === 'transferencia') {
 				somaTransferidas += paginas;
 				tempoTotalPrincipal += (paginas * 1.825);
@@ -465,6 +471,12 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 					const paginas = parseInt(s.paginasprev, 10) || 0;
 					if (s.transferencia === 'modificar') {
 						somaModificadasAplicaveis += (paginas || 1);
+					} else if (s.transferencia === 'zero_transferencia') {
+						const pz = parseInt(s.paginasprev_zero, 10) || 0;
+						const pt = parseInt(s.paginasprev_transf, 10) || 0;
+						somaCriadasAplicaveis += pz;
+						somaTransferidasAplicaveis += pt;
+						tempoTotalAplicaveis += (pz * 1.0) + (pt * 0.5);
 					} else if (s.transferencia === 'transferencia' || s.transferencia === 'transferencia_principal' || s.transferencia === 'transferencia_outro') {
 						somaTransferidasAplicaveis += paginas;
 						tempoTotalAplicaveis += (paginas * 0.5);
@@ -641,6 +653,7 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 
 			let linhaTransferencia = '';
 			if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
+			else if (sistema.transferencia === 'zero_transferencia') linhaTransferencia = `- Fazer do Zero + Transferência${sistema.idtransf ? ` - ID: ${sistema.idtransf}` : ''}`;
 			else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
 			else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
 
@@ -658,7 +671,13 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 			<div class="avoid-break" style="margin-top: 15px;">
 				<div id="p${parteNum}-cap-principal-${idx + 1}" class="highlight-tag">${tituloCapitulo}</div>
 				${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
+				${sistema.transferencia === 'zero_transferencia' ? `
+				<div class="info-row"><span class="info-label">Nº páginas prevista (Zero):</span> <span class="info-val">${sistema.paginasprev_zero || '0'}</span></div>
+				<div class="info-row"><span class="info-label">Nº páginas prevista (Transferência):</span> <span class="info-val">${sistema.paginasprev_transf || '0'}</span></div>
+				<div class="info-row"><span class="info-label">Nº páginas prevista (Total):</span> <span class="info-val">${(parseInt(sistema.paginasprev_zero, 10) || 0) + (parseInt(sistema.paginasprev_transf, 10) || 0)}</span></div>
+				` : `
 				<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
+				`}
 				${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
 			`;
 
@@ -673,7 +692,31 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 				`;
 			}
 
-			if (sistema.transferencia === 'modificar' && sistema.paginas_modificar && sistema.paginas_modificar.length > 0) {
+			if (sistema.transferencia === 'zero_transferencia') {
+				// PARTE FAZER DO ZERO
+				corpoDoc += `<div class="sub-header" style="margin-top: 14px; color: #15803d; border-left: 3px solid #15803d; padding-left: 8px;">PARTE FAZER DO ZERO:</div>`;
+				if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
+					sistema.paginas_zero.forEach((pagina, pIdx) => {
+						const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1} (Fazer do Zero)`;
+						corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+					});
+				} else {
+					corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+				}
+
+				// PARTE TRANSFERIR
+				corpoDoc += `<div class="sub-header" style="margin-top: 18px; color: #1d4ed8; border-left: 3px solid #1d4ed8; padding-left: 8px;">PARTE TRANSFERIR:</div>`;
+				if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
+					sistema.paginas_transf.forEach((pagina, pIdx) => {
+						const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1} (Transferência)`;
+						corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+						corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+					});
+				} else {
+					corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+				}
+			} else if (sistema.transferencia === 'modificar' && sistema.paginas_modificar && sistema.paginas_modificar.length > 0) {
 				corpoDoc += `<div class="sub-header" style="margin-top: 8px;">- Páginas a Modificar:</div>`;
 				sistema.paginas_modificar.forEach(pm => {
 					corpoDoc += `
@@ -763,7 +806,8 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 					let linhaTransferencia = '';
 					if (sistema.transferencia === 'transferencia') linhaTransferencia = `- Transferência - ID: ${sistema.idtransf || ''}`;
 					else if (sistema.transferencia === 'transferencia_principal') linhaTransferencia = `- Transferência do Principal`;
-					else if (sistema.transferencia === 'transferencia_outro') linhaTransferencia = `- Transferência de outro Aplicável`;
+					else if (sistema.transferencia === 'transferencia_outro') linhaTransferencia = `- Transferência de outro Aplicável${sistema.idtransf ? ` - ID: ${sistema.idtransf}` : ''}`;
+					else if (sistema.transferencia === 'zero_transferencia') linhaTransferencia = `- Fazer do Zero + Transferência${sistema.idtransf ? ` - ID: ${sistema.idtransf}` : ''}`;
 					else if (sistema.transferencia === 'zero') linhaTransferencia = `- Fazer do Zero`;
 					else if (sistema.transferencia === 'modificar') linhaTransferencia = `- Modificar Publicado`;
 
@@ -781,7 +825,13 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 					<div class="avoid-break" style="margin-top: 15px;">
 						<div id="p${parteNum}-cap-aplicavel-${vIndex + 1}-${idx + 1}" class="highlight-tag-yellow">${tituloCapitulo}</div>
 						${linhaTransferencia ? `<div style="font-weight: bold; margin: 3px 0;">${linhaTransferencia}</div>` : ''}
+						${sistema.transferencia === 'zero_transferencia' ? `
+						<div class="info-row"><span class="info-label">Nº páginas prevista (Zero):</span> <span class="info-val">${sistema.paginasprev_zero || '0'}</span></div>
+						<div class="info-row"><span class="info-label">Nº páginas prevista (Transferência):</span> <span class="info-val">${sistema.paginasprev_transf || '0'}</span></div>
+						<div class="info-row"><span class="info-label">Nº páginas prevista (Total):</span> <span class="info-val">${(parseInt(sistema.paginasprev_zero, 10) || 0) + (parseInt(sistema.paginasprev_transf, 10) || 0)}</span></div>
+						` : `
 						<div class="info-row"><span class="info-label">Nº páginas prevista:</span> <span class="info-val">${sistema.transferencia === 'modificar' ? '0' : (sistema.paginasprev || '')}</span></div>
+						`}
 						${(!isCaixasForm && !isPaginasFixas) ? `<div class="info-row"><span class="info-label">Módulo Dedicado:</span> <span class="info-val">${isModuloDedicado ? 'Sim' : 'Não'}</span></div>` : ''}
 					`;
 
@@ -796,7 +846,31 @@ function gerarDadosParteRelatorio(partData, parteNum = 1) {
 						`;
 					}
 
-					if (isCaixasForm || (sistema.caixas && sistema.caixas.length > 0)) {
+					if (sistema.transferencia === 'zero_transferencia') {
+						// PARTE FAZER DO ZERO
+						corpoDoc += `<div class="sub-header" style="margin-top: 14px; color: #15803d; border-left: 3px solid #15803d; padding-left: 8px;">PARTE FAZER DO ZERO:</div>`;
+						if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
+							sistema.paginas_zero.forEach((pagina, pIdx) => {
+								const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1} (Fazer do Zero)`;
+								corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+								corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+							});
+						} else {
+							corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+						}
+
+						// PARTE TRANSFERIR
+						corpoDoc += `<div class="sub-header" style="margin-top: 18px; color: #1d4ed8; border-left: 3px solid #1d4ed8; padding-left: 8px;">PARTE TRANSFERIR:</div>`;
+						if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
+							sistema.paginas_transf.forEach((pagina, pIdx) => {
+								const tituloPg = (pagina.titulo && pagina.titulo.trim()) ? pagina.titulo.trim() : `Página ${pIdx + 1} (Transferência)`;
+								corpoDoc += `<div style="font-weight: bold; margin-top: 8px;">- ${tituloPg}:</div>`;
+								corpoDoc += desconverterHtmlParaRelatorio(pagina.conteudo);
+							});
+						} else {
+							corpoDoc += `<p style="font-style: italic; color: #666; margin-left: 12px;">Nenhuma página adicionada.</p>`;
+						}
+					} else if (isCaixasForm || (sistema.caixas && sistema.caixas.length > 0)) {
 						corpoDoc += `
 						<div class="info-row"><span class="info-label">Tipo de Caixa:</span> <span class="info-val">${sistema.tipo_fusiveis || 'Simplificado'}</span></div>
 						`;
