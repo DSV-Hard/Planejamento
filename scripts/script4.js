@@ -732,7 +732,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				addText('PARTE FAZER DO ZERO:', 12, "bold", 0);
 				if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
 					for (const [paginaIdx, pagina] of sistema.paginas_zero.entries()) {
-						addText(`- Página ${paginaIdx + 1} (Fazer do Zero):`, 12, "bold", 0);
+						const tituloZero = (pagina.titulo && pagina.titulo.trim()) || `Página ${paginaIdx + 1} (Fazer do Zero)`;
+						addText(`- ${tituloZero}:`, 12, "bold", 0);
 						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
@@ -744,7 +745,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 				addText('PARTE TRANSFERIR:', 12, "bold", 0);
 				if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
 					for (const [paginaIdx, pagina] of sistema.paginas_transf.entries()) {
-						addText(`- Página ${paginaIdx + 1} (Transferência):`, 12, "bold", 0);
+						const tituloTransf = (pagina.titulo && pagina.titulo.trim()) || `Página ${paginaIdx + 1} (Transferência)`;
+						addText(`- ${tituloTransf}:`, 12, "bold", 0);
 						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
@@ -753,19 +755,25 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 					y += lineHeight;
 				}
 			} else if (isCaixasForm) {
-				if (sistema.caixas && sistema.caixas.length > 0) {
-					for (const [caixaIdx, caixa] of sistema.caixas.entries()) {
-						addText(`- Caixa ${caixaIdx + 1}: ${caixa.nome || 'Sem nome'}`, 12, "bold", 0);
-						y = await addRichContent(caixa.descricoes, y, 4, rootPrincipal, sistema, idx);
+				const itensCaixas = (sistema.paginas && sistema.paginas.length > 0) ? sistema.paginas : (sistema.caixas || []);
+				if (itensCaixas.length > 0) {
+					for (const [caixaIdx, caixa] of itensCaixas.entries()) {
+						const tituloCaixa = (caixa.titulo && caixa.titulo.trim()) || (caixa.nome && caixa.nome.trim()) || `Página ${caixaIdx + 1}`;
+						const conteudoCaixa = caixa.conteudo !== undefined ? caixa.conteudo : (caixa.descricoes || '');
+						addText(`- ${tituloCaixa}:`, 12, "bold", 0);
+						y = await addRichContent(conteudoCaixa, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
-				} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
+				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y += lineHeight; }
 			} 
 			else if (isPaginasFixas || !isModuloDedicado) {
-				if (sistema.paginas && sistema.paginas.length > 0) {
-					for (const [paginaIdx, pagina] of sistema.paginas.entries()) {
-						addText(`- Página ${paginaIdx + 1}:`, 12, "bold", 0);
-						y = await addRichContent(pagina.conteudo, y, 4, rootPrincipal, sistema, idx);
+				const itensPags = (sistema.paginas && sistema.paginas.length > 0) ? sistema.paginas : (sistema.caixas || []);
+				if (itensPags.length > 0) {
+					for (const [paginaIdx, pagina] of itensPags.entries()) {
+						const tituloPg = (pagina.titulo && pagina.titulo.trim()) || (pagina.nome && pagina.nome.trim()) || `Página ${paginaIdx + 1}`;
+						const conteudoPg = pagina.conteudo !== undefined ? pagina.conteudo : (pagina.descricoes || '');
+						addText(`- ${tituloPg}:`, 12, "bold", 0);
+						y = await addRichContent(conteudoPg, y, 4, rootPrincipal, sistema, idx);
 						y += lineHeight * 2;
 					}
 				} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y += lineHeight; }
@@ -914,7 +922,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						addText('PARTE FAZER DO ZERO:', 12, "bold", 0);
 						if (sistema.paginas_zero && sistema.paginas_zero.length > 0) {
 							for (const [pIdx, pagina] of sistema.paginas_zero.entries()) {
-								addText(`- Página ${pIdx + 1} (Fazer do Zero):`, 12, "bold", 0);
+								const tituloZero = (pagina.titulo && pagina.titulo.trim()) || `Página ${pIdx + 1} (Fazer do Zero)`;
+								addText(`- ${tituloZero}:`, 12, "bold", 0);
 								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 8;
 							}
@@ -926,7 +935,8 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 						addText('PARTE TRANSFERIR:', 12, "bold", 0);
 						if (sistema.paginas_transf && sistema.paginas_transf.length > 0) {
 							for (const [pIdx, pagina] of sistema.paginas_transf.entries()) {
-								addText(`- Página ${pIdx + 1} (Transferência):`, 12, "bold", 0);
+								const tituloTransf = (pagina.titulo && pagina.titulo.trim()) || `Página ${pIdx + 1} (Transferência)`;
+								addText(`- ${tituloTransf}:`, 12, "bold", 0);
 								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 8;
 							}
@@ -935,20 +945,25 @@ async function gerarPDFDocumento(partData, isLastPart, dadosCompletosJSON) {
 							y += lineHeight;
 						}
 					} else if (isCaixasForm) {
-						if (sistema.caixas && sistema.caixas.length > 0) {
-							for (const caixa of sistema.caixas) {
-								addText(`- ${caixa.nome || 'Caixa'}:`, 12, "bold", 0);
-								y = await addRichContent(caixa.descricoes, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
-								y += 5;
+						const itensCaixas = (sistema.paginas && sistema.paginas.length > 0) ? sistema.paginas : (sistema.caixas || []);
+						if (itensCaixas.length > 0) {
+							for (const [caixaIdx, caixa] of itensCaixas.entries()) {
+								const tituloCaixa = (caixa.titulo && caixa.titulo.trim()) || (caixa.nome && caixa.nome.trim()) || `Página ${caixaIdx + 1}`;
+								const conteudoCaixa = caixa.conteudo !== undefined ? caixa.conteudo : (caixa.descricoes || '');
+								addText(`- ${tituloCaixa}:`, 12, "bold", 0);
+								y = await addRichContent(conteudoCaixa, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
+								y += 8;
 							}
-						} else { addText('Nenhuma caixa adicionada.', 12, 'italic', 4); y += lineHeight; }
+						} else { addText('Nenhuma página adicionada.', 12, 'italic', 4); y += lineHeight; }
 					} 
 					else if (isPaginasFixas || !isModuloDedicado) {
-						if (sistema.paginas && sistema.paginas.length > 0) {
-							for (const [pIdx, pagina] of sistema.paginas.entries()) {
-								const tituloPg = pagina.titulo || `Página ${pIdx + 1}`;
+						const itensPags = (sistema.paginas && sistema.paginas.length > 0) ? sistema.paginas : (sistema.caixas || []);
+						if (itensPags.length > 0) {
+							for (const [pIdx, pagina] of itensPags.entries()) {
+								const tituloPg = (pagina.titulo && pagina.titulo.trim()) || (pagina.nome && pagina.nome.trim()) || `Página ${pIdx + 1}`;
+								const conteudoPg = pagina.conteudo !== undefined ? pagina.conteudo : (pagina.descricoes || '');
 								addText(`- ${tituloPg}:`, 12, "bold", 0);
-								y = await addRichContent(pagina.conteudo, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
+								y = await addRichContent(conteudoPg, y, 4, rootAplicaveis, sistema, idx, true, veiculo, index);
 								y += 8;
 							}
 						} else {
