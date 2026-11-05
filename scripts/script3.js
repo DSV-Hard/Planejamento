@@ -296,10 +296,13 @@ function renderizarSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 
 function toggleIdTransfAplicaveis(veiculoIndex, sistemaIndex) {
 	const radio = document.querySelector(`input[name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}"]:checked`);
+	const container = document.querySelector(`[data-container-for="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
 	const idTransfInput = document.getElementById(`idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 
-	if (radio && idTransfInput) {
-		idTransfInput.style.display = (radio.value === 'transferencia_outro') ? 'block' : 'none';
+	if (radio) {
+		const show = (radio.value === 'transferencia_outro' || radio.value === 'zero_transferencia');
+		if (container) container.style.display = show ? 'block' : 'none';
+		else if (idTransfInput) idTransfInput.style.display = show ? 'block' : 'none';
 	}
 }
 
@@ -520,8 +523,10 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 			if (itemsZero.length > 0) {
 				const atualizadas = [];
 				itemsZero.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
 					const descEl = item.querySelector('.editable-content');
 					atualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasZeroExistentes[i]?.titulo || `Página ${i + 1} (Fazer do Zero)`),
 						conteudo: descEl ? descEl.innerHTML : (paginasZeroExistentes[i]?.conteudo || '')
 					});
 				});
@@ -535,8 +540,10 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 			if (itemsTransf.length > 0) {
 				const atualizadas = [];
 				itemsTransf.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
 					const descEl = item.querySelector('.editable-content');
 					atualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasTransfExistentes[i]?.titulo || `Página ${i + 1} (Transferência)`),
 						conteudo: descEl ? descEl.innerHTML : (paginasTransfExistentes[i]?.conteudo || '')
 					});
 				});
@@ -548,31 +555,35 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 		if (dynamicContainer) {
 			const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
 			if (caixasDOMElements.length > 0) {
-				const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
-				const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
-				if (isCaixas) {
-					const caixasAtualizadas = [];
-					caixasDOMElements.forEach((item, i) => {
-						const inputNome = item.querySelector('input[type="text"]');
-						const descEl = item.querySelector('.editable-content');
-						caixasAtualizadas.push({
-							nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
-							descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
-						});
+				const paginasAtualizadas = [];
+				caixasDOMElements.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
+					const descEl = item.querySelector('.editable-content');
+					paginasAtualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasExistentes[i]?.titulo || paginasExistentes[i]?.nome || `Página ${i + 1}`),
+						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || paginasExistentes[i]?.descricoes || '')
 					});
-					caixasExistentes = caixasAtualizadas;
-				} else {
-					const paginasAtualizadas = [];
-					caixasDOMElements.forEach((item, i) => {
-						const descEl = item.querySelector('.editable-content');
-						paginasAtualizadas.push({
-							conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
-						});
-					});
-					paginasExistentes = paginasAtualizadas;
-				}
+				});
+				paginasExistentes = paginasAtualizadas;
+				caixasExistentes = paginasAtualizadas.map(p => ({
+					nome: p.titulo,
+					descricoes: p.conteudo
+				}));
 			}
 		}
+	}
+
+	if ((!paginasExistentes || paginasExistentes.length === 0) && caixasExistentes && caixasExistentes.length > 0) {
+		paginasExistentes = caixasExistentes.map(c => ({
+			titulo: c.nome || '',
+			conteudo: c.descricoes || ''
+		}));
+	}
+	if ((!caixasExistentes || caixasExistentes.length === 0) && paginasExistentes && paginasExistentes.length > 0) {
+		caixasExistentes = paginasExistentes.map(p => ({
+			nome: p.titulo || '',
+			descricoes: p.conteudo || ''
+		}));
 	}
 
 	const pagZeroVal = getVal(`input[name="paginasprev_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}"]`);
@@ -611,77 +622,49 @@ function salvarDadosSistemaAplicaveis(veiculoIndex, sistemaIndex) {
 }
 
 function adicionarCaixaAplicaveis(veiculoIndex, sistemaIndex) {
-	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
-	if (!sistema.caixas) sistema.caixas = [];
-	sistema.caixas.push({ nome: '', descricoes: '' });
-	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+	adicionarPaginaAplicaveis(veiculoIndex, sistemaIndex);
 }
 
 function removerCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex) {
-	veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas.splice(caixaIndex, 1);
-	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+	removerPaginaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex);
 }
 
 function moverCaixaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex, direcao) {
-	const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas;
-	const newIndex = caixaIndex + direcao;
-	if (newIndex < 0 || newIndex >= caixas.length) return;
-	const itemMovido = caixas.splice(caixaIndex, 1)[0];
-	caixas.splice(newIndex, 0, itemMovido);
-	renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+	moverPaginaAplicaveis(veiculoIndex, sistemaIndex, caixaIndex, direcao);
 }
 
 function renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex) {
-	const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
-	if (!container) return;
-	const caixas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas || [];
-	container.innerHTML = '';
-	caixas.forEach((caixa, i) => {
-		const descId = `descricoes_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
-		const caixaDiv = document.createElement('div');
-		caixaDiv.className = 'caixa-item';
-		caixaDiv.innerHTML = `
-			<label>Nome da Caixa</label>
-			<input type="text" value="${caixa.nome || ''}" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
-			<label>Descrições</label>
-			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}">${caixa.descricoes || ''}</div>
-				<div class="caixa-actions-column">
-					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
-					<button type="button" class="btn-remover-caixa" onclick="removerCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
-					<div class="mover-buttons">
-						<button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-						<button type="button" class="btn-mover-caixa" onclick="moverCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
-					</div>
-				</div>
-			</div>`;
-		container.appendChild(caixaDiv);
-		const descElement = document.getElementById(descId);
-		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
-		setupDragAndDrop(descId);
-		setupEditableContent(descId);
-	});
+	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 }
 
 function adicionarPaginaAplicaveis(veiculoIndex, sistemaIndex) {
 	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
 	if (!sistema.paginas) sistema.paginas = [];
-	sistema.paginas.push({ conteudo: '' });
+	const proximaPaginaNum = sistema.paginas.length + 1;
+	sistema.paginas.push({ titulo: `Página ${proximaPaginaNum}`, conteudo: '' });
+	if (!sistema.caixas) sistema.caixas = [];
+	sistema.caixas.push({ nome: `Página ${proximaPaginaNum}`, descricoes: '' });
 	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 }
 
 function removerPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex) {
-	veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas.splice(paginaIndex, 1);
+	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
+	if (sistema.paginas) sistema.paginas.splice(paginaIndex, 1);
+	if (sistema.caixas) sistema.caixas.splice(paginaIndex, 1);
 	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 }
 
 function moverPaginaAplicaveis(veiculoIndex, sistemaIndex, paginaIndex, direcao) {
-	const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas;
+	const sistema = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex];
+	const paginas = sistema.paginas || [];
 	const newIndex = paginaIndex + direcao;
 	if (newIndex < 0 || newIndex >= paginas.length) return;
 	const itemMovido = paginas.splice(paginaIndex, 1)[0];
 	paginas.splice(newIndex, 0, itemMovido);
+	if (sistema.caixas && sistema.caixas.length === paginas.length) {
+		const caixaMovida = sistema.caixas.splice(paginaIndex, 1)[0];
+		sistema.caixas.splice(newIndex, 0, caixaMovida);
+	}
 	renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 }
 
@@ -689,7 +672,8 @@ function adicionarPaginaAplicaveisZero(veiculoIndex, sistemaIndex) {
 	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
 	if (!sistema) return;
 	if (!sistema.paginas_zero) sistema.paginas_zero = [];
-	sistema.paginas_zero.push({ conteudo: '' });
+	const proximoNum = sistema.paginas_zero.length + 1;
+	sistema.paginas_zero.push({ titulo: `Página ${proximoNum} (Fazer do Zero)`, conteudo: '' });
 	renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
 }
 
@@ -717,20 +701,26 @@ function renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex) {
 	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_zero || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_zero_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : `Página ${i + 1} (Fazer do Zero)`;
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : '';
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label>Página ${i + 1} (Fazer do Zero)</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1} (Fazer do Zero)" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].paginas_zero[${i}].titulo = this.value">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
 					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
 					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
 					<div class="mover-buttons">
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisZero(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
 					</div>
 				</div>
 			</div>`;
@@ -746,7 +736,8 @@ function adicionarPaginaAplicaveisTransf(veiculoIndex, sistemaIndex) {
 	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
 	if (!sistema) return;
 	if (!sistema.paginas_transf) sistema.paginas_transf = [];
-	sistema.paginas_transf.push({ conteudo: '' });
+	const proximoNum = sistema.paginas_transf.length + 1;
+	sistema.paginas_transf.push({ titulo: `Página ${proximoNum} (Transferência)`, conteudo: '' });
 	renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
 }
 
@@ -774,20 +765,26 @@ function renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex) {
 	const paginas = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex]?.paginas_transf || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_transf_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_transf_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : `Página ${i + 1} (Transferência)`;
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : '';
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label>Página ${i + 1} (Transferência)</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1} (Transferência)" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].paginas_transf[${i}].titulo = this.value">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
 					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
 					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
 					<div class="mover-buttons">
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveisTransf(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
 					</div>
 				</div>
 			</div>`;
@@ -802,29 +799,50 @@ function renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex) {
 function renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex) {
 	const container = document.getElementById(`dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}`);
 	if (!container) return;
-	const paginas = veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas || [];
+	const sistema = veiculosAplicaveisData[veiculoIndex]?.sistemas[sistemaIndex];
+	if (!sistema) return;
+
+	if ((!sistema.paginas || sistema.paginas.length === 0) && sistema.caixas && sistema.caixas.length > 0) {
+		sistema.paginas = sistema.caixas.map(c => ({
+			titulo: c.nome || '',
+			conteudo: c.descricoes || ''
+		}));
+	}
+
+	const paginas = sistema.paginas || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_aplicaveis_${veiculoIndex}_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : (pagina.nome !== undefined ? pagina.nome : `Página ${i + 1}`);
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : (pagina.descricoes !== undefined ? pagina.descricoes : '');
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label>Página ${i + 1}</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1}" oninput="veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].paginas[${i}].titulo = this.value; if(veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas && veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas[${i}]) veiculosAplicaveisData[${veiculoIndex}].sistemas[${sistemaIndex}].caixas[${i}].nome = this.value;">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-					<input type="file" id="file_${descId}" class="file-input-hidden" multiple onchange="processarArquivosSelecionados('${descId}', this.files)">
+					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
 					<button type="button" class="btn-remover-caixa" onclick="removerPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i})">- Remover</button>
 					<div class="mover-buttons">
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)">▲</button>
-						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)">▼</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
+						<button type="button" class="btn-mover-caixa" onclick="moverPaginaAplicaveis(${veiculoIndex}, ${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
 					</div>
 				</div>
 			</div>`;
 		container.appendChild(paginaDiv);
 		const descElement = document.getElementById(descId);
-		descElement.oninput = () => { veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas[i].conteudo = descElement.innerHTML; };
+		descElement.oninput = () => { 
+			veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].paginas[i].conteudo = descElement.innerHTML;
+			if (veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas && veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas[i]) {
+				veiculosAplicaveisData[veiculoIndex].sistemas[sistemaIndex].caixas[i].descricoes = descElement.innerHTML;
+			}
+		};
 		setupDragAndDrop(descId);
 		setupEditableContent(descId);
 	});
@@ -1036,6 +1054,22 @@ function carregarDeJSON(input) {
 							s.modulo_dedicado = 'nao';
 						}
 					}
+					if ((!s.paginas || s.paginas.length === 0) && s.caixas && s.caixas.length > 0) {
+						s.paginas = s.caixas.map(c => ({
+							titulo: c.nome || '',
+							conteudo: c.descricoes || ''
+						}));
+					}
+					if (s.paginas_zero) {
+						s.paginas_zero.forEach((pz, idx) => {
+							if (!pz.titulo) pz.titulo = `Página ${idx + 1} (Fazer do Zero)`;
+						});
+					}
+					if (s.paginas_transf) {
+						s.paginas_transf.forEach((pt, idx) => {
+							if (!pt.titulo) pt.titulo = `Página ${idx + 1} (Transferência)`;
+						});
+					}
 				});
 
 				if (sistemasData.length > 0) {
@@ -1058,6 +1092,22 @@ function carregarDeJSON(input) {
 								} else {
 									s.modulo_dedicado = 'nao';
 								}
+							}
+							if ((!s.paginas || s.paginas.length === 0) && s.caixas && s.caixas.length > 0) {
+								s.paginas = s.caixas.map(c => ({
+									titulo: c.nome || '',
+									conteudo: c.descricoes || ''
+								}));
+							}
+							if (s.paginas_zero) {
+								s.paginas_zero.forEach((pz, idx) => {
+									if (!pz.titulo) pz.titulo = `Página ${idx + 1} (Fazer do Zero)`;
+								});
+							}
+							if (s.paginas_transf) {
+								s.paginas_transf.forEach((pt, idx) => {
+									if (!pt.titulo) pt.titulo = `Página ${idx + 1} (Transferência)`;
+								});
 							}
 						});
 					}
