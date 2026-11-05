@@ -466,7 +466,10 @@ function renderizarFormularioCapitulo(idx) {
 				<label><input type="radio" name="transferencia_${idx}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 			</div>
 		</div>
-		<input type="number" id="idtransf_${idx}" name="idtransf_${idx}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" style="display: ${(dados.transferencia === 'transferencia' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'}" onchange="salvarDadosSistema(${idx})">
+		<div data-container-for="idtransf_${idx}" style="display: ${(dados.transferencia === 'transferencia' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'};">
+			<label for="idtransf_${idx}">ID de Transferência:</label>
+			<input type="number" id="idtransf_${idx}" name="idtransf_${idx}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" onchange="salvarDadosSistema(${idx})">
+		</div>
 		
 		<div data-container-for="paginasprev_${idx}" style="display: ${(dados.transferencia !== 'modificar' && dados.transferencia !== 'zero_transferencia') ? 'block' : 'none'}">
 			<label>Nº páginas prevista</label>
@@ -554,15 +557,6 @@ function renderizarFormularioCapitulo(idx) {
 		</fieldset>
 	`;
 
-	// --- Bloco Desenvolvimento "Caixas" ---
-	const caixasDevelopmentHtml = `
-		<fieldset>
-			<legend>DESENVOLVIMENTO</legend>
-			<div id="dynamic-content-container_${idx}"></div>
-			<button type="button" class="btn-adicionar-caixa" onclick="adicionarCaixa(${idx})">+ Adicionar Caixa</button>
-		</fieldset>
-	`;
-
 	const fusiveisOptionsHtml = `
          <div class="checkbox-blockk"></div>
          <label class="checkbox-title">TIPO DE DEMANDA:</label>
@@ -601,8 +595,8 @@ function renderizarFormularioCapitulo(idx) {
 		renderizarPaginasZero(idx);
 		renderizarPaginasTransf(idx);
 	} else if (isCaixasForm) {
-		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
-		renderizarCaixas(idx);
+		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + pagesDevelopmentHtml;
+		renderizarPaginas(idx);
 	} else if (isPaginasForm) {
 		container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
 		renderizarPaginas(idx);
@@ -643,84 +637,59 @@ function renderizarFormularioCapitulo(idx) {
 }
 
 function adicionarCaixa(sistemaIndex) {
-	const dados = sistemasData[sistemaIndex];
-	if (!dados.caixas) dados.caixas = [];
-	dados.caixas.push({ nome: '', descricoes: '' });
-	renderizarCaixas(sistemaIndex);
+	adicionarPagina(sistemaIndex);
 }
 
 function removerCaixa(sistemaIndex, caixaIndex) {
-	sistemasData[sistemaIndex].caixas.splice(caixaIndex, 1);
-	renderizarCaixas(sistemaIndex);
+	removerPagina(sistemaIndex, caixaIndex);
 }
 
 function moverCaixa(sistemaIndex, caixaIndex, direcao) {
-	const caixas = sistemasData[sistemaIndex].caixas;
-	const newIndex = caixaIndex + direcao;
-	if (newIndex < 0 || newIndex >= caixas.length) return;
-	const itemMovido = caixas.splice(caixaIndex, 1)[0];
-	caixas.splice(newIndex, 0, itemMovido);
-	renderizarCaixas(sistemaIndex);
+	moverPagina(sistemaIndex, caixaIndex, direcao);
 }
 
 function renderizarCaixas(sistemaIndex) {
-	const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
-	if (!container) return;
-	const caixas = sistemasData[sistemaIndex].caixas || [];
-	container.innerHTML = '';
-	caixas.forEach((caixa, i) => {
-		const descId = `descricoes_${sistemaIndex}_${i}`;
-		const caixaDiv = document.createElement('div');
-		caixaDiv.className = 'caixa-item';
-		caixaDiv.innerHTML = `
-			<label for="nome_caixa_${sistemaIndex}_${i}">Nome da Caixa</label>
-			<input type="text" id="nome_caixa_${sistemaIndex}_${i}" value="${caixa.nome || ''}" oninput="sistemasData[${sistemaIndex}].caixas[${i}].nome = this.value" placeholder="Ex: Caixa de Fusíveis do Painel">
-			<label for="${descId}">Descrições</label>
-			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${caixa.descricoes || ''}</div>
-				<div class="caixa-actions-column">
-					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
-					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
-					<button type="button" class="btn-remover-caixa" onclick="removerCaixa(${sistemaIndex}, ${i})">- Remover</button>
-					<div class="mover-buttons">
-						<button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, -1)" title="Mover para cima">▲</button>
-						<button type="button" class="btn-mover-caixa" onclick="moverCaixa(${sistemaIndex}, ${i}, 1)" title="Mover para baixo">▼</button>
-					</div>
-				</div>
-			</div>`;
-		container.appendChild(caixaDiv);
-		const descElement = document.getElementById(descId);
-		descElement.oninput = () => { sistemasData[sistemaIndex].caixas[i].descricoes = descElement.innerHTML; };
-		setupDragAndDrop(descId);
-		setupEditableContent(descId);
-	});
+	renderizarPaginas(sistemaIndex);
 }
 
 function adicionarPagina(sistemaIndex) {
 	const dados = sistemasData[sistemaIndex];
 	if (!dados.paginas) dados.paginas = [];
-	dados.paginas.push({ conteudo: '' });
+	const proximoNum = dados.paginas.length + 1;
+	dados.paginas.push({ titulo: `Página ${proximoNum}`, conteudo: '' });
+	if (!dados.caixas) dados.caixas = [];
+	dados.caixas.push({ nome: `Página ${proximoNum}`, descricoes: '' });
 	renderizarPaginas(sistemaIndex);
 }
 
 function removerPagina(sistemaIndex, paginaIndex) {
-	sistemasData[sistemaIndex].paginas.splice(paginaIndex, 1);
-	renderizarPaginas(sistemaIndex);
+	if (sistemasData[sistemaIndex]) {
+		if (sistemasData[sistemaIndex].paginas) sistemasData[sistemaIndex].paginas.splice(paginaIndex, 1);
+		if (sistemasData[sistemaIndex].caixas) sistemasData[sistemaIndex].caixas.splice(paginaIndex, 1);
+		renderizarPaginas(sistemaIndex);
+	}
 }
 
 function moverPagina(sistemaIndex, paginaIndex, direcao) {
-	const paginas = sistemasData[sistemaIndex].paginas;
+	const dados = sistemasData[sistemaIndex];
+	const paginas = dados?.paginas;
+	if (!paginas) return;
 	const newIndex = paginaIndex + direcao;
 	if (newIndex < 0 || newIndex >= paginas.length) return;
 	const itemMovido = paginas.splice(paginaIndex, 1)[0];
 	paginas.splice(newIndex, 0, itemMovido);
+	if (dados.caixas && dados.caixas.length === paginas.length) {
+		const caixaMovida = dados.caixas.splice(paginaIndex, 1)[0];
+		dados.caixas.splice(newIndex, 0, caixaMovida);
+	}
 	renderizarPaginas(sistemaIndex);
 }
 
 function adicionarPaginaZero(sistemaIndex) {
 	const dados = sistemasData[sistemaIndex];
 	if (!dados.paginas_zero) dados.paginas_zero = [];
-	dados.paginas_zero.push({ conteudo: '' });
+	const proximoNum = dados.paginas_zero.length + 1;
+	dados.paginas_zero.push({ titulo: `Página ${proximoNum} (Fazer do Zero)`, conteudo: '' });
 	renderizarPaginasZero(sistemaIndex);
 }
 
@@ -747,13 +716,19 @@ function renderizarPaginasZero(sistemaIndex) {
 	const paginas = sistemasData[sistemaIndex]?.paginas_zero || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_zero_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_zero_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : `Página ${i + 1} (Fazer do Zero)`;
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : '';
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label for="${descId}">Página ${i + 1} (Fazer do Zero)</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1} (Fazer do Zero)" oninput="sistemasData[${sistemaIndex}].paginas_zero[${i}].titulo = this.value">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
 					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
@@ -775,7 +750,8 @@ function renderizarPaginasZero(sistemaIndex) {
 function adicionarPaginaTransf(sistemaIndex) {
 	const dados = sistemasData[sistemaIndex];
 	if (!dados.paginas_transf) dados.paginas_transf = [];
-	dados.paginas_transf.push({ conteudo: '' });
+	const proximoNum = dados.paginas_transf.length + 1;
+	dados.paginas_transf.push({ titulo: `Página ${proximoNum} (Transferência)`, conteudo: '' });
 	renderizarPaginasTransf(sistemaIndex);
 }
 
@@ -802,13 +778,19 @@ function renderizarPaginasTransf(sistemaIndex) {
 	const paginas = sistemasData[sistemaIndex]?.paginas_transf || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_transf_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_transf_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : `Página ${i + 1} (Transferência)`;
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : '';
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label for="${descId}">Página ${i + 1} (Transferência)</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1} (Transferência)" oninput="sistemasData[${sistemaIndex}].paginas_transf[${i}].titulo = this.value">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
 					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
@@ -830,16 +812,33 @@ function renderizarPaginasTransf(sistemaIndex) {
 function renderizarPaginas(sistemaIndex) {
 	const container = document.getElementById(`dynamic-content-container_${sistemaIndex}`);
 	if (!container) return;
-	const paginas = sistemasData[sistemaIndex].paginas || [];
+	const dados = sistemasData[sistemaIndex];
+	if (!dados) return;
+
+	// Compatibilidade: se tiver caixas antigas e não tiver páginas, migra
+	if ((!dados.paginas || dados.paginas.length === 0) && (dados.caixas && dados.caixas.length > 0)) {
+		dados.paginas = dados.caixas.map(c => ({
+			titulo: c.nome || '',
+			conteudo: c.descricoes || ''
+		}));
+	}
+
+	const paginas = dados.paginas || [];
 	container.innerHTML = '';
 	paginas.forEach((pagina, i) => {
+		const tituloId = `titulo_pagina_${sistemaIndex}_${i}`;
 		const descId = `descricoes_pagina_${sistemaIndex}_${i}`;
+		const tituloValor = pagina.titulo !== undefined ? pagina.titulo : (pagina.nome !== undefined ? pagina.nome : `Página ${i + 1}`);
+		const conteudoValor = pagina.conteudo !== undefined ? pagina.conteudo : (pagina.descricoes !== undefined ? pagina.descricoes : '');
+
 		const paginaDiv = document.createElement('div');
 		paginaDiv.className = 'caixa-item';
 		paginaDiv.innerHTML = `
-			<label for="${descId}">Página ${i + 1}</label>
+			<label for="${tituloId}">Título da página</label>
+			<input type="text" id="${tituloId}" value="${tituloValor.replace(/"/g, '&quot;')}" placeholder="Ex: Página ${i + 1}" oninput="sistemasData[${sistemaIndex}].paginas[${i}].titulo = this.value">
+			<label for="${descId}">Descrições</label>
 			<div class="development-field-container">
-				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${pagina.conteudo || ''}</div>
+				<div contenteditable="true" class="editable-content" id="${descId}" data-placeholder="Insira imagens, documentos ou texto...">${conteudoValor}</div>
 				<div class="caixa-actions-column">
 					<button type="button" class="btn-anexar" onclick="abrirSeletorArquivo('${descId}')">Anexar</button>
 					<input type="file" id="file_${descId}" class="file-input-hidden" multiple accept="image/*,.pdf,.doc,.docx,.txt,.csv,.xls,.xlsx,.ppt,.pptx" onchange="processarArquivosSelecionados('${descId}', this.files)">
@@ -901,7 +900,10 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 				<label><input type="radio" name="transferencia_aplicaveis_${veiculoIndex}_${sistemaIndex}" value="modificar" ${dados.transferencia === 'modificar' ? 'checked' : ''}> Modificar Publicado</label>
 			</div>
 		</div>
-		<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" style="display: ${(dados.transferencia === 'transferencia_outro' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		<div data-container-for="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${(dados.transferencia === 'transferencia_outro' || dados.transferencia === 'zero_transferencia') ? 'block' : 'none'};">
+			<label for="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}">ID de Transferência:</label>
+			<input type="number" id="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" name="idtransf_aplicaveis_${veiculoIndex}_${sistemaIndex}" placeholder="Informe o ID de Transferência..." value="${dados.idtransf || ''}" onchange="salvarDadosSistemaAplicaveis(${veiculoIndex}, ${sistemaIndex})">
+		</div>
 		
 		<div data-container-for="paginasprev_aplicaveis_${veiculoIndex}_${sistemaIndex}" style="display: ${(dados.transferencia !== 'modificar' && dados.transferencia !== 'zero_transferencia') ? 'block' : 'none'}">
 			<label>Nº páginas prevista</label>
@@ -978,14 +980,6 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 		</fieldset>
 	`;
 
-	const caixasDevelopmentHtml = `
-		<fieldset>
-			<legend>DESENVOLVIMENTO</legend>
-			<div id="dynamic-content-container-aplicaveis_${veiculoIndex}_${sistemaIndex}"></div>
-			<button type="button" class="btn-adicionar-caixa" onclick="adicionarCaixaAplicaveis(${veiculoIndex}, ${sistemaIndex})">+ Adicionar Caixa</button>
-		</fieldset>
-	`;
-
 	const fusiveisOptionsHtml = `
 		<div class="checkbox-blockk"></div>
 		<label class="checkbox-title">TIPO DE DEMANDA:</label>
@@ -1024,8 +1018,8 @@ function renderizarFormularioCapituloAplicaveis(veiculoIndex, sistemaIndex) {
 		if (typeof renderizarPaginasAplicaveisZero === 'function') renderizarPaginasAplicaveisZero(veiculoIndex, sistemaIndex);
 		if (typeof renderizarPaginasAplicaveisTransf === 'function') renderizarPaginasAplicaveisTransf(veiculoIndex, sistemaIndex);
 	} else if (isCaixasForm) {
-		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + caixasDevelopmentHtml;
-		renderizarCaixasAplicaveis(veiculoIndex, sistemaIndex);
+		container.innerHTML = commonTransferHtml + fusiveisOptionsHtml + pagesDevelopmentHtml;
+		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
 	} else if (isPaginasForm) {
 		container.innerHTML = commonTransferHtml + pagesDevelopmentHtml;
 		renderizarPaginasAplicaveis(veiculoIndex, sistemaIndex);
@@ -1218,10 +1212,13 @@ function toggleModuloDedicadoPrincipal(index) {
 
 function toggleIdTransfPrincipal(index) {
 	const radio = document.querySelector(`input[name="transferencia_${index}"]:checked`);
+	const container = document.querySelector(`[data-container-for="idtransf_${index}"]`);
 	const idTransfInput = document.getElementById(`idtransf_${index}`);
 
-	if (radio && idTransfInput) {
-		idTransfInput.style.display = (radio.value === 'transferencia') ? 'block' : 'none';
+	if (radio) {
+		const show = (radio.value === 'transferencia' || radio.value === 'zero_transferencia');
+		if (container) container.style.display = show ? 'block' : 'none';
+		else if (idTransfInput) idTransfInput.style.display = show ? 'block' : 'none';
 	}
 }
 
@@ -1420,8 +1417,10 @@ function salvarDadosSistema(index) {
 			if (itemsZero.length > 0) {
 				const atualizadas = [];
 				itemsZero.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
 					const descEl = item.querySelector('.editable-content');
 					atualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasZeroExistentes[i]?.titulo || `Página ${i + 1} (Fazer do Zero)`),
 						conteudo: descEl ? descEl.innerHTML : (paginasZeroExistentes[i]?.conteudo || '')
 					});
 				});
@@ -1435,8 +1434,10 @@ function salvarDadosSistema(index) {
 			if (itemsTransf.length > 0) {
 				const atualizadas = [];
 				itemsTransf.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
 					const descEl = item.querySelector('.editable-content');
 					atualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasTransfExistentes[i]?.titulo || `Página ${i + 1} (Transferência)`),
 						conteudo: descEl ? descEl.innerHTML : (paginasTransfExistentes[i]?.conteudo || '')
 					});
 				});
@@ -1446,31 +1447,19 @@ function salvarDadosSistema(index) {
 	} else {
 		const dynamicContainer = document.getElementById(`dynamic-content-container_${index}`);
 		if (dynamicContainer) {
-			const caixasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
-			if (caixasDOMElements.length > 0) {
-				const valorUpper = (selectElement ? selectElement.value : '').toUpperCase();
-				const isCaixas = valorUpper === "FUSÍVEIS E RELÉS";
-				if (isCaixas) {
-					const caixasAtualizadas = [];
-					caixasDOMElements.forEach((item, i) => {
-						const inputNome = item.querySelector('input[type="text"]');
-						const descEl = item.querySelector('.editable-content');
-						caixasAtualizadas.push({
-							nome: inputNome ? inputNome.value : (caixasExistentes[i]?.nome || ''),
-							descricoes: descEl ? descEl.innerHTML : (caixasExistentes[i]?.descricoes || '')
-						});
+			const paginasDOMElements = dynamicContainer.querySelectorAll('.caixa-item');
+			if (paginasDOMElements.length > 0) {
+				const paginasAtualizadas = [];
+				paginasDOMElements.forEach((item, i) => {
+					const inputTitulo = item.querySelector('input[type="text"]');
+					const descEl = item.querySelector('.editable-content');
+					paginasAtualizadas.push({
+						titulo: inputTitulo ? inputTitulo.value : (paginasExistentes[i]?.titulo || `Página ${i + 1}`),
+						conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
 					});
-					caixasExistentes = caixasAtualizadas;
-				} else {
-					const paginasAtualizadas = [];
-					caixasDOMElements.forEach((item, i) => {
-						const descEl = item.querySelector('.editable-content');
-						paginasAtualizadas.push({
-							conteudo: descEl ? descEl.innerHTML : (paginasExistentes[i]?.conteudo || '')
-						});
-					});
-					paginasExistentes = paginasAtualizadas;
-				}
+				});
+				paginasExistentes = paginasAtualizadas;
+				caixasExistentes = paginasAtualizadas.map(p => ({ nome: p.titulo, descricoes: p.conteudo }));
 			}
 		}
 	}
@@ -1673,17 +1662,17 @@ function renderizarVeiculoAplicavel(veiculoIndex) {
 
 			<fieldset>
 				<legend>SISTEMAS (Veículo ${veiculoIndex + 1})</legend>
-				<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 				<div id="paginas-navegacao-aplicaveis_${veiculoIndex}" class="paginas-navegacao"></div>
 				<div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
 					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, -1)" title="Mover capítulo para a esquerda">←</button>
 					<button type="button" class="orange-button" onclick="moverSistemaAplicavel(${veiculoIndex}, 1)" title="Mover capítulo para a direita">→</button>
 				</div>
-				<div class="button-group-centered">
+				<div class="button-group-centered" style="margin-bottom: 15px;">
 					<button class="orange-button" onclick="adicionarSistemaAplicaveis(${veiculoIndex})">➕</button>
 					<button class="orange-button" onclick="removerUltimoSistemaAplicaveis(${veiculoIndex})">➖</button>
 					<button type="button" class="orange-button" onclick="abrirModalCopia(${veiculoIndex})">Copiar Capítulo</button>
 				</div>
+				<div id="sistemas-container-aplicaveis_${veiculoIndex}"></div>
 			</fieldset>
 		</div>
 	`;
